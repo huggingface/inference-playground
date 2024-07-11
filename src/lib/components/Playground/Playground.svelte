@@ -108,6 +108,10 @@
 	}
 
 	async function submit() {
+		if(currentConversation.messages?.at(-1)?.role !== "user"){
+			addMessage();
+			return;
+		}
 		if (!hfToken) {
 			showTokenModal = true;
 			return;
