@@ -94,6 +94,11 @@
 		conversations = conversations;
 	}
 
+	function deleteConversation(idx: number) {
+		deleteAndGetItem(conversations, idx);
+		conversations = conversations;
+	}
+
 	function reset() {
 		currentConversation.messages = [...startMessages];
 		systemMessage.content = '';
@@ -236,14 +241,15 @@
 				<Conversation
 					{loading}
 					{streamingMessage}
-					{conversations}
 					{conversation}
 					{index}
 					{currentConversation}
 					{viewCode}
 					{messages}
+					sideBySide={conversations.length > 1}
 					on:addMessage={addMessage}
 					on:deleteMessage={(e) => deleteMessage(e.detail)}
+					on:deleteConversation={(e) => deleteConversation(e.detail)}
 				/>
 			{/each}
 		</div>

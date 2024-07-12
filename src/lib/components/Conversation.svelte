@@ -5,14 +5,15 @@
 
 	export let loading;
 	export let streamingMessage;
-	export let conversations;
 	export let conversation;
 	export let index;
 	export let currentConversation;
 	export let viewCode;
 	export let messages;
 
-	const dispatch = createEventDispatcher<{ addMessage: void; deleteMessage: number }>();
+	export let sideBySide = false;
+
+	const dispatch = createEventDispatcher<{ addMessage: void; deleteMessage: number, deleteConversation: number }>();
 
 	let messageContainer: HTMLDivElement | null = null;
 
@@ -35,7 +36,7 @@
 	class:animate-pulse={loading && !streamingMessage}
 	bind:this={messageContainer}
 >
-	{#if conversations.length > 1}
+	{#if sideBySide}
 		<div
 			class="sticky top-0 flex h-11 flex-none items-center gap-2 whitespace-nowrap rounded-lg border border-gray-200/80 bg-white pl-3 pr-2 text-sm leading-none shadow-sm *:flex-none dark:border-gray-800 dark:bg-gray-800/70 dark:hover:bg-gray-800"
 			class:mr-3={index === 0}
@@ -45,7 +46,7 @@
 			<div>{conversation.model}</div>
 			<button
 				class="ml-auto flex size-6 items-center justify-center rounded bg-gray-50 text-xs hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
-				on:click={() => (conversations = conversations.filter((_, i) => i !== index))}
+				on:click={() => dispatch('deleteConversation', index)}
 			>
 				✕
 			</button>
@@ -70,7 +71,7 @@
 				class="border-b"
 				{message}
 				on:delete={() => dispatch('deleteMessage', i)}
-				autofocus={conversations.length === 1 && !loading && i === messages.length - 1}
+				autofocus={!sideBySide && !loading && i === messages.length - 1}
 			/>
 		{/each}
 
