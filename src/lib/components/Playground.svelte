@@ -1,15 +1,15 @@
 <script lang="ts">
-	import PlaygroundCode from './PlaygroundCode.svelte';
+	import PlaygroundCode from './CodeSnippets.svelte';
 	import {
 		createHfInference,
 		prepareRequestMessages,
 		handleStreamingResponse,
 		handleNonStreamingResponse
 	} from './playgroundUtils';
-	import PlaygroundMessage from '$lib/components/Playground/PlaygroundMessage.svelte';
-	import PlaygroundOptions from '$lib/components/Playground/PlaygroundOptions.svelte';
-	import PlaygroundTokenModal from './PlaygroundTokenModal.svelte';
-	import PlaygroundModelSelector from './PlaygroundModelSelector.svelte';
+	import PlaygroundMessage from '$lib/components/Message.svelte';
+	import PlaygroundOptions from '$lib/components/GenerationConfig.svelte';
+	import PlaygroundTokenModal from './HFTokenModal.svelte';
+	import PlaygroundModelSelector from './ModelSelector.svelte';
 	import { onDestroy, onMount } from 'svelte';
 	import { type ModelEntry } from "@huggingface/hub";
 	import { type ChatCompletionInputMessage } from "@huggingface/tasks";
