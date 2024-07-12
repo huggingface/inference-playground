@@ -1,5 +1,4 @@
 <script lang="ts">
-	import PlaygroundCode from '$lib/components/CodeSnippets.svelte';
 	import {
 		createHfInference,
 		prepareRequestMessages,
