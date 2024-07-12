@@ -9,7 +9,7 @@
 	import PlaygroundTokenModal from '$lib/components/HFTokenModal.svelte';
 	import PlaygroundModelSelector from '$lib/components/ModelSelector.svelte';
 	import Conversation from '$lib/components/Conversation.svelte';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { type ModelEntry } from '@huggingface/hub';
 	import { type ChatCompletionInputMessage } from '@huggingface/tasks';
 
@@ -53,11 +53,11 @@
 			compatibleModels = (await res.json()) as ModelEntry[];
 			compatibleModels.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
 		})();
-	});
 
-	onDestroy(() => {
-		if (abortController) {
-			abortController.abort();
+		return () => {
+			if (abortController) {
+				abortController.abort();
+			}
 		}
 	});
 
