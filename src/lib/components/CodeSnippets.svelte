@@ -7,8 +7,6 @@
 	export let maxTokens: number;
 	export let messages: ChatCompletionInputMessage[];
 
-	$: console.log(messages);
-
 	const npmSnippet = `import { HfInference } from '@huggingface/inference'
 
 const hf = new HfInference('your access token')`;

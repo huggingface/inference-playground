@@ -1,16 +1,12 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import PlaygroundCode from '$lib/components/CodeSnippets.svelte';
-	import PlaygroundMessage from '$lib/components/Message.svelte';
+	import CodeSnippets from '$lib/components/CodeSnippets.svelte';
+	import Message from '$lib/components/Message.svelte';
 
 	export let loading;
-	export let streamingMessage;
 	export let conversation;
 	export let index;
-	export let currentConversation;
 	export let viewCode;
-	export let messages;
-
 	export let sideBySide = false;
 
 	const dispatch = createEventDispatcher<{ addMessage: void; deleteMessage: number, deleteConversation: number }>();
@@ -24,7 +20,7 @@
 	}
 
 	$: {
-		if (currentConversation.messages.at(-1)) {
+		if (conversation.messages.at(-1)) {
 			scrollToBottom();
 		}
 	}
@@ -33,7 +29,7 @@
 <div
 	class="flex max-h-[calc(100dvh-5.8rem)] flex-col overflow-y-auto overflow-x-hidden @container"
 	class:pointer-events-none={loading}
-	class:animate-pulse={loading && !streamingMessage}
+	class:animate-pulse={loading && !conversation.config.streaming}
 	bind:this={messageContainer}
 >
 	{#if sideBySide}
@@ -66,12 +62,15 @@
 		</div>
 	{/if}
 	{#if !viewCode}
-		{#each messages as message, i}
-			<PlaygroundMessage
+		{#each conversation.messages as message, messageIdx}
+			<Message
 				class="border-b"
 				{message}
-				on:delete={() => dispatch('deleteMessage', i)}
-				autofocus={!sideBySide && !loading && i === messages.length - 1}
+				conversationIdx={index}
+				{messageIdx}
+				on:messageValueChanged
+				on:delete={() => dispatch('deleteMessage', messageIdx)}
+				autofocus={!sideBySide && !loading && messageIdx === conversation.messages.length - 1}
 			/>
 		{/each}
 
@@ -95,6 +94,6 @@
 			</div>
 		</button>
 	{:else}
-		<PlaygroundCode {...currentConversation} {...currentConversation.config} />
+		<CodeSnippets {...conversation} {...conversation.config} />
 	{/if}
 </div>

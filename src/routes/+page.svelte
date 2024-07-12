@@ -30,18 +30,14 @@
 		viewCode = false;
 	}
 
-	let currentConversation = conversations[0];
 	let systemMessage: ChatCompletionInputMessage = { role: 'system', content: '' };
-	$: messages = currentConversation.messages;
-
 	let hfToken: string | null = import.meta.env.VITE_HF_TOKEN;
 	let viewCode = false;
 	let showTokenModal = false;
 	let loading = false;
-	let streamingMessage: ChatCompletionInputMessage | null = null;
 	let tokens = 0;
 	let latency = 0;
-	let abortController: AbortController | null = null;
+	let abortControllers: AbortController[] = []
 	let waitForNonStreaming = true;
 
 	onMount(() => {
@@ -55,20 +51,36 @@
 		})();
 
 		return () => {
-			if (abortController) {
+			for(const abortController of abortControllers){
 				abortController.abort();
 			}
 		}
 	});
 
 	function addMessage() {
-		currentConversation.messages = [
-			...currentConversation.messages,
-			{
-				role: currentConversation.messages.at(-1)?.role === 'user' ? 'assistant' : 'user',
-				content: ''
-			}
-		];
+		conversations = conversations.map(conversation => {
+			conversation.messages = [
+				...conversation.messages,
+				{
+					role: conversation.messages.at(-1)?.role === 'user' ? 'assistant' : 'user',
+					content: ''
+				}
+			];
+			return conversation;
+		});
+	}
+
+	function updateMessage(value: string, conversationIdx: number, messageIdx: number) {
+		const lastMsgIdx = conversations[0].messages.length - 1;
+		const msg = conversations[conversationIdx].messages[messageIdx];
+		msg.content = value;
+		const { role } = msg;
+		if(messageIdx === lastMsgIdx && role === "user"){
+			conversations = conversations.map(conversation => {
+				conversation.messages[messageIdx].content = value;
+				return conversation;
+			});
+		}
 		conversations = conversations;
 	}
 
@@ -80,17 +92,19 @@
 	}
 
 	function deleteMessage(idx: number) {
-		const deletedMsg = deleteAndGetItem<ChatCompletionInputMessage>(
-			currentConversation.messages,
-			idx
-		);
-		// delete messages in user/assistant pairs. otherwise, the chat template will be broken
-		if (deletedMsg) {
-			const { role } = deletedMsg;
-			const pairIdx = role === 'user' ? idx : idx - 1;
-			deleteAndGetItem<ChatCompletionInputMessage>(currentConversation.messages, pairIdx);
-		}
-		conversations = conversations;
+		conversations = conversations.map(conversation => {
+			const deletedMsg = deleteAndGetItem<ChatCompletionInputMessage>(
+				conversation.messages,
+				idx
+			);
+			// delete messages in user/assistant pairs. otherwise, the chat template will be broken
+			if (deletedMsg) {
+				const { role } = deletedMsg;
+				const pairIdx = role === 'user' ? idx : idx - 1;
+				deleteAndGetItem<ChatCompletionInputMessage>(conversation.messages, pairIdx);
+			}
+			return conversation;
+		});
 	}
 
 	function deleteConversation(idx: number) {
@@ -99,89 +113,96 @@
 	}
 
 	function reset() {
-		currentConversation.messages = [...startMessages];
 		systemMessage.content = '';
-		conversations = conversations;
+		conversations = conversations.map(conversation => {
+			conversation.messages = [...startMessages];
+			return conversation;
+		});
 	}
 
 	function abort() {
-		if (streamingMessage && abortController) {
-			abortController.abort();
-			abortController = null;
+		if (abortControllers.length) {
+			for(const abortController of abortControllers){
+				abortController.abort();
+			}
+			abortControllers = [];
 		}
 		loading = false;
-		streamingMessage = null;
 		waitForNonStreaming = false;
 	}
 
-	async function submit() {
-		// last message has to be from user
-		if (currentConversation.messages?.at(-1)?.role !== 'user') {
-			addMessage();
-			return;
+	async function runInference(conversation: Conversation){
+		const startTime = performance.now();
+		const hf = createHfInference(hfToken);
+		const requestMessages = prepareRequestMessages(systemMessage, conversation.messages);
+
+		if (conversation.config.streaming) {
+			const streamingMessage = { role: 'assistant', content: '' };
+			conversation.messages = [...conversation.messages, streamingMessage];
+			const abortController = new AbortController();
+			abortControllers.push(abortController)
+
+			await handleStreamingResponse(
+				hf,
+				conversation.model,
+				requestMessages,
+				conversation.config.temperature,
+				conversation.config.maxTokens,
+				conversation.config.jsonMode,
+				(content) => {
+					if (streamingMessage) {
+						streamingMessage.content = content;
+						conversation.messages = [...conversation.messages];
+						conversations = conversations;
+					}
+				},
+				abortController
+			);
+		} else {
+			waitForNonStreaming = true;
+			const newMessage = await handleNonStreamingResponse(
+				hf,
+				conversation.model,
+				requestMessages,
+				conversation.config.temperature,
+				conversation.config.maxTokens,
+				conversation.config.jsonMode
+			);
+			// check if the user did not abort the request
+			if (waitForNonStreaming) {
+				conversation.messages = [...conversation.messages, newMessage];
+				conversations = conversations;
+			}
 		}
+
+		const endTime = performance.now();
+		latency = Math.round(endTime - startTime);
+	}
+
+	async function submit() {
+		// // last message has to be from user
+		// if (currentConversation.messages?.at(-1)?.role !== 'user') {
+		// 	addMessage();
+		// 	return;
+		// }
 		if (!hfToken) {
 			showTokenModal = true;
 			return;
 		}
 		(document.activeElement as HTMLElement).blur();
 		loading = true;
-		const startTime = performance.now();
 
-		try {
-			const hf = createHfInference(hfToken);
-			const requestMessages = prepareRequestMessages(systemMessage, messages);
-
-			if (currentConversation.config.streaming) {
-				streamingMessage = { role: 'assistant', content: '' };
-				currentConversation.messages = [...currentConversation.messages, streamingMessage];
-				abortController = new AbortController();
-
-				await handleStreamingResponse(
-					hf,
-					currentConversation.model,
-					requestMessages,
-					currentConversation.config.temperature,
-					currentConversation.config.maxTokens,
-					currentConversation.config.jsonMode,
-					(content) => {
-						if (streamingMessage) {
-							streamingMessage.content = content;
-							currentConversation.messages = [...currentConversation.messages];
-							conversations = conversations;
-						}
-					},
-					abortController
-				);
-			} else {
-				streamingMessage = null;
-				waitForNonStreaming = true;
-				const newMessage = await handleNonStreamingResponse(
-					hf,
-					currentConversation.model,
-					requestMessages,
-					currentConversation.config.temperature,
-					currentConversation.config.maxTokens,
-					currentConversation.config.jsonMode
-				);
-				// check if the user did not abort the request
-				if (waitForNonStreaming) {
-					currentConversation.messages = [...currentConversation.messages, newMessage];
-					conversations = conversations;
-				}
-			}
-
+		try{
+			const promises = conversations.map(conversation => runInference(conversation));
+			await Promise.all(promises);
 			addMessage();
-		} catch (error) {
+		}catch (error){
 			if (error.name !== 'AbortError') {
 				alert('error: ' + (error as Error).message);
 			}
 		} finally {
-			const endTime = performance.now();
-			latency = Math.round(endTime - startTime);
 			loading = false;
-			streamingMessage = null;
-			abortController = null;
+			abortControllers = [];
 		}
 	}
 
@@ -239,14 +260,15 @@
 			{#each conversations as conversation, index}
 				<Conversation
 					{loading}
-					{streamingMessage}
 					{conversation}
 					{index}
-					{currentConversation}
 					{viewCode}
-					{messages}
 					sideBySide={conversations.length > 1}
 					on:addMessage={addMessage}
+					on:messageValueChanged={(e) => {
+						const {conversationIdx, messageIdx, value} = e.detail;
+						updateMessage(value, conversationIdx, messageIdx);
+					}}
 					on:deleteMessage={(e) => deleteMessage(e.detail)}
 					on:deleteConversation={(e) => deleteConversation(e.detail)}
 				/>
@@ -353,7 +375,7 @@
 			<div
 				class="flex flex-1 flex-col gap-6 overflow-y-hidden rounded-xl border border-gray-200/80 bg-gradient-to-b from-white via-white p-3 shadow-sm dark:border-white/5 dark:from-gray-800/40 dark:via-gray-800/40"
 			>
-				<PlaygroundModelSelector {compatibleModels} bind:currentModel={currentConversation.model} />
+				<PlaygroundModelSelector {compatibleModels} bind:currentModel={conversations[0].model} />
 				<div
 					class="group relative -mt-4 flex h-[26px] w-full items-center justify-center gap-2 rounded-lg bg-black px-5 text-sm text-white hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:border-gray-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-gray-700"
 				>
@@ -382,7 +404,7 @@
 									id: String(Math.random()),
 									model: e.target.value,
 									config: { temperature: 0.5, maxTokens: 2048, streaming: true, jsonMode: false },
-									messages: startMessages
+									messages: conversations[0].messages
 								}
 							];
 						}}
@@ -393,12 +415,7 @@
 					</select>
 				</div>
 
-				<PlaygroundOptions
-					bind:temperature={currentConversation.config.temperature}
-					bind:maxTokens={currentConversation.config.maxTokens}
-					bind:jsonMode={currentConversation.config.jsonMode}
-					bind:streaming={currentConversation.config.streaming}
-				/>
+				<PlaygroundOptions bind:config={conversations[0].config} />
 				<div class="mt-auto">
 					<div class="mb-3 flex items-center justify-between gap-2">
 						<label
