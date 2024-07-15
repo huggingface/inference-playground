@@ -33,11 +33,18 @@
 
 	let selectedLanguage: Language = 'javascript';
 
+	function getMessages(){
+		const placeholder = [{ role: "user", content: "Tell me a story" }];
+		const messages = conversation.messages.length ? conversation.messages : placeholder;
+		return JSON.stringify(messages, null, 2);
+	}
+
 	function highlight(code: string, language: Language) {
 		return hljs.highlight(code, { language }).value;
 	}
 
 	function getJavascriptSnippets() {
+		const messagesStr = getMessages().replace(/"([^"]+)":/g, '$1:');
 		const snippets: Snippet[] = [];
 		snippets.push({
 			label: 'Install @huggingface/inference',
@@ -57,9 +64,7 @@ let out = "";
 
 for await (const chunk of inference.chatCompletionStream({
   model: "${conversation.model}",
-  messages: [
-    { role: "user", content: "Tell me a story" }, 
-  ],
+  messages: ${messagesStr},
   max_tokens: ${conversation.config.maxTokens}, 
   temperature: ${conversation.config.temperature},
   seed: 0,
@@ -81,9 +86,7 @@ const inference = new HfInference("your access token")
 
 const out = await inference.chatCompletion({
     model: "${conversation.model}",
-    messages: [
-      { role: "user", content: "Who are you?" }
-    ], 
+    messages: ${messagesStr}, 
     max_tokens: ${conversation.config.maxTokens},
     temperature: ${conversation.config.temperature},
     seed: 0,
