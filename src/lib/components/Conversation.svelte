@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import CodeSnippets from '$lib/components/CodeSnippets.svelte';
 	import Message from '$lib/components/Message.svelte';
+	import PlaygroundOptions from '$lib/components/GenerationConfig.svelte';
 
 	export let loading;
 	export let conversation;
@@ -51,7 +52,7 @@
 				✕
 			</button>
 			<button
-				class=" flex size-6 items-center justify-center rounded bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+				class="group relative flex size-6 items-center justify-center rounded bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32"
 					><path
@@ -62,6 +63,10 @@
 						d="M16 22a6 6 0 1 1 6-6a5.94 5.94 0 0 1-6 6Zm0-10a3.91 3.91 0 0 0-4 4a3.91 3.91 0 0 0 4 4a3.91 3.91 0 0 0 4-4a3.91 3.91 0 0 0-4-4Z"
 					/></svg
 				>
+				<PlaygroundOptions
+					bind:config={conversation.config}
+					classNames="absolute top-8 right-0 w-56 invisible group-focus:visible hover:visible border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50 rounded-xl"
+				/>
 			</button>
 		</div>
 	{/if}
