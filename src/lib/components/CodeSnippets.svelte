@@ -147,45 +147,36 @@ print(output.choices[0].message)`
 	}
 
 	function getBashSnippets() {
+		const messagesStr = getMessages();
 		const snippets: Snippet[] = [];
-		snippets.push({
-			label: 'Install',
-			code: `import { HfInference } from '@huggingface/inference'
 
-const hf = new HfInference("your access token")`
-		});
 		if (conversation.config.streaming) {
 			snippets.push({
 				label: 'Streaming API',
-				code: `let out = "";
-
-for await (const chunk of hf.chatCompletionStream({
-  model: "${conversation.model}",
-  messages: [
-    { role: "user", content: "Complete the equation 1+1= ,just the answer" }, 
-  ],
-  max_tokens: ${conversation.config.maxTokens}, 
-  temperature: ${conversation.config.temperature},
-  seed: 0,
-})) {
-  if (chunk.choices && chunk.choices.length > 0) {
-    out += chunk.choices[0].delta.content;
-  }  
-}`
+				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model}/v1/chat/completions' \
+--header "Authorization: Bearer {YOUR_HF_TOKEN}" \
+--header 'Content-Type: application/json' \
+--data '{
+    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "messages": ${messagesStr},
+    "temperature": ${conversation.config.temperature},
+    "max_tokens": ${conversation.config.maxTokens},
+    "stream": true
+}'`
 			});
 		} else {
 			// non-streaming
 			snippets.push({
 				label: 'Non-Streaming API',
-				code: `await hf.chatCompletion({
-  model: "${conversation.model}",
-  messages: [
-    { role: "user", content: "Complete the this sentence with words one plus one is equal " }
-  ], 
-  max_tokens: ${conversation.config.maxTokens},
-  temperature: ${conversation.config.temperature},
-  seed: 0,
-});`
+				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model}/v1/chat/completions' \
+--header "Authorization: Bearer {YOUR_HF_TOKEN}" \
+--header 'Content-Type: application/json' \
+--data '{
+    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "messages": ${messagesStr},
+    "temperature": ${conversation.config.temperature},
+    "max_tokens": ${conversation.config.maxTokens}
+}'`
 			});
 		}
 
