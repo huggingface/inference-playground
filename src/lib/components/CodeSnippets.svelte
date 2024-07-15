@@ -22,6 +22,7 @@
 	interface Snippet {
 		label: string;
 		code: string;
+		language?: Language;
 	}
 
 	const snippetsByLanguage: Record<Language, Snippet[]> = {
@@ -39,27 +40,34 @@
 	function getJavascriptSnippets() {
 		const snippets: Snippet[] = [];
 		snippets.push({
-			label: 'Install',
-			code: `import { HfInference } from '@huggingface/inference'
-
-const hf = new HfInference('your access token')`
+			label: 'Install @huggingface/inference',
+			language: 'bash',
+			code: `npm install --save @huggingface/inference
+# or
+yarn add @huggingface/inference`
 		});
 		if (conversation.config.streaming) {
 			snippets.push({
 				label: 'Streaming API',
-				code: `let out = "";
+				code: `import { HfInference } from "@huggingface/inference"
 
-for await (const chunk of hf.chatCompletionStream({
+const inference = new HfInference("your HF token")
+
+let out = "";
+
+for await (const chunk of inference.chatCompletionStream({
   model: "${conversation.model}",
   messages: [
-    { role: "user", content: "Complete the equation 1+1= ,just the answer" }, 
+    { role: "user", content: "Tell me a story" }, 
   ],
   max_tokens: ${conversation.config.maxTokens}, 
   temperature: ${conversation.config.temperature},
   seed: 0,
 })) {
   if (chunk.choices && chunk.choices.length > 0) {
-    out += chunk.choices[0].delta.content;
+    const newContent = chunk.choices[0].delta.content;
+    out += newContent;
+    process.stdout.write(newContent);
   }  
 }`
 			});
@@ -67,15 +75,21 @@ for await (const chunk of hf.chatCompletionStream({
 			// non-streaming
 			snippets.push({
 				label: 'Non-Streaming API',
-				code: `await hf.chatCompletion({
-  model: "${conversation.model}",
-  messages: [
-    { role: "user", content: "Complete the this sentence with words one plus one is equal " }
-  ], 
-  max_tokens: ${conversation.config.maxTokens},
-  temperature: ${conversation.config.temperature},
-  seed: 0,
-});`
+				code: `import { HfInference } from '@huggingface/inference'
+
+const inference = new HfInference("your access token")
+
+const out = await inference.chatCompletion({
+    model: "${conversation.model}",
+    messages: [
+      { role: "user", content: "Who are you?" }
+    ], 
+    max_tokens: ${conversation.config.maxTokens},
+    temperature: ${conversation.config.temperature},
+    seed: 0,
+});
+
+console.log(out.choices[0].message);`
 			});
 		}
 
@@ -134,7 +148,7 @@ for await (const chunk of hf.chatCompletionStream({
 			label: 'Install',
 			code: `import { HfInference } from '@huggingface/inference'
 
-const hf = new HfInference('your access token')`
+const hf = new HfInference("your access token")`
 		});
 		if (conversation.config.streaming) {
 			snippets.push({
@@ -194,14 +208,14 @@ for await (const chunk of hf.chatCompletionStream({
 		</ul>
 	</div>
 
-	{#each snippetsByLanguage[selectedLanguage] as { label, code }}
+	{#each snippetsByLanguage[selectedLanguage] as { label, code, language }}
 		<div class="px-4 pb-4 pt-6">
 			<h2 class="font-semibold">{label}</h2>
 		</div>
 		<pre
 			class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
 				code,
-				'javascript'
+				language ?? selectedLanguage
 			)}</pre>
 	{/each}
 </div>
