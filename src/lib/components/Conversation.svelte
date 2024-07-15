@@ -65,7 +65,7 @@
 				>
 				<PlaygroundOptions
 					bind:config={conversation.config}
-					classNames="absolute top-8 right-0 w-56 invisible group-focus:visible hover:visible border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50 rounded-xl"
+					classNames="absolute top-8 right-0 w-56 invisible group-focus:visible hover:visible border border-gray-200/80 bg-white z-10 px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800 rounded-xl"
 				/>
 			</button>
 		</div>
