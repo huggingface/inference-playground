@@ -44,7 +44,7 @@
 		(async () => {
 			// TODO: use hfjs.hub listModels after https://github.com/huggingface/huggingface.js/pull/795
 			const res = await fetch(
-				'https://huggingface.co/api/models?pipeline_tag=text-generation&inferenceStatus=loaded&filter=conversational'
+				'https://huggingface.co/api/models?pipeline_tag=text-generation&inference=Warm&other=conversational'
 			);
 			compatibleModels = (await res.json()) as ModelEntry[];
 			compatibleModels.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
