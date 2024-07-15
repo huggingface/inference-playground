@@ -1,11 +1,25 @@
 <script lang="ts">
 	import { type ChatCompletionInputMessage } from '@huggingface/tasks';
+	import hljs from 'highlight.js/lib/core';
+	import javascript from 'highlight.js/lib/languages/javascript';
+	import python from 'highlight.js/lib/languages/python';
+	import bash from 'highlight.js/lib/languages/bash';
 
 	export let model: string;
 	export let streaming: Boolean;
 	export let temperature: number;
 	export let maxTokens: number;
 	export let messages: ChatCompletionInputMessage[];
+
+	type Langauge = 'javascript' | 'python' | 'bash';
+
+	hljs.registerLanguage('javascript', javascript);
+	hljs.registerLanguage('python', python);
+	hljs.registerLanguage('bash', bash);
+
+	function highlight(code: string, language: Langauge) {
+		return hljs.highlight(code, { language }).value;
+	}
 
 	const npmSnippet = `import { HfInference } from '@huggingface/inference'
 
@@ -64,15 +78,19 @@ for await (const chunk of hf.chatCompletionStream({
 		<h2 class="font-semibold">Install and instantiate</h2>
 	</div>
 	<pre
-		class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50">{npmSnippet}</pre>
+		class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
+			npmSnippet,
+			'javascript'
+		)}</pre>
 
 	<div class="px-4 pb-4 pt-6">
 		<h2 class="font-semibold">{streaming ? 'Streaming API' : 'Non-Streaming API'}</h2>
 	</div>
 
 	<pre
-		class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50">{streaming
-			? streamingSnippet
-			: nonStreamingSnippet}
+		class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
+			streaming ? streamingSnippet : nonStreamingSnippet,
+			'javascript'
+		)}
   </pre>
 </div>
