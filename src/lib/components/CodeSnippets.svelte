@@ -33,8 +33,8 @@
 
 	let selectedLanguage: Language = 'javascript';
 
-	function getMessages(){
-		const placeholder = [{ role: "user", content: "Tell me a story" }];
+	function getMessages() {
+		const placeholder = [{ role: 'user', content: 'Tell me a story' }];
 		const messages = conversation.messages.length ? conversation.messages : placeholder;
 		return JSON.stringify(messages, null, 2);
 	}
@@ -65,8 +65,8 @@ let out = "";
 for await (const chunk of inference.chatCompletionStream({
   model: "${conversation.model}",
   messages: ${messagesStr},
-  max_tokens: ${conversation.config.maxTokens}, 
   temperature: ${conversation.config.temperature},
+  max_tokens: ${conversation.config.maxTokens},
   seed: 0,
 })) {
   if (chunk.choices && chunk.choices.length > 0) {
@@ -87,8 +87,8 @@ const inference = new HfInference("your access token")
 const out = await inference.chatCompletion({
     model: "${conversation.model}",
     messages: ${messagesStr}, 
-    max_tokens: ${conversation.config.maxTokens},
     temperature: ${conversation.config.temperature},
+    max_tokens: ${conversation.config.maxTokens},
     seed: 0,
 });
 
@@ -100,45 +100,46 @@ console.log(out.choices[0].message);`
 	}
 
 	function getPythonSnippets() {
+		const messagesStr = getMessages();
 		const snippets: Snippet[] = [];
 		snippets.push({
-			label: 'Install',
-			code: `import { HfInference } from '@huggingface/inference'
-
-const hf = new HfInference('your access token')`
+			label: 'Install huggingface_hub',
+			language: 'bash',
+			code: `pip install huggingface_hub`
 		});
 		if (conversation.config.streaming) {
 			snippets.push({
 				label: 'Streaming API',
-				code: `let out = "";
+				code: `from huggingface_hub import InferenceClient
 
-for await (const chunk of hf.chatCompletionStream({
-  model: "${conversation.model}",
-  messages: [
-    { role: "user", content: "Complete the equation 1+1= ,just the answer" }, 
-  ],
-  max_tokens: ${conversation.config.maxTokens}, 
-  temperature: ${conversation.config.temperature},
-  seed: 0,
-})) {
-  if (chunk.choices && chunk.choices.length > 0) {
-    out += chunk.choices[0].delta.content;
-  }  
-}`
+model_id="${conversation.model}"
+hf_token = "your HF token"
+inference_client = InferenceClient(model_id, token=hf_token)
+
+output = ""
+
+messages = ${messagesStr}
+
+for token in inference_client.chat_completion(messages, stream=True, temperature=${conversation.config.temperature}, max_tokens=${conversation.config.maxTokens}):
+    new_content = token.choices[0].delta.content
+    print(new_content, end="")
+    output += new_content`
 			});
 		} else {
 			// non-streaming
 			snippets.push({
 				label: 'Non-Streaming API',
-				code: `await hf.chatCompletion({
-  model: "${conversation.model}",
-  messages: [
-    { role: "user", content: "Complete the this sentence with words one plus one is equal " }
-  ], 
-  max_tokens: ${conversation.config.maxTokens},
-  temperature: ${conversation.config.temperature},
-  seed: 0,
-});`
+				code: `from huggingface_hub import InferenceClient
+
+model_id="${conversation.model}"
+hf_token = "your HF token"
+inference_client = InferenceClient(model_id, token=hf_token)
+
+messages = ${messagesStr}
+
+output = inference_client.chat_completion(messages, temperature=${conversation.config.temperature}, max_tokens=${conversation.config.maxTokens})
+
+print(output.choices[0].message)`
 			});
 		}
 
