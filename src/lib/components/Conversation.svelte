@@ -103,6 +103,6 @@
 			</div>
 		</button>
 	{:else}
-		<CodeSnippets {...conversation} {...conversation.config} />
+		<CodeSnippets {conversation} />
 	{/if}
 </div>
