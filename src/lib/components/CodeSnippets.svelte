@@ -75,7 +75,8 @@ for await (const chunk of inference.chatCompletionStream({
   if (chunk.choices && chunk.choices.length > 0) {
     const newContent = chunk.choices[0].delta.content;
     out += newContent;
-    process.stdout.write(newContent);
+	console.clear();
+	console.log(out);
   }  
 }`
 			});
