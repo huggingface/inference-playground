@@ -194,6 +194,10 @@
 			submit();
 		}
 	}
+
+	function changeSelectedModel(modelIdx: number) {
+		conversations[0] = { ...conversations[0], model: models[modelIdx] };
+	}
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -364,7 +368,7 @@
 			>
 				<PlaygroundModelSelector
 					compatibleModels={models}
-					bind:currentModel={conversations[0].model}
+					on:modelIdxChange={(e) => changeSelectedModel(e.detail)}
 				/>
 				<div
 					class="group relative -mt-4 flex h-[26px] w-full items-center justify-center gap-2 rounded-lg bg-black px-5 text-sm text-white hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:border-gray-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-gray-700"

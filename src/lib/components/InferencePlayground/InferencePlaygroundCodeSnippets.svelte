@@ -25,10 +25,10 @@
 		language?: Language;
 	}
 
-	const snippetsByLanguage: Record<Language, Snippet[]> = {
-		javascript: getJavascriptSnippets(),
-		python: getPythonSnippets(),
-		bash: getBashSnippets()
+	$: snippetsByLanguage = {
+		javascript: getJavascriptSnippets(conversation),
+		python: getPythonSnippets(conversation),
+		bash: getBashSnippets(conversation)
 	};
 
 	let selectedLanguage: Language = 'javascript';
@@ -46,7 +46,7 @@
 		return hljs.highlight(code, { language }).value;
 	}
 
-	function getJavascriptSnippets() {
+	function getJavascriptSnippets(conversation: Conversation) {
 		const messagesStr = getMessages().replace(/"([^"]+)":/g, '$1:');
 		const snippets: Snippet[] = [];
 		snippets.push({
@@ -66,7 +66,7 @@ const inference = new HfInference("your HF token")
 let out = "";
 
 for await (const chunk of inference.chatCompletionStream({
-  model: "${conversation.model}",
+  model: "${conversation.model.id}",
   messages: ${messagesStr},
   temperature: ${conversation.config.temperature},
   max_tokens: ${conversation.config.maxTokens},
@@ -89,7 +89,7 @@ for await (const chunk of inference.chatCompletionStream({
 const inference = new HfInference("your access token")
 
 const out = await inference.chatCompletion({
-    model: "${conversation.model}",
+    model: "${conversation.model.id}",
     messages: ${messagesStr}, 
     temperature: ${conversation.config.temperature},
     max_tokens: ${conversation.config.maxTokens},
@@ -103,7 +103,7 @@ console.log(out.choices[0].message);`
 		return snippets;
 	}
 
-	function getPythonSnippets() {
+	function getPythonSnippets(conversation: Conversation) {
 		const messagesStr = getMessages();
 		const snippets: Snippet[] = [];
 		snippets.push({
@@ -116,7 +116,7 @@ console.log(out.choices[0].message);`
 				label: 'Streaming API',
 				code: `from huggingface_hub import InferenceClient
 
-model_id="${conversation.model}"
+model_id="${conversation.model.id}"
 hf_token = "your HF token"
 inference_client = InferenceClient(model_id, token=hf_token)
 
@@ -135,7 +135,7 @@ for token in client.chat_completion(messages, stream=True, temperature=${convers
 				label: 'Non-Streaming API',
 				code: `from huggingface_hub import InferenceClient
 
-model_id="${conversation.model}"
+model_id="${conversation.model.id}"
 hf_token = "your HF token"
 inference_client = InferenceClient(model_id, token=hf_token)
 
@@ -150,14 +150,14 @@ print(output.choices[0].message)`
 		return snippets;
 	}
 
-	function getBashSnippets() {
+	function getBashSnippets(conversation: Conversation) {
 		const messagesStr = getMessages();
 		const snippets: Snippet[] = [];
 
 		if (conversation.config.streaming) {
 			snippets.push({
 				label: 'Streaming API',
-				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model}/v1/chat/completions' \
+				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model.id}/v1/chat/completions' \
 --header "Authorization: Bearer {YOUR_HF_TOKEN}" \
 --header 'Content-Type: application/json' \
 --data '{
@@ -172,7 +172,7 @@ print(output.choices[0].message)`
 			// non-streaming
 			snippets.push({
 				label: 'Non-Streaming API',
-				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model}/v1/chat/completions' \
+				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model.id}/v1/chat/completions' \
 --header "Authorization: Bearer {YOUR_HF_TOKEN}" \
 --header 'Content-Type: application/json' \
 --data '{
