@@ -1,15 +1,9 @@
 import { type ChatCompletionInputMessage } from '@huggingface/tasks';
 import { HfInference } from '@huggingface/inference';
+import type { ModelEntryWithTokenizer } from '$lib/types';
 
 export function createHfInference(token: string): HfInference {
 	return new HfInference(token);
-}
-
-export function prepareRequestMessages(
-	systemMessage: ChatCompletionInputMessage,
-	messages: ChatCompletionInputMessage[]
-): ChatCompletionInputMessage[] {
-	return [...(systemMessage.content.length ? [systemMessage] : []), ...messages];
 }
 
 export async function handleStreamingResponse(
@@ -64,4 +58,8 @@ export async function handleNonStreamingResponse(
 		return response.choices[0].message;
 	}
 	throw new Error('No response from the model');
+}
+
+export function isSystemPromptSupported(model: ModelEntryWithTokenizer) {
+	return model.tokenizerConfig.chat_template?.includes('system');
 }

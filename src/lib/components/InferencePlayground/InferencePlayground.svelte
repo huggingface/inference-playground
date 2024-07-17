@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {
 		createHfInference,
-		prepareRequestMessages,
 		handleStreamingResponse,
-		handleNonStreamingResponse
+		handleNonStreamingResponse,
+		isSystemPromptSupported
 	} from './inferencePlaygroundUtils';
 	import PlaygroundOptions from './InferencePlaygroundGenerationConfig.svelte';
 	import PlaygroundTokenModal from './InferencePlaygroundHFTokenModal.svelte';
@@ -20,7 +20,7 @@
 	let conversations: Conversation[] = [
 		{
 			id: String(Math.random()),
-			model: '01-ai/Yi-1.5-34B-Chat',
+			model: models[0],
 			config: { temperature: 0.5, maxTokens: 2048, streaming: true },
 			messages: startMessages
 		}
@@ -39,6 +39,8 @@
 	let latency = 0;
 	let abortControllers: AbortController[] = [];
 	let waitForNonStreaming = true;
+
+	$: systemPromptSupported = isSystemPromptSupported(conversations[0].model);
 
 	onDestroy(() => {
 		for (const abortController of abortControllers) {
@@ -114,7 +116,10 @@
 	async function runInference(conversation: Conversation) {
 		const startTime = performance.now();
 		const hf = createHfInference(hfToken);
-		const requestMessages = prepareRequestMessages(systemMessage, conversation.messages);
+		const requestMessages = [
+			...(systemPromptSupported && systemMessage?.content?.length ? [systemMessage] : []),
+			...conversation.messages
+		];
 
 		if (conversation.config.streaming) {
 			const streamingMessage = { role: 'assistant', content: '' };
@@ -216,12 +221,16 @@
 	<div class=" flex flex-col overflow-y-auto py-3 pr-3">
 		<div
 			class="relative flex flex-1 flex-col gap-6 overflow-y-hidden rounded-r-xl border-x border-y border-gray-200/80 bg-gradient-to-b from-white via-white p-3 shadow-sm dark:border-white/5 dark:from-gray-800/40 dark:via-gray-800/40"
+			class:pointer-events-none={!systemPromptSupported}
+			class:opacity-70={!systemPromptSupported}
 		>
-			<div class="pb-2 text-sm font-semibold">SYSTEM</div>
+			<div class="pb-2 text-sm font-semibold uppercase">system</div>
 			<textarea
 				name=""
 				id=""
-				placeholder="Enter a custom prompt"
+				placeholder={systemPromptSupported
+					? 'Enter a custom prompt'
+					: 'System prompt is not supported with the chosen model.'}
 				bind:value={systemMessage.content}
 				class="absolute inset-x-0 bottom-0 h-full resize-none bg-transparent px-3 pt-10 text-sm outline-none"
 			></textarea>
