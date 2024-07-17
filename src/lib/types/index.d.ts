@@ -16,3 +16,12 @@ type Conversation = {
 	config: ModelConfig;
 	messages: ChatCompletionInputMessage[];
 };
+
+interface TokenizerConfig {
+	chat_template?: string;
+	model_max_length?: number;
+}
+
+export interface ModelEntryWithTokenizer extends ModelEntry {
+	tokenizerConfig: TokenizerConfig;
+}

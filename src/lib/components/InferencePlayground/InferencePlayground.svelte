@@ -9,11 +9,11 @@
 	import PlaygroundTokenModal from './InferencePlaygroundHFTokenModal.svelte';
 	import PlaygroundModelSelector from './InferencePlaygroundModelSelector.svelte';
 	import Conversation from './InferencePlaygroundConversation.svelte';
-	import { onMount } from 'svelte';
-	import { type ModelEntry } from '@huggingface/hub';
+	import { onDestroy } from 'svelte';
 	import { type ChatCompletionInputMessage } from '@huggingface/tasks';
+	import type { ModelEntryWithTokenizer } from '$lib/types';
 
-	let compatibleModels: ModelEntry[] = [];
+	export let models: ModelEntryWithTokenizer[];
 
 	const startMessages: ChatCompletionInputMessage[] = [{ role: 'user', content: '' }];
 
@@ -40,21 +40,10 @@
 	let abortControllers: AbortController[] = [];
 	let waitForNonStreaming = true;
 
-	onMount(() => {
-		(async () => {
-			// TODO: use hfjs.hub listModels after https://github.com/huggingface/huggingface.js/pull/795
-			const res = await fetch(
-				'https://huggingface.co/api/models?pipeline_tag=text-generation&inference=Warm&filter=conversational'
-			);
-			compatibleModels = (await res.json()) as ModelEntry[];
-			compatibleModels.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
-		})();
-
-		return () => {
-			for (const abortController of abortControllers) {
-				abortController.abort();
-			}
-		};
+	onDestroy(() => {
+		for (const abortController of abortControllers) {
+			abortController.abort();
+		}
 	});
 
 	function addMessage() {
@@ -366,7 +355,10 @@
 			<div
 				class="flex flex-1 flex-col gap-6 overflow-y-hidden rounded-xl border border-gray-200/80 bg-gradient-to-b from-white via-white p-3 shadow-sm dark:border-white/5 dark:from-gray-800/40 dark:via-gray-800/40"
 			>
-				<PlaygroundModelSelector {compatibleModels} bind:currentModel={conversations[0].model} />
+				<PlaygroundModelSelector
+					compatibleModels={models}
+					bind:currentModel={conversations[0].model}
+				/>
 				<div
 					class="group relative -mt-4 flex h-[26px] w-full items-center justify-center gap-2 rounded-lg bg-black px-5 text-sm text-white hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:border-gray-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-gray-700"
 				>
@@ -400,7 +392,7 @@
 							];
 						}}
 					>
-						{#each compatibleModels as model}
+						{#each models as model}
 							<option value={model.id}>{model.id}</option>
 						{/each}
 					</select>
