@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import CodeSnippets from '$lib/components/CodeSnippets.svelte';
-	import Message from '$lib/components/Message.svelte';
-	import PlaygroundOptions from '$lib/components/GenerationConfig.svelte';
+	import CodeSnippets from './InferencePlaygroundCodeSnippets.svelte';
+	import Message from './InferencePlaygroundMessage.svelte';
+	import PlaygroundOptions from './InferencePlaygroundGenerationConfig.svelte';
 
 	export let loading;
 	export let conversation;

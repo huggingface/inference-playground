@@ -124,7 +124,7 @@ output = ""
 
 messages = ${messagesStr}
 
-for token in inference_client.chat_completion(messages, stream=True, temperature=${conversation.config.temperature}, max_tokens=${conversation.config.maxTokens}):
+for token in client.chat_completion(messages, stream=True, temperature=${conversation.config.temperature}, max_tokens=${conversation.config.maxTokens}):
     new_content = token.choices[0].delta.content
     print(new_content, end="")
     output += new_content`
