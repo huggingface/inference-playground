@@ -93,13 +93,7 @@
 
 	function deleteMessage(idx: number) {
 		conversations = conversations.map((conversation) => {
-			const deletedMsg = deleteAndGetItem<ChatCompletionInputMessage>(conversation.messages, idx);
-			// delete messages in user/assistant pairs. otherwise, the chat template will be broken
-			if (deletedMsg) {
-				const { role } = deletedMsg;
-				const pairIdx = role === 'user' ? idx : idx - 1;
-				deleteAndGetItem<ChatCompletionInputMessage>(conversation.messages, pairIdx);
-			}
+			deleteAndGetItem<ChatCompletionInputMessage>(conversation.messages, idx);
 			return conversation;
 		});
 	}
