@@ -1,6 +1,6 @@
 import { type ChatCompletionInputMessage } from '@huggingface/tasks';
 import { HfInference } from '@huggingface/inference';
-import type { ModelEntryWithTokenizer } from '$lib/types';
+import type { Conversation, ModelEntryWithTokenizer } from '$lib/types';
 
 export function createHfInference(token: string): HfInference {
 	return new HfInference(token);
@@ -8,21 +8,25 @@ export function createHfInference(token: string): HfInference {
 
 export async function handleStreamingResponse(
 	hf: HfInference,
-	model: string,
-	messages: ChatCompletionInputMessage[],
-	temperature: number,
-	maxTokens: number,
+	conversation: Conversation,
 	onChunk: (content: string) => void,
-	abortController: AbortController
+	abortController: AbortController,
+	systemMessage?: ChatCompletionInputMessage
 ): Promise<void> {
+	const messages = [
+		...(isSystemPromptSupported(conversation.model) && systemMessage?.content?.length
+			? [systemMessage]
+			: []),
+		...conversation.messages
+	];
 	let out = '';
 	try {
 		for await (const chunk of hf.chatCompletionStream(
 			{
-				model: model,
-				messages: messages,
-				temperature: temperature,
-				max_tokens: maxTokens
+				model: conversation.model.id,
+				messages,
+				temperature: conversation.config.temperature,
+				max_tokens: conversation.config.maxTokens
 			},
 			{ signal: abortController.signal }
 		)) {
@@ -42,16 +46,21 @@ export async function handleStreamingResponse(
 
 export async function handleNonStreamingResponse(
 	hf: HfInference,
-	model: string,
-	messages: ChatCompletionInputMessage[],
-	temperature: number,
-	maxTokens: number
+	conversation: Conversation,
+	systemMessage?: ChatCompletionInputMessage
 ): Promise<ChatCompletionInputMessage> {
+	const messages = [
+		...(isSystemPromptSupported(conversation.model) && systemMessage?.content?.length
+			? [systemMessage]
+			: []),
+		...conversation.messages
+	];
+
 	const response = await hf.chatCompletion({
-		model: model,
-		messages: messages,
-		temperature: temperature,
-		max_tokens: maxTokens
+		model: conversation.model,
+		messages,
+		temperature: conversation.config.temperature,
+		max_tokens: conversation.config.maxTokens
 	});
 
 	if (response.choices && response.choices.length > 0) {

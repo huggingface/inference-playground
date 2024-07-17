@@ -129,10 +129,7 @@
 
 			await handleStreamingResponse(
 				hf,
-				conversation.model,
-				requestMessages,
-				conversation.config.temperature,
-				conversation.config.maxTokens,
+				conversation,
 				(content) => {
 					if (streamingMessage) {
 						streamingMessage.content = content;
@@ -140,17 +137,12 @@
 						conversations = conversations;
 					}
 				},
-				abortController
+				abortController,
+				systemMessage
 			);
 		} else {
 			waitForNonStreaming = true;
-			const newMessage = await handleNonStreamingResponse(
-				hf,
-				conversation.model,
-				requestMessages,
-				conversation.config.temperature,
-				conversation.config.maxTokens
-			);
+			const newMessage = await handleNonStreamingResponse(hf, conversation, systemMessage);
 			// check if the user did not abort the request
 			if (waitForNonStreaming) {
 				conversation.messages = [...conversation.messages, newMessage];
