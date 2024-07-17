@@ -56,7 +56,7 @@
 # or
 yarn add @huggingface/inference`
 		});
-		if (conversation.config.streaming) {
+		if (conversation.streaming) {
 			snippets.push({
 				label: 'Streaming API',
 				code: `import { HfInference } from "@huggingface/inference"
@@ -111,7 +111,7 @@ console.log(out.choices[0].message);`
 			language: 'bash',
 			code: `pip install huggingface_hub`
 		});
-		if (conversation.config.streaming) {
+		if (conversation.streaming) {
 			snippets.push({
 				label: 'Streaming API',
 				code: `from huggingface_hub import InferenceClient
@@ -154,7 +154,7 @@ print(output.choices[0].message)`
 		const messagesStr = getMessages();
 		const snippets: Snippet[] = [];
 
-		if (conversation.config.streaming) {
+		if (conversation.streaming) {
 			snippets.push({
 				label: 'Streaming API',
 				code: `curl 'https://api-inference.huggingface.co/models/${conversation.model.id}/v1/chat/completions' \

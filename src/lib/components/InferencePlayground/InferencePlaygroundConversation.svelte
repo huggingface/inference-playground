@@ -34,7 +34,7 @@
 <div
 	class="flex max-h-[calc(100dvh-5.8rem)] flex-col overflow-y-auto overflow-x-hidden @container"
 	class:pointer-events-none={loading}
-	class:animate-pulse={loading && !conversation.config.streaming}
+	class:animate-pulse={loading && !conversation.streaming}
 	bind:this={messageContainer}
 >
 	{#if sideBySide}
@@ -65,6 +65,7 @@
 				>
 				<PlaygroundOptions
 					bind:config={conversation.config}
+					bind:streaming={conversation.streaming}
 					classNames="absolute top-8 right-0 w-56 invisible group-focus:visible hover:visible border border-gray-200/80 bg-white z-10 px-4 py-6 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-800 rounded-xl"
 				/>
 			</button>

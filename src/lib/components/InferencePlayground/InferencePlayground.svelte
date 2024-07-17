@@ -12,6 +12,7 @@
 	import { onDestroy } from 'svelte';
 	import { type ChatCompletionInputMessage } from '@huggingface/tasks';
 	import type { ModelEntryWithTokenizer } from '$lib/types';
+	import { defaultGenerationConfig } from './generationConfigSettings';
 
 	export let models: ModelEntryWithTokenizer[];
 
@@ -21,8 +22,9 @@
 		{
 			id: String(Math.random()),
 			model: models[0],
-			config: { temperature: 0.5, maxTokens: 2048, streaming: true },
-			messages: startMessages
+			config: defaultGenerationConfig,
+			messages: startMessages,
+			streaming: true
 		}
 	];
 
@@ -121,7 +123,7 @@
 			...conversation.messages
 		];
 
-		if (conversation.config.streaming) {
+		if (conversation.streaming) {
 			const streamingMessage = { role: 'assistant', content: '' };
 			conversation.messages = [...conversation.messages, streamingMessage];
 			const abortController = new AbortController();
@@ -400,7 +402,10 @@
 					</select>
 				</div>
 
-				<PlaygroundOptions bind:config={conversations[0].config} />
+				<PlaygroundOptions
+					bind:config={conversations[0].config}
+					bind:streaming={conversations[0].streaming}
+				/>
 				<div class="mt-auto">
 					<div class="mb-3 flex items-center justify-between gap-2">
 						<label
