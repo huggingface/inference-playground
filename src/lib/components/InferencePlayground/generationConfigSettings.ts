@@ -46,16 +46,17 @@ export const GENERATION_CONFIG_SETTINGS: Record<string, GenerationKeySettings> =
 
 export type GenerationConfigKey = keyof typeof GENERATION_CONFIG_SETTINGS;
 
-export const GENERATION_CONFIG_KEYS: GenerationConfigKey[] = Object.keys(
-	GENERATION_CONFIG_SETTINGS
-);
+export const GENERATION_CONFIG_KEYS: GenerationConfigKey[] = ['temperature', 'max_tokens'];
+
+export const GENERATION_CONFIG_KEYS_ADVANCED: GenerationConfigKey[] = [
+	'top_p',
+	'top_k',
+	'repetition_penalty'
+];
 
 export type GenerationConfig = Record<GenerationConfigKey, number>;
 
-export const defaultGenerationConfig = Object.keys(GENERATION_CONFIG_SETTINGS).reduce(
-	(acc, key) => {
-		acc[key] = GENERATION_CONFIG_SETTINGS[key].default;
-		return acc;
-	},
-	{} as GenerationConfig
-);
+export const defaultGenerationConfig = GENERATION_CONFIG_KEYS.reduce((acc, key) => {
+	acc[key] = GENERATION_CONFIG_SETTINGS[key].default;
+	return acc;
+}, {} as GenerationConfig);
