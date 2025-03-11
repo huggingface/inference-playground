@@ -229,7 +229,7 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-	class="grid h-dvh divide-gray-200 overflow-hidden bg-gray-100/50 max-md:grid-rows-[120px_1fr] max-md:divide-y dark:divide-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:[color-scheme:dark] {compareActive
+	class="motion-safe:animate-fade-in grid h-dvh divide-gray-200 overflow-hidden bg-gray-100/50 max-md:grid-rows-[120px_1fr] max-md:divide-y dark:divide-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:[color-scheme:dark] {compareActive
 		? 'md:grid-cols-[clamp(220px,20%,350px)_minmax(0,1fr)]'
 		: 'md:grid-cols-[clamp(220px,20%,350px)_minmax(0,1fr)_clamp(270px,25%,300px)]'}"
 >
