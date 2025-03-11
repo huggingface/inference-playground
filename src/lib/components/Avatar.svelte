@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
-
 	export let orgName: string | undefined;
 	export let size: "sm" | "md" = "md";
 
@@ -9,7 +7,6 @@
 	async function getAvatarUrl(orgName?: string) {
 		if (!orgName) return;
 		const url = `https://huggingface.co/api/organizations/${orgName}/avatar`;
-		if (!browser) return;
 		const res = await fetch(url);
 		if (!res.ok) {
 			console.error(`Error getting avatar url for org: ${orgName}`, res.status, res.statusText);

@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
-
 	import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
 	import IconCross from "../Icons/IconCross.svelte";
@@ -35,7 +33,6 @@
 	});
 
 	onDestroy(() => {
-		if (!browser) return;
 		// remove inert attribute if this is the last modal
 		if (document.querySelectorAll('[role="dialog"]:not(#app *)').length === 1) {
 			document.getElementById("app")?.removeAttribute("inert");

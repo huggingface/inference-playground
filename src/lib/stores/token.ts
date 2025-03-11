@@ -1,4 +1,3 @@
-import { browser } from "$app/environment";
 import { writable } from "svelte/store";
 
 const key = "hf_token";
@@ -13,11 +12,9 @@ function createTokenStore() {
 		});
 	}
 
-	if (browser) {
-		const storedHfToken = localStorage.getItem(key);
-		if (storedHfToken !== null) {
-			setValue(JSON.parse(storedHfToken));
-		}
+	const storedHfToken = localStorage.getItem(key);
+	if (storedHfToken !== null) {
+		setValue(JSON.parse(storedHfToken));
 	}
 
 	return {

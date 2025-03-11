@@ -1,4 +1,3 @@
-import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import { defaultGenerationConfig } from "$lib/components/InferencePlayground/generationConfigSettings";
 import { models } from "$lib/stores/models";
@@ -44,7 +43,7 @@ function createSessionStore() {
 		const defaultModel = featured[0] ?? $models[0] ?? emptyModel;
 
 		// Parse URL query parameters
-		const searchParams = new URLSearchParams(browser ? window.location.search : undefined);
+		const searchParams = new URLSearchParams(window.location.search);
 		const searchProviders = searchParams.getAll("provider");
 		const searchModelIds = searchParams.getAll("modelId");
 		const modelsFromSearch = searchModelIds.map(id => $models.find(model => model.id === id)).filter(Boolean);
@@ -62,14 +61,12 @@ function createSessionStore() {
 			conversations: [defaultConversation],
 		};
 
-		if (browser) {
-			const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-			if (savedData) {
-				const parsed = safeParse(savedData);
-				const res = typia.validate<Session>(parsed);
-				if (res.success) savedSession = parsed;
-				else localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedSession));
-			}
+		const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+		if (savedData) {
+			const parsed = safeParse(savedData);
+			const res = typia.validate<Session>(parsed);
+			if (res.success) savedSession = parsed;
+			else localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedSession));
 		}
 
 		// Merge query params with savedSession.
@@ -100,12 +97,10 @@ function createSessionStore() {
 			const s = cb($s);
 
 			// Save to localStorage
-			if (browser) {
-				try {
-					localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(s));
-				} catch (e) {
-					console.error("Failed to save session to localStorage:", e);
-				}
+			try {
+				localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(s));
+			} catch (e) {
+				console.error("Failed to save session to localStorage:", e);
 			}
 
 			// Update URL query parameters
@@ -137,9 +132,7 @@ function createSessionStore() {
 
 	// Add a method to clear localStorage
 	const clearSavedSession = () => {
-		if (browser) {
-			localStorage.removeItem(LOCAL_STORAGE_KEY);
-		}
+		localStorage.removeItem(LOCAL_STORAGE_KEY);
 	};
 
 	return { ...store, set, update, clearSavedSession };

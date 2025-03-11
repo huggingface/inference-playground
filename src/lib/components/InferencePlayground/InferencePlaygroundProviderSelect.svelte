@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Conversation } from "$lib/types";
 
-	import { browser } from "$app/environment";
 	import { randomPick } from "$lib/utils/array";
 	import { cn } from "$lib/utils/cn";
 	import { createSelect, createSync } from "@melt-ui/svelte";
@@ -13,7 +12,6 @@
 	export { classes as class };
 
 	function reset(providers: typeof conversation.model.inferenceProviderMapping) {
-		if (!browser) return;
 		const validProvider = providers.find(p => p.provider === conversation.provider);
 		if (validProvider) return;
 		conversation.provider = randomPick(providers)?.provider;
