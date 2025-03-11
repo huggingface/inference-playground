@@ -85,7 +85,9 @@ function createSessionStore() {
 			const newQuery = query.toString();
 			// slice to remove the ? prefix
 			if (newQuery !== prevQuery.slice(1)) {
-				console.log(prevQuery, newQuery);
+				window.parent.postMessage({
+					queryString: query.toString(),
+				}, "https://huggingface.co")
 				goto(`?${query}`, { replaceState: true });
 			}
 
