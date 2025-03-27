@@ -201,7 +201,7 @@
 							<Tooltip>
 								{#snippet trigger(tooltip)}
 									<button
-										class="ml-auto grid size-4 place-items-center rounded-sm bg-gray-100 text-xs
+										class="mr-1 ml-auto grid size-4.5 place-items-center rounded-sm bg-gray-100 text-xs
 					hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
 										aria-label="Add custom model"
 										{...tooltip.trigger}

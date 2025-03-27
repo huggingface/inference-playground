@@ -56,8 +56,7 @@ class Models {
 	}
 
 	upsertCustom(model: CustomModel) {
-		console.log("hi");
-		const index = this.#custom.findIndex(m => m.id === model.id);
+		const index = this.#custom.findIndex(m => m._id === model._id);
 		if (index === -1) {
 			this.addCustom(model);
 		} else {
@@ -65,8 +64,8 @@ class Models {
 		}
 	}
 
-	removeCustom(model: CustomModel) {
-		this.#custom = this.#custom.filter(m => m !== model);
+	removeCustom(uuid: CustomModel["_id"]) {
+		this.#custom = this.#custom.filter(m => m._id !== uuid);
 	}
 }
 

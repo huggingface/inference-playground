@@ -54,6 +54,8 @@ export type Model = {
 
 export type CustomModel = {
 	id: string;
+	/** UUID */
+	_id: string;
 	provider: InferenceProvider;
 	endpointUrl?: string;
 	accessToken?: string;

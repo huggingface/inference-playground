@@ -23,6 +23,7 @@
 	import typia from "typia";
 
 	let dialog: HTMLDialogElement | undefined = $state();
+	const exists = $derived(!!models.custom.find(m => m._id === model?._id));
 
 	$effect(() => {
 		if (model !== undefined) {
@@ -36,8 +37,9 @@
 
 	const onsubmit: HTMLFormAttributes["onsubmit"] = e => {
 		e.preventDefault();
-		if (!typia.is<CustomModel>(model)) return;
-		models.upsertCustom(model);
+		const withUUID = { _id: crypto.randomUUID(), ...model };
+		if (!typia.is<CustomModel>(withUUID)) return;
+		models.upsertCustom(withUUID);
 		model = undefined;
 	};
 </script>
@@ -117,10 +119,22 @@
 				</div>
 
 				<!-- Modal footer -->
-				<div class="flex rounded-b border-t border-gray-200 p-4 md:p-5 dark:border-gray-800">
+				<div class="flex justify-end gap-2 rounded-b border-t border-gray-200 p-4 md:p-5 dark:border-gray-800">
+					{#if exists}
+						<button
+							type="button"
+							class="rounded-lg bg-red-100 px-5 py-2.5 text-sm font-medium text-red-700 hover:bg-red-200 focus:ring-4 focus:ring-red-300 focus:outline-none dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/40 dark:focus:ring-red-900"
+							onclick={() => {
+								if (model?._id) models.removeCustom(model._id);
+								close();
+							}}
+						>
+							Delete
+						</button>
+					{/if}
 					<button
 						type="submit"
-						class="ml-auto rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+						class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 					>
 						Submit
 					</button>
