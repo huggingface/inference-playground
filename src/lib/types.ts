@@ -1,4 +1,5 @@
 import type { GenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
+import type { InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 
 export type ConversationMessage = Pick<ChatCompletionInputMessage, "name" | "role" | "tool_calls"> & {
@@ -49,6 +50,13 @@ export type Model = {
 	tags: string[];
 	pipeline_tag: PipelineTag;
 	library_name?: LibraryName;
+};
+
+export type CustomModel = {
+	id: string;
+	provider: InferenceProvider;
+	endpointUrl?: string;
+	accessToken?: string;
 };
 
 export type Config = {

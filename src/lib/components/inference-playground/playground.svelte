@@ -28,6 +28,7 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
+	import Tooltip from "../tooltip.svelte";
 
 	const startMessageUser: ConversationMessage = { role: "user", content: "" };
 
@@ -286,9 +287,14 @@
 						{!viewSettings ? "Settings" : "Hide Settings"}
 					</button>
 				{/if}
-				<button type="button" onclick={reset} class="btn size-[39px]">
-					<IconDelete />
-				</button>
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<button type="button" onclick={reset} class="btn size-[39px]" {...tooltip.trigger}>
+							<IconDelete />
+						</button>
+					{/snippet}
+					Clear conversation
+				</Tooltip>
 			</div>
 			<div class="flex flex-1 shrink-0 items-center justify-center gap-x-8 text-center text-sm text-gray-500">
 				{#each generationStats as { latency, generatedTokensCount }}

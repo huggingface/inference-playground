@@ -7,10 +7,8 @@
 	import IconEdit from "~icons/carbon/edit";
 	import IconSave from "~icons/carbon/save";
 	import IconDelete from "~icons/carbon/trash-can";
-	import IconShare from "~icons/carbon/share";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
-	import { showShareModal } from "../share-modal.svelte";
 
 	interface Props {
 		class?: string;
