@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Conversation, ModelWithTokenizer } from "$lib/types.js";
+	import { isConversationWithHFModel, type Conversation, type ModelWithTokenizer } from "$lib/types.js";
 
 	import { models } from "$lib/state/models.svelte.js";
 	import IconCaret from "~icons/carbon/chevron-down";
@@ -61,4 +61,6 @@
 	<ModelSelectorModal {conversation} onModelSelect={changeModel} onClose={() => (showModelPickerModal = false)} />
 {/if}
 
-<ProviderSelect bind:conversation />
+{#if isConversationWithHFModel(conversation)}
+	<ProviderSelect bind:conversation />
+{/if}

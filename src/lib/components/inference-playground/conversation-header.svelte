@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Conversation, ModelWithTokenizer } from "$lib/types.js";
+	import { isConversationWithHFModel, type Conversation, type ModelWithTokenizer } from "$lib/types.js";
 
 	import { createEventDispatcher } from "svelte";
 
@@ -56,20 +56,24 @@
 		class="borderdark:border-white/5 group relative flex size-6 items-center justify-center rounded-sm bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600"
 	>
 		<IconCog />
-		<GenerationConfig
-			bind:conversation
-			classNames="absolute top-7 min-w-[250px] z-10 right-3 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hidden group-focus:flex hover:flex"
-		/>
+		{#if isConversationWithHFModel(conversation)}
+			<GenerationConfig
+				bind:conversation
+				classNames="absolute top-7 min-w-[250px] z-10 right-3 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hidden group-focus:flex hover:flex"
+			/>
+		{/if}
 	</button>
 </div>
 
-<div
-	class="{conversationIdx === 0
-		? 'mr-4 max-sm:ml-4'
-		: 'mx-4'}  mt-2 h-11 text-sm leading-none whitespace-nowrap max-sm:mt-4"
->
-	<ProviderSelect
-		bind:conversation
-		class="rounded-lg border border-gray-200/80 bg-white dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
-	/>
-</div>
+{#if isConversationWithHFModel(conversation)}
+	<div
+		class="{conversationIdx === 0
+			? 'mr-4 max-sm:ml-4'
+			: 'mx-4'}  mt-2 h-11 text-sm leading-none whitespace-nowrap max-sm:mt-4"
+	>
+		<ProviderSelect
+			bind:conversation
+			class="rounded-lg border border-gray-200/80 bg-white dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
+		/>
+	</div>
+{/if}

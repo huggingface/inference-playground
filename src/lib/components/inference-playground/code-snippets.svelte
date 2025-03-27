@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Conversation } from "$lib/types.js";
+	import type { ConversationWithHFModel } from "$lib/types.js";
 
 	import hljs from "highlight.js/lib/core";
 	import http from "highlight.js/lib/languages/http";
@@ -19,7 +19,7 @@
 	hljs.registerLanguage("http", http);
 
 	interface Props {
-		conversation: Conversation;
+		conversation: ConversationWithHFModel;
 	}
 
 	let { conversation }: Props = $props();
@@ -38,7 +38,7 @@
 
 	type GetSnippetArgs = {
 		tokenStr: string;
-		conversation: Conversation;
+		conversation: ConversationWithHFModel;
 		lang: InferenceSnippetLanguage;
 	};
 	function getSnippet({ tokenStr, conversation, lang }: GetSnippetArgs) {

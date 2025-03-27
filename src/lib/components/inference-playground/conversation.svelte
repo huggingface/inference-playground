@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Conversation } from "$lib/types.js";
+	import { isConversationWithHFModel, type Conversation } from "$lib/types.js";
 
 	import { ScrollState } from "$lib/spells/scroll-state.svelte";
 	import { watch } from "runed";
@@ -86,7 +86,7 @@
 				Add message
 			</div>
 		</button>
-	{:else}
+	{:else if isConversationWithHFModel(conversation)}
 		<CodeSnippets {conversation} on:closeCode />
 	{/if}
 </div>

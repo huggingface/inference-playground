@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { Conversation } from "$lib/types.js";
+	import type { ConversationWithHFModel } from "$lib/types.js";
 
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import { customMaxTokens } from "./utils.js";
 
 	interface Props {
-		conversation: Conversation;
+		conversation: ConversationWithHFModel;
 		classNames?: string;
 	}
 

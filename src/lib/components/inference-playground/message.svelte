@@ -26,7 +26,9 @@
 	});
 
 	const canUploadImgs = $derived(
-		message.role === "user" && conversation.model.pipeline_tag === PipelineTag.ImageTextToText
+		message.role === "user" &&
+			"pipeline_tag" in conversation.model &&
+			conversation.model.pipeline_tag === PipelineTag.ImageTextToText
 	);
 	const fileUpload = new FileUpload({
 		accept: "image/*",

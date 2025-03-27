@@ -24,7 +24,7 @@ class Models {
 		}
 	});
 
-	all = $derived(page.data.models.concat(this.custom));
+	all = $derived([...this.remote, ...this.custom]);
 
 	constructor() {
 		$effect.root(() => {

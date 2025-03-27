@@ -1,5 +1,10 @@
 <script lang="ts">
-	import type { ConversationMessage, ModelWithTokenizer, Project } from "$lib/types.js";
+	import {
+		isConversationWithHFModel,
+		type ConversationMessage,
+		type ModelWithTokenizer,
+		type Project,
+	} from "$lib/types.js";
 
 	import { handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
 
@@ -8,7 +13,6 @@
 	import { session } from "$lib/state/session.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { isMac } from "$lib/utils/platform.js";
-	import { HfInference } from "@huggingface/inference";
 	import typia from "typia";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconCode from "~icons/carbon/code";
@@ -21,6 +25,7 @@
 	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
 	import { addToast } from "../toaster.svelte.js";
+	import Tooltip from "../tooltip.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
 	import GenerationConfig from "./generation-config.svelte";
@@ -28,7 +33,6 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import Tooltip from "../tooltip.svelte";
 
 	const startMessageUser: ConversationMessage = { role: "user", content: "" };
 
@@ -70,14 +74,12 @@
 		if (!conversation) return;
 
 		const startTime = performance.now();
-		const hf = new HfInference(token.value);
 
 		if (conversation.streaming) {
 			let addedMessage = false;
 			let streamingMessage = $state({ role: "assistant", content: "" });
 
 			await handleStreamingResponse(
-				hf,
 				conversation,
 				content => {
 					if (!streamingMessage) return;
@@ -93,10 +95,7 @@
 				abortManager.createController()
 			);
 		} else {
-			const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(
-				hf,
-				conversation
-			);
+			const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conversation);
 			conversation.messages = [...conversation.messages, newMessage];
 			const c = generationStats[conversationIdx];
 			if (c) c.generatedTokensCount += newTokensCount;
@@ -302,10 +301,12 @@
 				{/each}
 			</div>
 			<div class="flex flex-1 justify-end gap-x-2">
-				<button type="button" onclick={() => (viewCode = !viewCode)} class="btn">
-					<IconCode />
-					{!viewCode ? "View Code" : "Hide Code"}</button
-				>
+				{#if session.project.conversations.some(isConversationWithHFModel)}
+					<button type="button" onclick={() => (viewCode = !viewCode)} class="btn">
+						<IconCode />
+						{!viewCode ? "View Code" : "Hide Code"}
+					</button>
+				{/if}
 				<button
 					onclick={() => {
 						viewCode = false;
@@ -371,7 +372,9 @@
 					</div>
 				</div>
 
-				<GenerationConfig bind:conversation={session.project.conversations[0]!} />
+				{#if isConversationWithHFModel(session.project.conversations[0]!)}
+					<GenerationConfig bind:conversation={session.project.conversations[0]!} />
+				{/if}
 
 				<div class="mt-auto flex items-center justify-end gap-4">
 					<button

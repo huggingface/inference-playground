@@ -1,7 +1,14 @@
-import type { Conversation, ConversationMessage, ModelWithTokenizer } from "$lib/types.js";
+import {
+	isCustomModel,
+	type Conversation,
+	type ConversationMessage,
+	type CustomModel,
+	type ModelWithTokenizer,
+} from "$lib/types.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 
+import { token } from "$lib/state/token.svelte";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -25,27 +32,50 @@ function parseMessage(message: ConversationMessage): ChatCompletionInputMessage 
 	};
 }
 
-export async function handleStreamingResponse(
-	hf: HfInference,
-	conversation: Conversation,
-	onChunk: (content: string) => void,
-	abortController: AbortController
-): Promise<void> {
+type GetCompletionMetadataReturn = {
+	args: Parameters<HfInference["chatCompletion"]>[0];
+	hf: HfInference;
+};
+
+function getCompletionMetadata(conversation: Conversation): GetCompletionMetadataReturn {
 	const { model, systemMessage } = conversation;
 	const messages = [
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
 		...conversation.messages,
 	];
+
+	if (isCustomModel(model)) {
+		return {
+			args: {
+				provider: model.endpointUrl ? "hf-inference" : model.provider,
+				model: model.id,
+				messages: messages.map(parseMessage),
+				endpointUrl: model.endpointUrl,
+				...conversation.config,
+			},
+			hf: new HfInference(model.accessToken ?? token.value),
+		};
+	} else {
+		return {
+			args: {
+				model: model.id,
+				messages: messages.map(parseMessage),
+				provider: conversation.provider,
+				...conversation.config,
+			},
+			hf: new HfInference(token.value),
+		};
+	}
+}
+
+export async function handleStreamingResponse(
+	conversation: Conversation,
+	onChunk: (content: string) => void,
+	abortController: AbortController
+): Promise<void> {
+	const { hf, args } = getCompletionMetadata(conversation);
 	let out = "";
-	for await (const chunk of hf.chatCompletionStream(
-		{
-			model: model.id,
-			messages: messages.map(parseMessage),
-			provider: conversation.provider,
-			...conversation.config,
-		},
-		{ signal: abortController.signal }
-	)) {
+	for await (const chunk of hf.chatCompletionStream(args, { signal: abortController.signal })) {
 		if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0]?.delta?.content) {
 			out += chunk.choices[0].delta.content;
 			onChunk(out);
@@ -54,22 +84,11 @@ export async function handleStreamingResponse(
 }
 
 export async function handleNonStreamingResponse(
-	hf: HfInference,
 	conversation: Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const { model, systemMessage } = conversation;
-	const messages = [
-		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
-		...conversation.messages,
-	];
+	const { hf, args } = getCompletionMetadata(conversation);
 
-	const response = await hf.chatCompletion({
-		model: model.id,
-		messages: messages.map(parseMessage),
-		provider: conversation.provider,
-		...conversation.config,
-	});
-
+	const response = await hf.chatCompletion(args);
 	if (response.choices && response.choices.length > 0) {
 		const { message } = response.choices[0]!;
 		const { completion_tokens } = response.usage;
@@ -78,8 +97,9 @@ export async function handleNonStreamingResponse(
 	throw new Error("No response from the model");
 }
 
-export function isSystemPromptSupported(model: ModelWithTokenizer) {
-	return model?.tokenizerConfig?.chat_template?.includes("system");
+export function isSystemPromptSupported(model: ModelWithTokenizer | CustomModel) {
+	if ("tokenizerConfig" in model) return model?.tokenizerConfig?.chat_template?.includes("system");
+	return false;
 }
 
 export const defaultSystemMessage: { [key: string]: string } = {
