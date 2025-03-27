@@ -1,8 +1,8 @@
 <script lang="ts" module>
-	let model = $state<CustomModel | undefined>(undefined);
+	let model = $state<Partial<CustomModel> | undefined>(undefined);
 
-	export function openLocalModelConfig(m?: CustomModel) {
-		model = $state.snapshot(m);
+	export function openCustomModelConfig(m?: typeof model) {
+		model = $state.snapshot(m ?? {});
 	}
 
 	function close() {
@@ -20,6 +20,7 @@
 	import CustomProviderSelect from "./custom-provider-select.svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import { models } from "$lib/state/models.svelte";
+	import typia from "typia";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -35,14 +36,14 @@
 
 	const onsubmit: HTMLFormAttributes["onsubmit"] = e => {
 		e.preventDefault();
-		if (!model) return;
+		if (!typia.is<CustomModel>(model)) return;
 		models.upsertCustom(model);
 		model = undefined;
 	};
 </script>
 
 <dialog class="backdrop:bg-transparent" bind:this={dialog} onclose={() => close()}>
-	{#if model}
+	{#if model !== undefined}
 		<!-- Backdrop -->
 		<div
 			class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 backdrop-blur-sm"
@@ -97,7 +98,7 @@
 						</p>
 						<input
 							bind:value={model.endpointUrl}
-							placeholder="e.g. https://some-provider.ai/api/v1"
+							placeholder="e.g. https://some-provider.ai/api"
 							type="text"
 							class="input block w-full"
 						/>

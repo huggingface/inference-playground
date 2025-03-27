@@ -10,6 +10,7 @@
 	import { addToast } from "./toaster.svelte.js";
 	import { models } from "$lib/state/models.svelte";
 	import { last } from "$lib/utils/array.js";
+	import { openCustomModelConfig } from "./inference-playground/custom-model-config.svelte";
 
 	let innerWidth = $state<number>();
 	let innerHeight = $state<number>();
@@ -93,6 +94,16 @@
 				];
 
 				addToast(toastData[Math.floor(Math.random() * toastData.length)]!);
+			},
+		},
+		{
+			label: "Pre-filled custom model config",
+			cb: () => {
+				openCustomModelConfig({
+					id: "google/gemini-2.0-flash-001",
+					endpointUrl: "https://openrouter.ai/api",
+					provider: "openai",
+				});
 			},
 		},
 	].toSorted((a, b) => compareStr(a.label, b.label));

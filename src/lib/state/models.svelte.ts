@@ -7,9 +7,9 @@ import typia from "typia";
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
 class Models {
-	all = $derived(page.data.models as ModelWithTokenizer[]);
-	trending = $derived(this.all.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
-	nonTrending = $derived(this.all.filter(m => !this.trending.includes(m)));
+	remote = $derived(page.data.models as ModelWithTokenizer[]);
+	trending = $derived(this.remote.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
+	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)));
 
 	#custom = $state<CustomModel[]>([]);
 	#initCustom = createInit(() => {
@@ -23,6 +23,8 @@ class Models {
 			localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
 		}
 	});
+
+	all = $derived(page.data.models.concat(this.custom));
 
 	constructor() {
 		$effect.root(() => {
@@ -54,6 +56,7 @@ class Models {
 	}
 
 	upsertCustom(model: CustomModel) {
+		console.log("hi");
 		const index = this.#custom.findIndex(m => m.id === model.id);
 		if (index === -1) {
 			this.addCustom(model);

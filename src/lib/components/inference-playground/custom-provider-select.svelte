@@ -73,6 +73,7 @@
 		select.open && "!custom-outline",
 		classes
 	)}
+	type="button"
 >
 	<div class="flex items-center gap-1 text-sm">
 		<IconProvider {provider} />

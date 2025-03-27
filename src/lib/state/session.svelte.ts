@@ -37,7 +37,7 @@ const emptyModel: ModelWithTokenizer = {
 };
 
 function getDefaults() {
-	const defaultModel = models.trending[0] ?? models.all[0] ?? emptyModel;
+	const defaultModel = models.trending[0] ?? models.remote[0] ?? emptyModel;
 
 	const defaultConversation: Conversation = {
 		model: defaultModel,
@@ -90,7 +90,7 @@ class SessionState {
 			const searchParams = new URLSearchParams(window.location.search);
 			const searchProviders = searchParams.getAll("provider");
 			const searchModelIds = searchParams.getAll("modelId");
-			const modelsFromSearch = searchModelIds.map(id => models.all.find(model => model.id === id)).filter(Boolean);
+			const modelsFromSearch = searchModelIds.map(id => models.remote.find(model => model.id === id)).filter(Boolean);
 			if (modelsFromSearch.length > 0) savedSession.activeProjectId = "default";
 
 			let min = Math.min(dp.conversations.length, modelsFromSearch.length, searchProviders.length);

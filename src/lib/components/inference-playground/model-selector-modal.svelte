@@ -1,15 +1,19 @@
 <script lang="ts">
-	import type { Conversation, ModelWithTokenizer } from "$lib/types.js";
-
-	import { tick } from "svelte";
-
 	import { autofocus } from "$lib/actions/autofocus.js";
 	import { models } from "$lib/state/models.svelte.js";
+	import type { Conversation, CustomModel, ModelWithTokenizer } from "$lib/types.js";
 	import fuzzysearch from "$lib/utils/search.js";
 	import { watch } from "runed";
+	import { tick } from "svelte";
+	import typia from "typia";
+	import IconAdd from "~icons/carbon/add";
+	import IconCube from "~icons/carbon/cube";
 	import IconSearch from "~icons/carbon/search";
 	import IconStar from "~icons/carbon/star";
 	import IconEye from "~icons/carbon/view";
+	import IconEdit from "~icons/carbon/edit";
+	import Tooltip from "../tooltip.svelte";
+	import { openCustomModelConfig } from "./custom-model-config.svelte";
 
 	interface Props {
 		onModelSelect?: (model: string) => void;
@@ -27,8 +31,10 @@
 
 	const trending = $derived(fuzzysearch({ needle: query, haystack: models.trending, property: "id" }));
 	const other = $derived(fuzzysearch({ needle: query, haystack: models.nonTrending, property: "id" }));
-	const queried = $derived(trending.concat(other));
-	function getModelIdx(model: ModelWithTokenizer) {
+	const custom = $derived(fuzzysearch({ needle: query, haystack: models.custom, property: "id" }));
+	const queried = $derived([...trending, ...other, ...custom]);
+
+	function getModelIdx(model: ModelWithTokenizer | CustomModel) {
 		return queried.findIndex(m => m.id === model.id);
 	}
 	const highlighted = $derived(queried[highlightIdx]);
@@ -50,7 +56,7 @@
 		}
 	);
 
-	function selectModel(model: ModelWithTokenizer) {
+	function selectModel(model: ModelWithTokenizer | CustomModel) {
 		onModelSelect?.(model.id);
 		onClose?.();
 	}
@@ -94,6 +100,8 @@
 			onClose?.();
 		}
 	}
+
+	const isCustom = typia.createIs<CustomModel>();
 </script>
 
 <svelte:window onkeydown={handleKeydown} onmousemove={() => (ignoreCursorHighlight = false)} />
@@ -120,9 +128,26 @@
 					placeholder="Search models ..."
 					bind:value={query}
 				/>
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<button
+							class="ml-auto grid size-4 place-items-center rounded-sm bg-gray-100 text-xs
+					hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
+							aria-label="Add custom model"
+							{...tooltip.trigger}
+							onclick={() => {
+								onClose?.();
+								openCustomModelConfig();
+							}}
+						>
+							<IconAdd />
+						</button>
+					{/snippet}
+					<span class="text-sm">Add custom model</span>
+				</Tooltip>
 			</div>
 			<div class="max-h-[300px] overflow-x-hidden overflow-y-auto">
-				{#snippet modelEntry(model: ModelWithTokenizer, trending?: boolean)}
+				{#snippet modelEntry(model: ModelWithTokenizer | CustomModel, trending?: boolean)}
 					{@const idx = getModelIdx(model)}
 					{@const [nameSpace, modelName] = model.id.split("/")}
 					<button
@@ -146,12 +171,51 @@
 								class="mx-1 text-gray-300 dark:text-gray-700">/</span
 							><span class="text-black dark:text-white">{modelName}</span></span
 						>
-						{#if model.pipeline_tag === "image-text-to-text"}
-							<div
-								class="ml-2 grid size-5 place-items-center rounded bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300"
-							>
-								<IconEye class="size-3.5" />
-							</div>
+
+						{#if "pipeline_tag" in model && model.pipeline_tag === "image-text-to-text"}
+							<Tooltip openDelay={100}>
+								{#snippet trigger(tooltip)}
+									<div
+										class="ml-2 grid size-5 place-items-center rounded bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300"
+										{...tooltip.trigger}
+									>
+										<IconEye class="size-3.5" />
+									</div>
+								{/snippet}
+								Image text-to-text
+							</Tooltip>
+						{/if}
+
+						{#if isCustom(model)}
+							<Tooltip openDelay={100}>
+								{#snippet trigger(tooltip)}
+									<div
+										class="ml-2 grid size-5 place-items-center rounded bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300"
+										{...tooltip.trigger}
+									>
+										<IconCube class="size-3.5" />
+									</div>
+								{/snippet}
+								Custom Model
+							</Tooltip>
+							<Tooltip>
+								{#snippet trigger(tooltip)}
+									<button
+										class="ml-auto grid size-4 place-items-center rounded-sm bg-gray-100 text-xs
+					hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
+										aria-label="Add custom model"
+										{...tooltip.trigger}
+										onclick={e => {
+											e.stopPropagation();
+											onClose?.();
+											openCustomModelConfig(model);
+										}}
+									>
+										<IconEdit class="size-3" />
+									</button>
+								{/snippet}
+								<span class="text-sm">Edit</span>
+							</Tooltip>
 						{/if}
 					</button>
 				{/snippet}
@@ -164,6 +228,12 @@
 				{#if other.length > 0}
 					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Other models</div>
 					{#each other as model}
+						{@render modelEntry(model, false)}
+					{/each}
+				{/if}
+				{#if custom.length > 0}
+					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Custom models</div>
+					{#each custom as model}
 						{@render modelEntry(model, false)}
 					{/each}
 				{/if}

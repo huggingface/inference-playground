@@ -81,9 +81,9 @@
 					><br /> Your token is kept safe by only being used from your browser.
 				</p>
 				<div>
-					<label for="hf-token" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-						>Hugging Face Token</label
-					>
+					<label for="hf-token" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+						Hugging Face Token
+					</label>
 					<input
 						use:autofocus
 						required
