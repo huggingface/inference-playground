@@ -100,7 +100,7 @@
 						</p>
 						<input
 							bind:value={model.endpointUrl}
-							placeholder="e.g. https://some-provider.ai/api"
+							placeholder="e.g. https://some-provider.ai/api/v1"
 							type="text"
 							class="input block w-full"
 						/>
@@ -111,7 +111,7 @@
 						</p>
 						<input
 							bind:value={model.accessToken}
-							placeholder="hf-XXXXXXXXXXXXXXXXXXXX"
+							placeholder="XXXXXXXXXXXXXXXXXXXX"
 							type="text"
 							class="input block w-full"
 						/>

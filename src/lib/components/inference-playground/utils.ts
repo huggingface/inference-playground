@@ -7,6 +7,7 @@ import {
 } from "$lib/types.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
+import OpenAI from "openai";
 
 import { token } from "$lib/state/token.svelte";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
@@ -32,12 +33,12 @@ function parseMessage(message: ConversationMessage): ChatCompletionInputMessage 
 	};
 }
 
-type GetCompletionMetadataReturn = {
+type GetHFCompletionMetadataReturn = {
 	args: Parameters<HfInference["chatCompletion"]>[0];
 	hf: HfInference;
 };
 
-function getCompletionMetadata(conversation: Conversation): GetCompletionMetadataReturn {
+function getHFCompletionMetadata(conversation: Conversation): GetHFCompletionMetadataReturn {
 	const { model, systemMessage } = conversation;
 	const messages = [
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
@@ -67,13 +68,12 @@ function getCompletionMetadata(conversation: Conversation): GetCompletionMetadat
 		};
 	}
 }
-
 export async function handleStreamingResponse(
 	conversation: Conversation,
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
-	const { hf, args } = getCompletionMetadata(conversation);
+	const { hf, args } = getHFCompletionMetadata(conversation);
 	let out = "";
 	for await (const chunk of hf.chatCompletionStream(args, { signal: abortController.signal })) {
 		if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0]?.delta?.content) {
@@ -86,7 +86,7 @@ export async function handleStreamingResponse(
 export async function handleNonStreamingResponse(
 	conversation: Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const { hf, args } = getCompletionMetadata(conversation);
+	const { hf, args } = getHFCompletionMetadata(conversation);
 
 	const response = await hf.chatCompletion(args);
 	if (response.choices && response.choices.length > 0) {

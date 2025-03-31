@@ -6,9 +6,10 @@
 
 	interface Props {
 		children: Snippet<[{ addToast: typeof toaster.addToast; trigger: typeof trigger }]>;
+		toast?: Snippet<[{ toast: (typeof toaster.toasts)[0]; float: typeof float }]>;
 		closeDelay?: number;
 	}
-	const { children, closeDelay = 2000 }: Props = $props();
+	const { children, closeDelay = 2000, toast: toastSnippet }: Props = $props();
 
 	const id = $props.id();
 
@@ -56,16 +57,20 @@
 {@render children({ trigger, addToast: toaster.addToast })}
 
 {#each toaster.toasts as toast (toast.id)}
-	<div
-		data-local-toast
-		data-variant={toast.data.variant}
-		class="rounded-full px-2 py-1 text-xs {classMap[toast.data.variant]}"
-		in:fly={{ y: 10 }}
-		out:fly={{ y: -4 }}
-		use:float
-	>
-		{toast.data.content}
-	</div>
+	{#if toastSnippet}
+		{@render toastSnippet({ toast, float })}
+	{:else}
+		<div
+			data-local-toast
+			data-variant={toast.data.variant}
+			class="rounded-full px-2 py-1 text-xs {classMap[toast.data.variant]}"
+			in:fly={{ y: 10 }}
+			out:fly={{ y: -4 }}
+			use:float
+		>
+			{toast.data.content}
+		</div>
+	{/if}
 {/each}
 
 <style>
