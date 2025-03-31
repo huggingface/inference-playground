@@ -13,7 +13,7 @@
 
 	const id = $props.id();
 
-	const trigger = {
+	export const trigger = {
 		id,
 	} as const;
 
@@ -22,10 +22,12 @@
 		variant: "info" | "danger";
 	};
 
-	const toaster = new Toaster<ToastData>({
+	export const toaster = new Toaster<ToastData>({
 		hover: null,
 		closeDelay: () => closeDelay,
 	});
+
+	export const addToast = toaster.addToast;
 
 	function float(node: HTMLElement) {
 		const triggerEl = document.getElementById(trigger.id);
@@ -56,21 +58,21 @@
 
 {@render children({ trigger, addToast: toaster.addToast })}
 
-{#each toaster.toasts as toast (toast.id)}
-	{#if toastSnippet}
-		{@render toastSnippet({ toast, float })}
-	{:else}
-		<div
-			data-local-toast
-			data-variant={toast.data.variant}
-			class="rounded-full px-2 py-1 text-xs {classMap[toast.data.variant]}"
-			in:fly={{ y: 10 }}
-			out:fly={{ y: -4 }}
-			use:float
-		>
+{#each toaster.toasts.slice(toaster.toasts.length - 1) as toast (toast.id)}
+	<div
+		data-local-toast
+		data-variant={toast.data.variant}
+		class={[!toastSnippet && `${classMap[toast.data.variant]} rounded-full px-2 py-1 text-xs`]}
+		in:fly={{ y: 10 }}
+		out:fly={{ y: -4 }}
+		use:float
+	>
+		{#if toastSnippet}
+			{@render toastSnippet({ toast, float })}
+		{:else}
 			{toast.data.content}
-		</div>
-	{/if}
+		{/if}
+	</div>
 {/each}
 
 <style>

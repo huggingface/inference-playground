@@ -14,13 +14,15 @@
 	import { autofocus } from "$lib/actions/autofocus.js";
 
 	import { clickOutside } from "$lib/actions/click-outside.js";
-	import type { CustomModel } from "$lib/types.js";
-	import { fade, scale } from "svelte/transition";
-	import IconCross from "~icons/carbon/close";
-	import CustomProviderSelect from "./custom-provider-select.svelte";
-	import type { HTMLFormAttributes } from "svelte/elements";
 	import { models } from "$lib/state/models.svelte";
+	import { isCustomModel, type Conversation, type CustomModel } from "$lib/types.js";
+	import type { HTMLFormAttributes } from "svelte/elements";
+	import { fade, scale } from "svelte/transition";
 	import typia from "typia";
+	import IconCross from "~icons/carbon/close";
+	import LocalToasts from "../local-toasts.svelte";
+	import CustomProviderSelect from "./custom-provider-select.svelte";
+	import { handleNonStreamingResponse } from "./utils.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));
@@ -42,6 +44,8 @@
 		models.upsertCustom(withUUID);
 		model = undefined;
 	};
+
+	let testing = $state(false);
 </script>
 
 <dialog class="backdrop:bg-transparent" bind:this={dialog} onclose={() => close()}>
@@ -119,7 +123,7 @@
 				</div>
 
 				<!-- Modal footer -->
-				<div class="flex justify-end gap-2 rounded-b border-t border-gray-200 p-4 md:p-5 dark:border-gray-800">
+				<div class="flex gap-2 rounded-b border-t border-gray-200 p-4 md:p-5 dark:border-gray-800">
 					{#if exists}
 						<button
 							type="button"
@@ -128,16 +132,61 @@
 								if (model?._id) models.removeCustom(model._id);
 								close();
 							}}
+							disabled={testing}
 						>
 							Delete
 						</button>
 					{/if}
-					<button
-						type="submit"
-						class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-					>
-						Submit
-					</button>
+					<div class="ml-auto flex items-center gap-2">
+						<LocalToasts>
+							{#snippet children({ trigger, addToast })}
+								<button
+									type="button"
+									class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+									disabled={testing}
+									{...trigger}
+									onclick={async () => {
+										testing = true;
+										if (!isCustomModel(model)) {
+											addToast({ data: { content: "Please fill in all the fields", variant: "danger" } });
+											testing = false;
+											return;
+										}
+										const conv: Conversation = {
+											model,
+											messages: [
+												{
+													role: "user",
+													content: "test",
+												},
+											],
+											config: {},
+											systemMessage: { role: "system", content: "" },
+											streaming: false,
+										};
+										try {
+											await handleNonStreamingResponse(conv);
+											addToast({ data: { content: "Success!", variant: "info" } });
+										} catch (e) {
+											addToast({ data: { content: `${e}`, variant: "danger" }, closeDelay: 5000 });
+										} finally {
+											testing = false;
+										}
+									}}
+								>
+									{testing ? "..." : "Test"}
+								</button>
+							{/snippet}
+						</LocalToasts>
+
+						<button
+							type="submit"
+							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+							disabled={testing}
+						>
+							Submit
+						</button>
+					</div>
 				</div>
 			</form>
 		</div>

@@ -7,7 +7,6 @@ import {
 } from "$lib/types.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
-import OpenAI from "openai";
 
 import { token } from "$lib/state/token.svelte";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
