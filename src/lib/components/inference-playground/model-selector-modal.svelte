@@ -137,7 +137,7 @@
 							{...tooltip.trigger}
 							onclick={() => {
 								onClose?.();
-								openCustomModelConfig();
+								openCustomModelConfig({ onSubmit: m => (conversation.model = m) });
 							}}
 						>
 							<IconAdd />
@@ -208,7 +208,7 @@
 										onclick={e => {
 											e.stopPropagation();
 											onClose?.();
-											openCustomModelConfig(model);
+											openCustomModelConfig({ model });
 										}}
 									>
 										<IconEdit class="size-3" />

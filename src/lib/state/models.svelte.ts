@@ -3,6 +3,8 @@ import { createInit } from "$lib/spells/create-init.svelte";
 import type { CustomModel, ModelWithTokenizer } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
+import { session } from "./session.svelte";
+import { randomPick } from "$lib/utils/array.js";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
@@ -66,6 +68,10 @@ class Models {
 
 	removeCustom(uuid: CustomModel["_id"]) {
 		this.#custom = this.#custom.filter(m => m._id !== uuid);
+		session.project.conversations.forEach((c, i) => {
+			if (c.model._id !== uuid) return;
+			session.project.conversations[i]!.model = randomPick(models.trending)!;
+		});
 	}
 }
 

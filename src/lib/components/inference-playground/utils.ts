@@ -47,7 +47,7 @@ function getHFCompletionMetadata(conversation: Conversation): GetHFCompletionMet
 	if (isCustomModel(model)) {
 		return {
 			args: {
-				provider: model.endpointUrl ? "hf-inference" : model.provider,
+				provider: model.endpointUrl ? "hf-inference" : "openai",
 				model: model.id,
 				messages: messages.map(parseMessage),
 				endpointUrl: model.endpointUrl,
