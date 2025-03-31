@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	let model = $state<Partial<CustomModel> | undefined>({});
+	let model = $state<Partial<CustomModel> | undefined>(undefined);
 	let onSubmit = $state<OpenCustomModelConfigArgs["onSubmit"]>();
 
 	type OpenCustomModelConfigArgs = {
@@ -10,7 +10,7 @@
 
 	export function openCustomModelConfig(args?: OpenCustomModelConfigArgs) {
 		model = $state.snapshot(args?.model ?? {});
-		onSubmit = args?.onSubmit;
+		// onSubmit = args?.onSubmit;
 	}
 
 	function close() {
@@ -57,7 +57,7 @@
 					...model,
 					id: model?.id ?? "",
 					_id: "",
-					provider: "hf-inference",
+					endpointUrl: model?.endpointUrl ?? "",
 				},
 				messages: [
 					{

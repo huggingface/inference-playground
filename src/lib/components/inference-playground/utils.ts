@@ -7,9 +7,10 @@ import {
 } from "$lib/types.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
-
 import { token } from "$lib/state/token.svelte";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
+import OpenAI from "openai";
+
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
 
@@ -32,49 +33,107 @@ function parseMessage(message: ConversationMessage): ChatCompletionInputMessage 
 	};
 }
 
-type GetHFCompletionMetadataReturn = {
+type HFCompletionMetadata = {
+	type: "huggingface";
+	client: HfInference;
 	args: Parameters<HfInference["chatCompletion"]>[0];
-	hf: HfInference;
 };
 
-function getHFCompletionMetadata(conversation: Conversation): GetHFCompletionMetadataReturn {
+type OpenAICompletionMetadata = {
+	type: "openai";
+	client: OpenAI;
+	args: OpenAI.ChatCompletionCreateParams;
+};
+
+type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
+
+function parseOpenAIMessages(
+	messages: ConversationMessage[],
+	systemMessage?: ConversationMessage
+): OpenAI.ChatCompletionMessageParam[] {
+	const parsedMessages: OpenAI.ChatCompletionMessageParam[] = [];
+
+	if (systemMessage?.content) {
+		parsedMessages.push({
+			role: "system",
+			content: systemMessage.content,
+		});
+	}
+
+	return [
+		...parsedMessages,
+		...messages.map(msg => ({
+			role: msg.role === "assistant" ? ("assistant" as const) : ("user" as const),
+			content: msg.content || "",
+		})),
+	];
+}
+
+function getCompletionMetadata(conversation: Conversation): CompletionMetadata {
 	const { model, systemMessage } = conversation;
+
+	// Handle OpenAI-compatible models
+	if (isCustomModel(model)) {
+		const openai = new OpenAI({
+			apiKey: model.accessToken,
+			baseURL: model.endpointUrl,
+			dangerouslyAllowBrowser: true,
+		});
+
+		return {
+			type: "openai",
+			client: openai,
+			args: {
+				messages: parseOpenAIMessages(conversation.messages, systemMessage),
+				model: model.id,
+			},
+		};
+	}
+
+	// Handle HuggingFace models
 	const messages = [
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
 		...conversation.messages,
 	];
 
-	if (isCustomModel(model)) {
-		return {
-			args: {
-				provider: model.endpointUrl ? "hf-inference" : "openai",
-				model: model.id,
-				messages: messages.map(parseMessage),
-				endpointUrl: model.endpointUrl,
-				...conversation.config,
-			},
-			hf: new HfInference(model.accessToken ?? token.value),
-		};
-	} else {
-		return {
-			args: {
-				model: model.id,
-				messages: messages.map(parseMessage),
-				provider: conversation.provider,
-				...conversation.config,
-			},
-			hf: new HfInference(token.value),
-		};
-	}
+	return {
+		type: "huggingface",
+		client: new HfInference(token.value),
+		args: {
+			model: model.id,
+			messages: messages.map(parseMessage),
+			provider: conversation.provider,
+			...conversation.config,
+		},
+	};
 }
+
 export async function handleStreamingResponse(
 	conversation: Conversation,
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
-	const { hf, args } = getHFCompletionMetadata(conversation);
+	const metadata = getCompletionMetadata(conversation);
+
+	if (metadata.type === "openai") {
+		const stream = await metadata.client.chat.completions.create({
+			...metadata.args,
+			stream: true,
+		} as OpenAI.ChatCompletionCreateParamsStreaming);
+
+		let out = "";
+		for await (const chunk of stream) {
+			if (chunk.choices[0]?.delta?.content) {
+				out += chunk.choices[0].delta.content;
+				onChunk(out);
+			}
+		}
+		return;
+	}
+
+	// HuggingFace streaming
 	let out = "";
-	for await (const chunk of hf.chatCompletionStream(args, { signal: abortController.signal })) {
+	for await (const chunk of metadata.client.chatCompletionStream(metadata.args, { signal: abortController.signal })) {
 		if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0]?.delta?.content) {
 			out += chunk.choices[0].delta.content;
 			onChunk(out);
@@ -85,9 +144,28 @@ export async function handleStreamingResponse(
 export async function handleNonStreamingResponse(
 	conversation: Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const { hf, args } = getHFCompletionMetadata(conversation);
+	const metadata = getCompletionMetadata(conversation);
 
-	const response = await hf.chatCompletion(args);
+	if (metadata.type === "openai") {
+		const response = await metadata.client.chat.completions.create({
+			...metadata.args,
+			stream: false,
+		} as OpenAI.ChatCompletionCreateParamsNonStreaming);
+
+		if (response.choices && response.choices.length > 0 && response.choices[0]?.message) {
+			return {
+				message: {
+					role: "assistant",
+					content: response.choices[0].message.content || "",
+				},
+				completion_tokens: response.usage?.completion_tokens || 0,
+			};
+		}
+		throw new Error("No response from the model");
+	}
+
+	// HuggingFace non-streaming
+	const response = await metadata.client.chatCompletion(metadata.args);
 	if (response.choices && response.choices.length > 0) {
 		const { message } = response.choices[0]!;
 		const { completion_tokens } = response.usage;
@@ -97,6 +175,7 @@ export async function handleNonStreamingResponse(
 }
 
 export function isSystemPromptSupported(model: ModelWithTokenizer | CustomModel) {
+	if (isCustomModel(model)) return true; // OpenAI-compatible models support system messages
 	if ("tokenizerConfig" in model) return model?.tokenizerConfig?.chat_template?.includes("system");
 	return false;
 }
@@ -178,6 +257,11 @@ export function getInferenceSnippet(
 	accessToken: string,
 	opts?: Record<string, unknown>
 ): GetInferenceSnippetReturn {
+	// If it's a custom model, we don't generate inference snippets
+	if (isCustomModel(model)) {
+		return [];
+	}
+
 	const providerId = model.inferenceProviderMapping.find(p => p.provider === provider)?.providerId;
 	const snippetsByClient = GET_SNIPPET_FN[language](
 		{ ...model, inference: "" },
@@ -197,5 +281,7 @@ export function hasInferenceSnippet(
 	provider: InferenceProvider,
 	language: InferenceSnippetLanguage
 ): boolean {
+	if (isCustomModel(model)) return false;
 	return getInferenceSnippet(model, provider, language, "").length > 0;
 }
+

@@ -1,19 +1,17 @@
 <script lang="ts">
-	import type { ConversationWithHFModel } from "$lib/types.js";
+	import type { Conversation } from "$lib/types.js";
 
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import { customMaxTokens } from "./utils.js";
 
 	interface Props {
-		conversation: ConversationWithHFModel;
+		conversation: Conversation;
 		classNames?: string;
 	}
 
 	let { conversation = $bindable(), classNames = "" }: Props = $props();
 
-	let modelMaxLength = $derived(
-		customMaxTokens[conversation.model.id] ?? conversation.model.tokenizerConfig.model_max_length
-	);
+	let modelMaxLength = $derived(customMaxTokens[conversation.model.id] ?? 100000);
 	let maxTokens = $derived(Math.min(modelMaxLength ?? GENERATION_CONFIG_SETTINGS["max_tokens"].max, 64_000));
 </script>
 

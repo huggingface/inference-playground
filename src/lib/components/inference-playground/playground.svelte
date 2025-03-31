@@ -372,9 +372,7 @@
 					</div>
 				</div>
 
-				{#if isConversationWithHFModel(session.project.conversations[0]!)}
-					<GenerationConfig bind:conversation={session.project.conversations[0]!} />
-				{/if}
+				<GenerationConfig bind:conversation={session.project.conversations[0]!} />
 
 				<div class="mt-auto flex items-center justify-end gap-4">
 					<button

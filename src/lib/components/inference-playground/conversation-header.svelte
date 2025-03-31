@@ -56,12 +56,10 @@
 		class="borderdark:border-white/5 group relative flex size-6 items-center justify-center rounded-sm bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600"
 	>
 		<IconCog />
-		{#if isConversationWithHFModel(conversation)}
-			<GenerationConfig
-				bind:conversation
-				classNames="absolute top-7 min-w-[250px] z-10 right-3 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hidden group-focus:flex hover:flex"
-			/>
-		{/if}
+		<GenerationConfig
+			bind:conversation
+			classNames="absolute top-7 min-w-[250px] z-10 right-3 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hidden group-focus:flex hover:flex"
+		/>
 	</button>
 </div>
 

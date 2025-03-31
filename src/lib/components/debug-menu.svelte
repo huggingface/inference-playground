@@ -100,9 +100,10 @@
 			label: "Pre-filled custom model config",
 			cb: () => {
 				openCustomModelConfig({
-					id: "google/gemini-2.0-flash-001",
-					endpointUrl: "https://openrouter.ai/api",
-					provider: "openai",
+					model: {
+						id: "google/gemini-2.0-flash-001",
+						endpointUrl: "https://openrouter.ai/api",
+					},
 				});
 			},
 		},
