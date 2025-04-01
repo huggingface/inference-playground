@@ -29,7 +29,9 @@
 </script>
 
 {#if isCustom}
-	<div class="{sizeClass} grid place-items-center rounded-sm bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300">
+	<div
+		class="{sizeClass} grid place-items-center rounded-sm bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300"
+	>
 		<IconCube class="size-full p-0.5" />
 	</div>
 {:else}
@@ -37,11 +39,7 @@
 		<div class="{sizeClass} flex-none rounded-sm bg-gray-200"></div>
 	{:then avatarUrl}
 		{#if avatarUrl}
-			<img
-				class="{sizeClass} flex-none rounded-sm bg-gray-200 object-cover"
-				src={avatarUrl}
-				alt="{_orgName} avatar"
-			/>
+			<img class="{sizeClass} flex-none rounded-sm bg-gray-200 object-cover" src={avatarUrl} alt="{_orgName} avatar" />
 		{:else}
 			<div class="{sizeClass} flex-none rounded-sm bg-gray-200"></div>
 		{/if}

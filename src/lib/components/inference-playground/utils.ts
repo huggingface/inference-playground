@@ -284,4 +284,3 @@ export function hasInferenceSnippet(
 	if (isCustomModel(model)) return false;
 	return getInferenceSnippet(model, provider, language, "").length > 0;
 }
-

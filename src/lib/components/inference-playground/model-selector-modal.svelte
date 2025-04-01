@@ -32,7 +32,7 @@
 	const trending = $derived(fuzzysearch({ needle: query, haystack: models.trending, property: "id" }));
 	const other = $derived(fuzzysearch({ needle: query, haystack: models.nonTrending, property: "id" }));
 	const custom = $derived(fuzzysearch({ needle: query, haystack: models.custom, property: "id" }));
-	const queried = $derived([...trending, ...other, ...custom]);
+	const queried = $derived([...trending, ...custom, ...other]);
 
 	function getModelIdx(model: ModelWithTokenizer | CustomModel) {
 		return queried.findIndex(m => m.id === model.id);
@@ -215,13 +215,13 @@
 					{/each}
 				{/if}
 				<button
-					class="flex w-full cursor-pointer items-center gap-2  px-2 py-1.5 text-sm text-gray-500  dark:text-gray-400 hover:bg-blue-500/15 hover:text-blue-600 dark:hover:text-blue-300"
+					class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 hover:bg-blue-500/15 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300"
 					onclick={() => {
 						onClose?.();
 						openCustomModelConfig({ onSubmit: m => (conversation.model = m) });
 					}}
 				>
-					<IconAdd class="text-blue-600 bg-blue-500/10 rounded"/>
+					<IconAdd class="rounded bg-blue-500/10 text-blue-600" />
 					Add a custom endpoint
 				</button>
 				{#if other.length > 0}

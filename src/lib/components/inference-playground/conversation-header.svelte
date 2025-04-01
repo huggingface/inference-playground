@@ -44,9 +44,8 @@
 >
 	<Avatar model={conversation.model} orgName={nameSpace} size="md" />
 	<button
-		class="flex-1! self-stretch text-left hover:underline focus-outline"
-		onclick={() => (modelSelectorOpen = true)}
-		>{conversation.model.id}</button
+		class="focus-outline flex-1! self-stretch text-left hover:underline"
+		onclick={() => (modelSelectorOpen = true)}>{conversation.model.id}</button
 	>
 	<button
 		class="borderdark:border-white/5 flex size-6 items-center justify-center rounded-sm bg-gray-50 text-xs hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600"
