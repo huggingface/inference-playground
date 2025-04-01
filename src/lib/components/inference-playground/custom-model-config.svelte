@@ -40,32 +40,34 @@
 		} else {
 			setTimeout(() => {
 				dialog?.close();
-				errorMessage = null;
-				successMessage = null;
+				clear();
 			}, 250);
 		}
 	});
 
-	let errorMessage = $state<string | null>(null);
-	let successMessage = $state<string | null>(null);
+	type Message = {
+		type: "error" | "success";
+		content: string;
+	};
+	let message = $state<Message | null>(null);
+
+	const error = (content: string) => (message = { type: "error", content }) satisfies Message;
+	const success = (content: string) => (message = { type: "success", content }) satisfies Message;
+	const clear = () => (message = null);
 
 	const onsubmit: HTMLFormAttributes["onsubmit"] = async e => {
 		e.preventDefault();
-		errorMessage = null; // Clear previous errors
-		successMessage = null; // Clear previous success message
+		clear();
 		const isTest = e.submitter?.dataset.form === "test";
 		if (isTest) {
 			testing = true;
-			if (!model?.id || !model?.endpointUrl) {
-				errorMessage = "Model ID and Endpoint URL are required.";
-				testing = false;
-				return;
-			}
+
 			const conv: Conversation = {
 				model: {
 					...model,
-					id: model?.id ?? "",
 					_id: "",
+					/** These will never be empty, because of our form validation */
+					id: model?.id ?? "",
 					endpointUrl: model?.endpointUrl ?? "",
 				},
 				messages: [
@@ -80,12 +82,12 @@
 			};
 			try {
 				await handleNonStreamingResponse(conv);
-				successMessage = "Test successful!";
+				success("Test successful!");
 			} catch (err) {
 				if (err instanceof Error) {
-					errorMessage = `Test failed: ${err.message}`;
+					error(`Test failed: ${err.message}`);
 				} else {
-					errorMessage = `An unknown error occurred during testing.`;
+					error(`An unknown error occurred during testing.`);
 				}
 			} finally {
 				testing = false;
@@ -169,20 +171,18 @@
 						<p class="text-sm text-gray-500">Stored locally - not sent to our server</p>
 					</label>
 
-					{#if errorMessage}
+					{#if message}
 						<div
-							class="mt-2 rounded-lg border border-red-400 bg-red-100 p-3 text-sm text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-300"
+							class={[
+								"mt-2 rounded-lg border p-3 text-sm",
+								message.type === "error" &&
+									"border-red-400 bg-red-100 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-300",
+								message.type === "success" &&
+									"border-green-400 bg-green-100 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-300",
+							]}
 							role="alert"
 						>
-							{errorMessage}
-						</div>
-					{/if}
-					{#if successMessage}
-						<div
-							class="mt-2 rounded-lg border border-green-400 bg-green-100 p-3 text-sm text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-300"
-							role="alert"
-						>
-							{successMessage}
+							{message.content}
 						</div>
 					{/if}
 				</div>
