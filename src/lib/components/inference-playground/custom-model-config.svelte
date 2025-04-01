@@ -139,7 +139,7 @@
 							use:autofocus
 							bind:value={model.id}
 							required
-							placeholder="e.g. HuggingFaceTB/SmolVLM2-2.2B-Instruct"
+							placeholder="e.g. mistralai/mistral-large-2407"
 							type="text"
 							class="input block w-full"
 						/>
