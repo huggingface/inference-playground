@@ -150,7 +150,7 @@
 						</p>
 						<input
 							bind:value={model.endpointUrl}
-							placeholder="e.g. https://some-provider.ai/api/v1"
+							placeholder="e.g. https://your-provider.com/api/v1"
 							required
 							type="text"
 							class="input block w-full"
@@ -158,7 +158,7 @@
 					</label>
 					<label class="flex flex-col gap-2">
 						<p class="block text-sm font-medium text-gray-900 dark:text-white">
-							Access Token <span class="text-xs opacity-75">(optional)</span>
+							Access Token
 						</p>
 						<input
 							bind:value={model.accessToken}
@@ -166,6 +166,7 @@
 							type="text"
 							class="input block w-full"
 						/>
+						<p class="text-gray-500 text-sm">Not send to our server stored</p>
 					</label>
 
 					{#if errorMessage}
