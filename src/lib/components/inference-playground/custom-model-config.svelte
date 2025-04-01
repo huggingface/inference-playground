@@ -10,7 +10,7 @@
 
 	export function openCustomModelConfig(args?: OpenCustomModelConfigArgs) {
 		model = $state.snapshot(args?.model ?? {});
-		// onSubmit = args?.onSubmit;
+		onSubmit = args?.onSubmit;
 	}
 
 	function close() {
