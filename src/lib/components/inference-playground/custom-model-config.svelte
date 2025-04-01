@@ -28,7 +28,6 @@
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import { fade, scale } from "svelte/transition";
 	import IconCross from "~icons/carbon/close";
-	import LocalToasts from "../local-toasts.svelte";
 	import typia from "typia";
 	import { handleNonStreamingResponse } from "./utils.js";
 
@@ -45,13 +44,20 @@
 		}
 	});
 
-	let localToasts = $state<LocalToasts>();
+	let errorMessage = $state<string | null>(null);
 
 	const onsubmit: HTMLFormAttributes["onsubmit"] = async e => {
 		e.preventDefault();
+		e.preventDefault();
+		errorMessage = null; // Clear previous errors
 		const isTest = e.submitter?.dataset.form === "test";
 		if (isTest) {
 			testing = true;
+			if (!model?.id || !model?.endpointUrl) {
+				errorMessage = "Model ID and Endpoint URL are required.";
+				testing = false;
+				return;
+			}
 			const conv: Conversation = {
 				model: {
 					...model,
@@ -71,9 +77,13 @@
 			};
 			try {
 				await handleNonStreamingResponse(conv);
-				localToasts?.addToast({ data: { content: "Success!", variant: "info" } });
-			} catch (e) {
-				localToasts?.addToast({ data: { content: `${e}`, variant: "danger" }, closeDelay: 5000 });
+				// Optionally show a success message or clear the form on success
+			} catch (err) {
+				if (err instanceof Error) {
+					errorMessage = `Error: ${err.message}`;
+				} else {
+					errorMessage = `An unknown error occurred during testing.`;
+				}
 			} finally {
 				testing = false;
 			}
@@ -156,6 +166,15 @@
 							class="input block w-full"
 						/>
 					</label>
+
+					{#if errorMessage}
+						<div
+							class="mt-2 rounded-lg border border-red-400 bg-red-100 p-3 text-sm text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-300"
+							role="alert"
+						>
+							{errorMessage}
+						</div>
+					{/if}
 				</div>
 
 				<!-- Modal footer -->
@@ -174,23 +193,17 @@
 						</button>
 					{/if}
 					<div class="ml-auto flex items-center gap-2">
-						<LocalToasts bind:this={localToasts}>
-							{#snippet children({ trigger })}
-								<button
-									data-form="test"
-									type="submit"
-									class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white
+						<button
+							data-form="test"
+							type="submit"
+							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white
 									hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none
 									disabled:!bg-black dark:border-gray-700
 									dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:disabled:!bg-gray-800"
-									disabled={testing}
-									{...trigger}
-								>
-									Test
-								</button>
-							{/snippet}
-						</LocalToasts>
-
+							disabled={testing}
+						>
+							Test
+						</button>
 						<button
 							data-form="submit"
 							type="submit"
