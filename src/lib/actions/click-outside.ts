@@ -8,6 +8,10 @@ export const clickOutside: Action<HTMLElement, () => void> = (node, callback) =>
 	}
 
 	function handleClick(event: MouseEvent) {
+		if (window.getSelection()?.toString()) {
+			// Don't close if text is selected
+			return;
+		}
 		if (node && !node.contains(event.target as Node) && !event.defaultPrevented) {
 			_callback();
 		}
