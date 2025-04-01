@@ -215,13 +215,13 @@
 					{/each}
 				{:else}
 					<button
-						class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+						class="flex w-full cursor-pointer items-center gap-2  px-2 py-1.5 text-sm text-gray-500  dark:text-gray-400 hover:bg-blue-500/15 hover:text-blue-600 dark:hover:text-blue-300"
 						onclick={() => {
 							onClose?.();
 							openCustomModelConfig({ onSubmit: m => (conversation.model = m) });
 						}}
 					>
-						<IconAdd />
+						<IconAdd class="text-blue-600 bg-blue-500/10 rounded"/>
 						Add a custom endpoint
 					</button>
 				{/if}
