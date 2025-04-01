@@ -9,6 +9,7 @@
 	import IconDelete from "~icons/carbon/trash-can";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
+	import CheckpointsMenu from "./checkpoints-menu.svelte";
 
 	interface Props {
 		class?: string;
@@ -50,6 +51,7 @@
 	</button>
 
 	<div class="flex items-center gap-2">
+		<CheckpointsMenu />
 		{#if isDefault}
 			<Tooltip>
 				{#snippet trigger(tooltip)}
