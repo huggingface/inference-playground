@@ -40,6 +40,8 @@
 		} else {
 			setTimeout(() => {
 				dialog?.close();
+				errorMessage = null;
+				successMessage = null;
 			}, 250);
 		}
 	});
