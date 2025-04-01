@@ -225,15 +225,15 @@
 						{@render modelEntry(model, true)}
 					{/each}
 				{/if}
-				{#if other.length > 0}
-					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Other models</div>
-					{#each other as model}
+				{#if custom.length > 0}
+					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Custom endpoints</div>
+					{#each custom as model}
 						{@render modelEntry(model, false)}
 					{/each}
 				{/if}
-				{#if custom.length > 0}
-					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Custom models</div>
-					{#each custom as model}
+				{#if other.length > 0}
+					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Other models</div>
+					{#each other as model}
 						{@render modelEntry(model, false)}
 					{/each}
 				{/if}
