@@ -36,15 +36,14 @@
 	<label for={id} class="flex items-baseline gap-2 text-sm font-medium text-gray-900 dark:text-white">
 		Models<span class="text-xs font-normal text-gray-400">{models.all.length}</span>
 	</label>
-
 	<button
 		{id}
-		class="relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110"
+		class="relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110 focus-outline"
 		onclick={() => (showModelPickerModal = true)}
 	>
 		<div class="flex flex-col items-start">
 			<div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-300">
-				<Avatar orgName={nameSpace} size="sm" />
+				<Avatar model={conversation.model} orgName={nameSpace} size="sm" />
 				{nameSpace}
 			</div>
 			<div>{modelName}</div>

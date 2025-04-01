@@ -42,8 +42,10 @@
 		? 'mr-4 max-sm:ml-4'
 		: 'mx-4'} flex h-11 flex-none items-center gap-2 rounded-lg border border-gray-200/80 bg-white pr-2 pl-3 text-sm leading-none whitespace-nowrap shadow-xs *:flex-none max-sm:mt-4 dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
 >
-	<Avatar orgName={nameSpace} size="md" />
-	<button class="flex-1! self-stretch text-left hover:underline" onclick={() => (modelSelectorOpen = true)}
+	<Avatar model={conversation.model} orgName={nameSpace} size="md" />
+	<button
+		class="flex-1! self-stretch text-left hover:underline focus-outline"
+		onclick={() => (modelSelectorOpen = true)}
 		>{conversation.model.id}</button
 	>
 	<button
