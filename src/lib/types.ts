@@ -1,5 +1,4 @@
 import type { GenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
-import type { InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 import typia from "typia";
 

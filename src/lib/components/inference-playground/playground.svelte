@@ -1,10 +1,5 @@
 <script lang="ts">
-	import {
-		isConversationWithHFModel,
-		type ConversationMessage,
-		type ModelWithTokenizer,
-		type Project,
-	} from "$lib/types.js";
+	import { type ConversationMessage, type ModelWithTokenizer, type Project } from "$lib/types.js";
 
 	import { handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
 

@@ -140,7 +140,6 @@
 	} as Record<Language, GetInferenceSnippetReturn>);
 
 	const selectedSnippet = $derived(snippetsByLang[lang][selectedSnippetIdxByLang[lang]]);
-	$inspect(snippetsByLang, selectedSnippet);
 
 	const installInstructions = $derived.by(function getInstallInstructions(): InstallInstructions | undefined {
 		if (lang === "javascript") {
