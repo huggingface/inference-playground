@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConversationWithHFModel } from "$lib/types.js";
+	import { isConversationWithCustomModel, isCustomModel, PipelineTag, type Conversation } from "$lib/types.js";
 
 	import hljs from "highlight.js/lib/core";
 	import http from "highlight.js/lib/languages/http";
@@ -13,13 +13,14 @@
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconCopyCode from "~icons/carbon/copy";
 	import { getInferenceSnippet, type GetInferenceSnippetReturn, type InferenceSnippetLanguage } from "./utils.js";
+	import { emptyModel } from "$lib/state/session.svelte.js";
 
 	hljs.registerLanguage("javascript", javascript);
 	hljs.registerLanguage("python", python);
 	hljs.registerLanguage("http", http);
 
 	interface Props {
-		conversation: ConversationWithHFModel;
+		conversation: Conversation;
 	}
 
 	let { conversation }: Props = $props();
@@ -38,11 +39,35 @@
 
 	type GetSnippetArgs = {
 		tokenStr: string;
-		conversation: ConversationWithHFModel;
+		conversation: Conversation;
 		lang: InferenceSnippetLanguage;
 	};
 	function getSnippet({ tokenStr, conversation, lang }: GetSnippetArgs) {
-		return getInferenceSnippet(conversation.model, conversation.provider as InferenceProvider, lang, tokenStr, {
+		const model = conversation.model;
+		if (isCustomModel(model)) {
+			const snippets = getInferenceSnippet(
+				{
+					...emptyModel,
+					_id: model._id,
+					id: model.id,
+					pipeline_tag: PipelineTag.TextGeneration,
+					tags: ["conversational"],
+				},
+				"hf-inference",
+				lang,
+				tokenStr,
+				{
+					messages: conversation.messages,
+					streaming: conversation.streaming,
+					max_tokens: conversation.config.max_tokens,
+					temperature: conversation.config.temperature,
+					top_p: conversation.config.top_p,
+				}
+			);
+			return snippets.filter(s => s.client.startsWith("open") || lang === "curl");
+		}
+
+		return getInferenceSnippet(model, conversation.provider as InferenceProvider, lang, tokenStr, {
 			messages: conversation.messages,
 			streaming: conversation.streaming,
 			max_tokens: conversation.config.max_tokens,
@@ -66,14 +91,8 @@
 		docs: string;
 	};
 
-	function getTokenStr(showToken: boolean) {
-		if (token.value && showToken) {
-			return token.value;
-		}
-		return "YOUR_HF_TOKEN";
-	}
-
 	function highlight(code?: string, language?: InferenceSnippetLanguage) {
+		console.log({ code, language });
 		if (!code || !language) return "";
 		return hljs.highlight(code, { language: language === "curl" ? "http" : language }).value;
 	}
@@ -104,40 +123,50 @@
 			},
 		};
 	}
-	let tokenStr = $derived(getTokenStr(showToken));
-	let snippetsByLang = $derived({
+	const tokenStr = $derived.by(() => {
+		if (isConversationWithCustomModel(conversation)) {
+			const t = conversation.model.accessToken;
+
+			return t && showToken ? t : "YOUR_ACCESS_TOKEN";
+		}
+
+		return token.value && showToken ? token.value : "YOUR_HF_TOKEN";
+	});
+
+	const snippetsByLang = $derived({
 		javascript: getSnippet({ lang: "js", tokenStr, conversation }),
 		python: getSnippet({ lang: "python", tokenStr, conversation }),
 		http: getSnippet({ lang: "curl", tokenStr, conversation }),
 	} as Record<Language, GetInferenceSnippetReturn>);
-	let selectedSnippet = $derived(snippetsByLang[lang][selectedSnippetIdxByLang[lang]]);
-	let installInstructions = $derived(
-		(function getInstallInstructions(): InstallInstructions | undefined {
-			if (lang === "javascript") {
-				const isHugging = selectedSnippet?.client.includes("hugging");
-				const toInstall = isHugging ? "@huggingface/inference" : "openai";
-				const docs = isHugging
-					? "https://huggingface.co/docs/huggingface.js/inference/README"
-					: "https://platform.openai.com/docs/libraries";
-				return {
-					title: `Install ${toInstall}`,
-					content: `npm install --save ${toInstall}`,
-					docs,
-				};
-			} else if (lang === "python") {
-				const isHugging = selectedSnippet?.client.includes("hugging");
-				const toInstall = isHugging ? "huggingface_hub" : "openai";
-				const docs = isHugging
-					? "https://huggingface.co/docs/huggingface_hub/guides/inference"
-					: "https://platform.openai.com/docs/libraries";
-				return {
-					title: `Install the latest`,
-					content: `pip install --upgrade ${toInstall}`,
-					docs,
-				};
-			}
-		})()
-	);
+
+	const selectedSnippet = $derived(snippetsByLang[lang][selectedSnippetIdxByLang[lang]]);
+	$inspect(snippetsByLang, selectedSnippet);
+
+	const installInstructions = $derived.by(function getInstallInstructions(): InstallInstructions | undefined {
+		if (lang === "javascript") {
+			const isHugging = selectedSnippet?.client.includes("hugging");
+			const toInstall = isHugging ? "@huggingface/inference" : "openai";
+			const docs = isHugging
+				? "https://huggingface.co/docs/huggingface.js/inference/README"
+				: "https://platform.openai.com/docs/libraries";
+			return {
+				title: `Install ${toInstall}`,
+				content: `npm install --save ${toInstall}`,
+				docs,
+			};
+		} else if (lang === "python") {
+			const isHugging = selectedSnippet?.client.includes("hugging");
+			const toInstall = isHugging ? "huggingface_hub" : "openai";
+			const docs = isHugging
+				? "https://huggingface.co/docs/huggingface_hub/guides/inference"
+				: "https://platform.openai.com/docs/libraries";
+			return {
+				title: `Install the latest`,
+				content: `pip install --upgrade ${toInstall}`,
+				docs,
+			};
+		}
+	});
 </script>
 
 <div class="px-2 pt-2">

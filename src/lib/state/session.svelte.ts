@@ -21,7 +21,7 @@ const systemMessage: ConversationMessage = {
 	content: "",
 };
 
-const emptyModel: ModelWithTokenizer = {
+export const emptyModel: ModelWithTokenizer = {
 	_id: "",
 	inferenceProviderMapping: [],
 	pipeline_tag: PipelineTag.TextGeneration,

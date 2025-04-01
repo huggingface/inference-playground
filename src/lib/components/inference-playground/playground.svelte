@@ -301,12 +301,10 @@
 				{/each}
 			</div>
 			<div class="flex flex-1 justify-end gap-x-2">
-				{#if session.project.conversations.some(isConversationWithHFModel)}
-					<button type="button" onclick={() => (viewCode = !viewCode)} class="btn">
-						<IconCode />
-						{!viewCode ? "View Code" : "Hide Code"}
-					</button>
-				{/if}
+				<button type="button" onclick={() => (viewCode = !viewCode)} class="btn">
+					<IconCode />
+					{!viewCode ? "View Code" : "Hide Code"}
+				</button>
 				<button
 					onclick={() => {
 						viewCode = false;
