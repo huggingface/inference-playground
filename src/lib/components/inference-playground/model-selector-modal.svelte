@@ -225,11 +225,22 @@
 						{@render modelEntry(model, true)}
 					{/each}
 				{/if}
+				<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Custom endpoints</div>
 				{#if custom.length > 0}
-					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Custom endpoints</div>
 					{#each custom as model}
 						{@render modelEntry(model, false)}
 					{/each}
+				{:else}
+					<button
+						class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+						onclick={() => {
+							onClose?.();
+							openCustomModelConfig({ onSubmit: m => (conversation.model = m) });
+						}}
+					>
+						<IconAdd />
+						Add a custom endpoint
+					</button>
 				{/if}
 				{#if other.length > 0}
 					<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Other models</div>
