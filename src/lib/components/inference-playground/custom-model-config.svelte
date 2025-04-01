@@ -164,7 +164,7 @@
 							type="text"
 							class="input block w-full"
 						/>
-						<p class="text-sm text-gray-500">Stored locally - not send to our server</p>
+						<p class="text-sm text-gray-500">Stored locally - not sent to our server</p>
 					</label>
 
 					{#if errorMessage}

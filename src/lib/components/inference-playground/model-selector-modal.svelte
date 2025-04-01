@@ -26,7 +26,6 @@
 	let backdropEl = $state<HTMLDivElement>();
 	let highlightIdx = $state(-1);
 	let ignoreCursorHighlight = $state(false);
-	let containerEl = $state<HTMLDivElement>();
 	let query = $state("");
 
 	const trending = $derived(fuzzysearch({ needle: query, haystack: models.trending, property: "id" }));
