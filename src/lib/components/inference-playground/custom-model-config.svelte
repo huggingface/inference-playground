@@ -45,11 +45,12 @@
 	});
 
 	let errorMessage = $state<string | null>(null);
+	let successMessage = $state<string | null>(null);
 
 	const onsubmit: HTMLFormAttributes["onsubmit"] = async e => {
 		e.preventDefault();
-		e.preventDefault();
 		errorMessage = null; // Clear previous errors
+		successMessage = null; // Clear previous success message
 		const isTest = e.submitter?.dataset.form === "test";
 		if (isTest) {
 			testing = true;
@@ -77,10 +78,10 @@
 			};
 			try {
 				await handleNonStreamingResponse(conv);
-				// Optionally show a success message or clear the form on success
+				successMessage = "Connection successful!";
 			} catch (err) {
 				if (err instanceof Error) {
-					errorMessage = `Error: ${err.message}`;
+					errorMessage = `Test failed: ${err.message}`;
 				} else {
 					errorMessage = `An unknown error occurred during testing.`;
 				}
@@ -175,6 +176,14 @@
 							{errorMessage}
 						</div>
 					{/if}
+					{#if successMessage}
+						<div
+							class="mt-2 rounded-lg border border-green-400 bg-green-100 p-3 text-sm text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-300"
+							role="alert"
+						>
+							{successMessage}
+						</div>
+					{/if}
 				</div>
 
 				<!-- Modal footer -->
@@ -202,7 +211,24 @@
 									dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:disabled:!bg-gray-800"
 							disabled={testing}
 						>
-							Test
+							{#if testing}
+								<svg
+									class="mr-2 h-4 w-4 animate-spin text-white"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+								>
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+								Testing...
+							{:else}
+								Test
+							{/if}
 						</button>
 						<button
 							data-form="submit"
