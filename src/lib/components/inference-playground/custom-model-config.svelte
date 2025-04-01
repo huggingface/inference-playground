@@ -116,7 +116,7 @@
 			>
 				<div class="flex items-center justify-between rounded-t border-b p-4 md:px-5 md:py-4 dark:border-gray-800">
 					<h2 class="flex items-center gap-2.5 text-lg font-semibold text-gray-900 dark:text-white">
-						Configure custom model
+						Configure custom endpoint
 					</h2>
 					<button
 						type="button"
@@ -205,7 +205,7 @@
 						<button
 							data-form="test"
 							type="submit"
-							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white
+							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white flex items-center
 									hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none
 									disabled:!bg-black dark:border-gray-700
 									dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:disabled:!bg-gray-800"
