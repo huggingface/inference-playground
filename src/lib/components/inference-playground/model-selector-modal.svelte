@@ -128,23 +128,6 @@
 					placeholder="Search models ..."
 					bind:value={query}
 				/>
-				<Tooltip>
-					{#snippet trigger(tooltip)}
-						<button
-							class="ml-auto grid size-4 place-items-center rounded-sm bg-gray-100 text-xs
-					hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500"
-							aria-label="Add custom model"
-							{...tooltip.trigger}
-							onclick={() => {
-								onClose?.();
-								openCustomModelConfig({ onSubmit: m => (conversation.model = m) });
-							}}
-						>
-							<IconAdd />
-						</button>
-					{/snippet}
-					<span class="text-sm">Add custom model</span>
-				</Tooltip>
 			</div>
 			<div class="max-h-[300px] overflow-x-hidden overflow-y-auto">
 				{#snippet modelEntry(model: ModelWithTokenizer | CustomModel, trending?: boolean)}

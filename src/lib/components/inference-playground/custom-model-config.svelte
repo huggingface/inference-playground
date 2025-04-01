@@ -78,7 +78,7 @@
 			};
 			try {
 				await handleNonStreamingResponse(conv);
-				successMessage = "Connection successful!";
+				successMessage = "Test successful!";
 			} catch (err) {
 				if (err instanceof Error) {
 					errorMessage = `Test failed: ${err.message}`;
