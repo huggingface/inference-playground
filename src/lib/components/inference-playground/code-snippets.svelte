@@ -1,19 +1,19 @@
 <script lang="ts">
+	import { emptyModel } from "$lib/state/session.svelte.js";
+	import { token } from "$lib/state/token.svelte.js";
 	import { isConversationWithCustomModel, isCustomModel, PipelineTag, type Conversation } from "$lib/types.js";
-
+	import { copyToClipboard } from "$lib/utils/copy.js";
+	import { entries, fromEntries, keys } from "$lib/utils/object.js";
+	import type { InferenceProvider } from "@huggingface/inference";
 	import hljs from "highlight.js/lib/core";
 	import http from "highlight.js/lib/languages/http";
 	import javascript from "highlight.js/lib/languages/javascript";
 	import python from "highlight.js/lib/languages/python";
 	import { createEventDispatcher } from "svelte";
-
-	import { token } from "$lib/state/token.svelte.js";
-	import { entries, fromEntries, keys } from "$lib/utils/object.js";
-	import type { InferenceProvider } from "@huggingface/inference";
 	import IconExternal from "~icons/carbon/arrow-up-right";
-	import IconCopyCode from "~icons/carbon/copy";
+	import IconCopy from "~icons/carbon/copy";
+	import LocalToasts from "../local-toasts.svelte";
 	import { getInferenceSnippet, type GetInferenceSnippetReturn, type InferenceSnippetLanguage } from "./utils.js";
-	import { emptyModel } from "$lib/state/session.svelte.js";
 
 	hljs.registerLanguage("javascript", javascript);
 	hljs.registerLanguage("python", python);
@@ -106,32 +106,6 @@
 		return hljs.highlight(code, { language: language === "curl" ? "http" : language }).value;
 	}
 
-	function copy(el: HTMLElement, _content?: string) {
-		let timeout: ReturnType<typeof setTimeout>;
-		let content = _content ?? "";
-
-		function update(_content?: string) {
-			content = _content ?? "";
-		}
-
-		function onClick() {
-			el.classList.add("text-green-500");
-			navigator.clipboard.writeText(content);
-			clearTimeout(timeout);
-			timeout = setTimeout(() => {
-				el.classList.remove("text-green-500");
-			}, 400);
-		}
-		el.addEventListener("click", onClick);
-
-		return {
-			update,
-			destroy() {
-				clearTimeout(timeout);
-				el.removeEventListener("click", onClick);
-			},
-		};
-	}
 	const tokenStr = $derived.by(() => {
 		if (isConversationWithCustomModel(conversation)) {
 			const t = conversation.model.accessToken;
@@ -235,12 +209,21 @@
 				</a>
 			</h2>
 			<div class="flex items-center gap-x-4">
-				<button
-					class="flex items-center gap-x-2 rounded-md border bg-white px-1.5 py-0.5 text-sm shadow-xs transition dark:border-gray-800 dark:bg-gray-800"
-					use:copy={installInstructions.content}
-				>
-					<IconCopyCode class="text-2xs" /> Copy code
-				</button>
+				<LocalToasts>
+					{#snippet children({ addToast, trigger })}
+						<button
+							{...trigger}
+							class="btn flex h-auto items-center gap-2 px-2 py-1.5 text-xs"
+							onclick={() => {
+								copyToClipboard(installInstructions.content);
+								addToast({ data: { content: "Copied to clipboard", variant: "info" } });
+							}}
+						>
+							<IconCopy />
+							Copy code
+						</button>
+					{/snippet}
+				</LocalToasts>
 			</div>
 		</div>
 		<pre
@@ -261,12 +244,21 @@
 				<input type="checkbox" bind:checked={showToken} />
 				<p class="leading-none">With token</p>
 			</label>
-			<button
-				class="flex items-center gap-x-2 rounded-md border bg-white px-1.5 py-0.5 text-sm shadow-xs transition dark:border-gray-800 dark:bg-gray-800"
-				use:copy={selectedSnippet?.content}
-			>
-				<IconCopyCode class="text-2xs" /> Copy code
-			</button>
+			<LocalToasts>
+				{#snippet children({ addToast, trigger })}
+					<button
+						{...trigger}
+						class="btn flex h-auto items-center gap-2 px-2 py-1.5 text-xs"
+						onclick={() => {
+							copyToClipboard(selectedSnippet?.content ?? "");
+							addToast({ data: { content: "Copied to clipboard", variant: "info" } });
+						}}
+					>
+						<IconCopy />
+						Copy code
+					</button>
+				{/snippet}
+			</LocalToasts>
 		</div>
 	</div>
 	<pre
