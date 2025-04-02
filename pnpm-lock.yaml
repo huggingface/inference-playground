@@ -85,8 +85,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2
       melt:
-        specifier: ^0.28.1
-        version: 0.28.1(@floating-ui/dom@1.6.13)(svelte@5.23.0)
+        specifier: ^0.28.2
+        version: 0.28.2(@floating-ui/dom@1.6.13)(svelte@5.23.0)
       openai:
         specifier: ^4.90.0
         version: 4.90.0
@@ -1642,8 +1642,8 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  melt@0.28.1:
-    resolution: {integrity: sha512-UC4RTNR1OGo4C/eCEy+rFyYrlH5++S1TvZzM+FRam2Pfx0Ym/kUiCfoajyOs5ECJ3KSrpbT5JMOUdPo9/5jcxQ==}
+  melt@0.28.2:
+    resolution: {integrity: sha512-55DGQ4B3bHKnDnK1ECJ46D+xythNKvuil60k0RXWJ3eEY5XsGjT6WZPVpRooYLfMlAki2J7JCWglCMYzvXwxVw==}
     peerDependencies:
       '@floating-ui/dom': ^1.6.0
       svelte: ^5.0.0
@@ -3716,7 +3716,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  melt@0.28.1(@floating-ui/dom@1.6.13)(svelte@5.23.0):
+  melt@0.28.2(@floating-ui/dom@1.6.13)(svelte@5.23.0):
     dependencies:
       '@floating-ui/dom': 1.6.13
       jest-axe: 9.0.0

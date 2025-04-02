@@ -15,7 +15,7 @@
 </button>
 
 <div
-	class="mb-2 w-80 rounded-xl border border-gray-200 bg-white p-3 pb-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+	class="mb-2 max-h-120 w-80 rounded-xl border border-gray-200 bg-white p-3 pb-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
 	{...popover.content}
 >
 	<div {...popover.arrow}></div>
@@ -30,9 +30,10 @@
 		</button>
 	</div>
 
-	{#each checkpoints.for(session.project.id) as checkpoint (checkpoint.timestamp)}
+	{#each checkpoints.for(session.project.id) as checkpoint (checkpoint.id)}
 		{@const state = checkpoint.projectState}
 		{@const msgs = state.conversations[0].messages.filter(m => m.content?.trim())}
+		{@const sliced = msgs.slice(0, 4)}
 		<Tooltip
 			openDelay={0}
 			floatingConfig={{
@@ -78,8 +79,8 @@
 						transition:fly={{ x: -2 }}
 					>
 						<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
-						{#each msgs as msg, i}
-							{@const isLast = i === msgs.length - 1}
+						{#each sliced as msg, i}
+							{@const isLast = i === sliced.length - 1}
 							<div class="flex flex-col gap-1 p-2">
 								<p class="font-mono text-xs font-medium text-gray-500 uppercase">{msg.role}</p>
 								<p class="line-clamp-2 text-sm">{msg.content}</p>

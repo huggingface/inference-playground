@@ -5,12 +5,25 @@ import { session } from "./session.svelte";
 const ls_key = "checkpoints";
 
 type Checkpoint = {
+	id: string;
 	timestamp: string;
 	projectState: Project;
 };
 
 class Checkpoints {
-	#checkpoints = new PersistedState<Record<Project["id"], Checkpoint[]>>(ls_key, {});
+	#checkpoints = new PersistedState<Record<Project["id"], Checkpoint[]>>(
+		ls_key,
+		{},
+		{
+			serializer: {
+				serialize: JSON.stringify,
+				deserialize: v => {
+					console.log(v);
+					return JSON.parse(v);
+				},
+			},
+		}
+	);
 
 	for(projectId: Project["id"]) {
 		return this.#checkpoints.current[projectId] ?? [];
@@ -20,7 +33,10 @@ class Checkpoints {
 		const project = session.$.projects.find(p => p.id == projectId);
 		if (!project) return;
 		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
-		this.#checkpoints.current[projectId] = [...prev, { projectState: project, timestamp: new Date().toLocaleString() }];
+		this.#checkpoints.current[projectId] = [
+			...prev,
+			{ projectState: project, timestamp: new Date().toLocaleString(), id: crypto.randomUUID() },
+		];
 	}
 
 	restore(projectId: Project["id"], checkpoint: Checkpoint) {
@@ -33,7 +49,7 @@ class Checkpoints {
 
 	delete(projectId: Project["id"], checkpoint: Checkpoint) {
 		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
-		this.#checkpoints.current[projectId] = prev.filter(c => c.timestamp != checkpoint.timestamp);
+		this.#checkpoints.current[projectId] = prev.filter(c => c.id != checkpoint.id);
 	}
 }
 
