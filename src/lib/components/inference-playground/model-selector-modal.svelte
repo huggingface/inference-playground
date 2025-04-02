@@ -6,6 +6,7 @@
 	import fuzzysearch from "$lib/utils/search.js";
 	import { sleep } from "$lib/utils/sleep.js";
 	import { Combobox } from "melt/builders";
+	import { untrack } from "svelte";
 	import typia from "typia";
 	import IconAdd from "~icons/carbon/add";
 	import IconCube from "~icons/carbon/cube";
@@ -15,8 +16,6 @@
 	import IconEye from "~icons/carbon/view";
 	import Tooltip from "../tooltip.svelte";
 	import { openCustomModelConfig } from "./custom-model-config.svelte";
-	import { untrack } from "svelte";
-	import { session } from "$lib/state/session.svelte";
 
 	interface Props {
 		onModelSelect?: (model: string) => void;
