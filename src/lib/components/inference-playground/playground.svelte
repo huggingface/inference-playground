@@ -417,7 +417,7 @@
 <div class="absolute bottom-6 left-4 flex items-center gap-2 max-md:hidden">
 	<a
 		target="_blank"
-		href="https://huggingface.co/docs/api-inference/tasks/chat-completion"
+		href="https://huggingface.co/docs/inference-providers/tasks/chat-completion"
 		class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
 	>
 		<div class="text-xs">

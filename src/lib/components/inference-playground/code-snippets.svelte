@@ -64,7 +64,16 @@
 					top_p: conversation.config.top_p,
 				}
 			);
-			return snippets.filter(s => s.client.startsWith("open") || lang === "curl");
+			return snippets
+				.filter(s => s.client.startsWith("open") || lang === "curl")
+				.map(s => {
+					return {
+						...s,
+						content: s.content
+							.replaceAll("https://router.huggingface.co/hf-inference/v1", model.endpointUrl)
+							.replaceAll(`https://router.huggingface.co/hf-inference/models/${model.id}/v1`, model.endpointUrl),
+					};
+				});
 		}
 
 		return getInferenceSnippet(model, conversation.provider as InferenceProvider, lang, tokenStr, {
