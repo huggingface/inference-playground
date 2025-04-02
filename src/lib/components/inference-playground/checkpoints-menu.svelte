@@ -40,7 +40,7 @@
 					placement: "right",
 				},
 				offset: {
-					mainAxis: 8,
+					mainAxis: 16,
 				},
 			}}
 			forceVisible
@@ -59,24 +59,6 @@
 							{msgs.length} messages
 						</span>
 					</button>
-					{#if tooltip.open}
-						<div
-							class="max-h-120 w-80 !overflow-x-clip !overflow-y-auto rounded-xl border border-gray-700 bg-gray-800 p-2"
-							{...tooltip.content}
-							transition:fly={{ x: -8 }}
-						>
-							{#each msgs as msg, i}
-								{@const isLast = i === msgs.length - 1}
-								<div class="flex flex-col gap-2 p-2">
-									<span class="text-sm font-medium">{msg.role}</span>
-									<span class="text-sm">{msg.content}</span>
-								</div>
-								{#if !isLast}
-									<div class="h-px w-full bg-gray-200 dark:bg-gray-700"></div>
-								{/if}
-							{/each}
-						</div>
-					{/if}
 
 					<button
 						class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -88,6 +70,26 @@
 						<IconDelete />
 					</button>
 				</div>
+
+				{#if tooltip.open && msgs.length > 0}
+					<div
+						class="w-80 rounded-xl border border-gray-700 bg-gray-800 p-2 shadow"
+						{...tooltip.content}
+						transition:fly={{ x: -2 }}
+					>
+						<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
+						{#each msgs as msg, i}
+							{@const isLast = i === msgs.length - 1}
+							<div class="flex flex-col gap-1 p-2">
+								<p class="font-mono text-xs font-medium text-gray-500 uppercase">{msg.role}</p>
+								<p class="line-clamp-2 text-sm">{msg.content}</p>
+							</div>
+							{#if !isLast}
+								<div class="my-2 h-px w-full bg-gray-200 dark:bg-gray-700"></div>
+							{/if}
+						{/each}
+					</div>
+				{/if}
 			{/snippet}
 		</Tooltip>
 	{:else}
