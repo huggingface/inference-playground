@@ -106,11 +106,16 @@
 								<IconStar />
 							</div>
 						{/if}
-						<span class="inline-flex items-center"
-							><span class="text-gray-500 dark:text-gray-400">{nameSpace}</span><span
-								class="mx-1 text-gray-300 dark:text-gray-700">/</span
-							><span class="text-black dark:text-white">{modelName}</span></span
-						>
+
+						{#if modelName}
+							<span class="inline-flex items-center">
+								<span class="text-gray-500 dark:text-gray-400">{nameSpace}</span>
+								<span class="mx-1 text-gray-300 dark:text-gray-700">/</span>
+								<span class="text-black dark:text-white">{modelName}</span>
+							</span>
+						{:else}
+							<span class="text-black dark:text-white">{nameSpace}</span>
+						{/if}
 
 						{#if "pipeline_tag" in model && model.pipeline_tag === "image-text-to-text"}
 							<Tooltip openDelay={100}>

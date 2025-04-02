@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isConversationWithHFModel, type Conversation, type ModelWithTokenizer } from "$lib/types.js";
+	import { isConversationWithHFModel, isCustomModel, type Conversation, type ModelWithTokenizer } from "$lib/types.js";
 
 	import { models } from "$lib/state/models.svelte.js";
 	import IconCaret from "~icons/carbon/chevron-down";
@@ -27,9 +27,11 @@
 		conversation.provider = undefined;
 	}
 
-	let nameSpace = $derived(conversation.model.id.split("/")[0] ?? "");
-	let modelName = $derived(conversation.model.id.split("/")[1] ?? "");
-	const id = crypto.randomUUID();
+	const model = $derived(conversation.model);
+	const isCustom = $derived(isCustomModel(model));
+	const nameSpace = $derived(isCustom ? "Custom endpoint" : (model.id.split("/")[0] ?? ""));
+	const modelName = $derived(isCustom ? model.id : (model.id.split("/")[1] ?? ""));
+	const id = $props.id();
 </script>
 
 <div class="flex flex-col gap-2">
@@ -41,12 +43,12 @@
 		class="focus-outline relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110"
 		onclick={() => (showModelPickerModal = true)}
 	>
-		<div class="flex flex-col items-start">
+		<div class="overflow-hidden text-start">
 			<div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-300">
 				<Avatar model={conversation.model} orgName={nameSpace} size="sm" />
 				{nameSpace}
 			</div>
-			<div>{modelName}</div>
+			<div class="truncate">{modelName}</div>
 		</div>
 		<div
 			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
