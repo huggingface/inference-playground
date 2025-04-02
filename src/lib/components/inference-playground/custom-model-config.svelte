@@ -202,7 +202,19 @@
 							Delete
 						</button>
 					{/if}
-					<div class="ml-auto flex items-center gap-2">
+					<!-- Reverse flex so that submit is the button called on enter -->
+					<div class="ml-auto flex flex-row-reverse items-center gap-2">
+						<button
+							data-form="submit"
+							type="submit"
+							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white
+									hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none
+									disabled:!bg-black dark:border-gray-700
+									dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:disabled:!bg-gray-800"
+							disabled={testing}
+						>
+							Submit
+						</button>
 						<button
 							data-form="test"
 							type="submit"
@@ -230,17 +242,6 @@
 							{:else}
 								Test
 							{/if}
-						</button>
-						<button
-							data-form="submit"
-							type="submit"
-							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white
-									hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none
-									disabled:!bg-black dark:border-gray-700
-									dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:disabled:!bg-gray-800"
-							disabled={testing}
-						>
-							Submit
 						</button>
 					</div>
 				</div>

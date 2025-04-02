@@ -16,6 +16,7 @@
 	import Tooltip from "../tooltip.svelte";
 	import { openCustomModelConfig } from "./custom-model-config.svelte";
 	import { untrack } from "svelte";
+	import { session } from "$lib/state/session.svelte";
 
 	interface Props {
 		onModelSelect?: (model: string) => void;
@@ -147,7 +148,12 @@
 										onclick={e => {
 											e.stopPropagation();
 											onClose?.();
-											openCustomModelConfig({ model });
+											openCustomModelConfig({
+												model,
+												onSubmit: model => {
+													onModelSelect?.(model.id);
+												},
+											});
 										}}
 									>
 										<IconEdit class="size-3" />
@@ -174,7 +180,11 @@
 					class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 data-[highlighted]:bg-blue-500/15 data-[highlighted]:text-blue-600 dark:text-gray-400 dark:data-[highlighted]:text-blue-300"
 					{...combobox.getOption("__custom__", () => {
 						onClose?.();
-						openCustomModelConfig();
+						openCustomModelConfig({
+							onSubmit: model => {
+								onModelSelect?.(model.id);
+							},
+						});
 					})}
 				>
 					<IconAdd class="rounded bg-blue-500/10 text-blue-600" />
