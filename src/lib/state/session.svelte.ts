@@ -12,6 +12,7 @@ import {
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
 import { models } from "./models.svelte";
+import { goto } from "$app/navigation";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_session";
 
@@ -120,6 +121,27 @@ class SessionState {
 					localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(v));
 				} catch (e) {
 					console.error("Failed to save session to localStorage:", e);
+				}
+
+				// Save current model to query params
+				const p = v.projects.find(p => p.id === v.activeProjectId);
+				if (!p) return;
+				const prevQuery = window.location.search;
+				const query = new URLSearchParams();
+				const modelIds = p.conversations.map(c => c.model.id);
+				modelIds.forEach(m => query.append("modelId", m));
+				const providers = p.conversations.map(c => c.provider ?? "hf-inference");
+				providers.forEach(p => query.append("provider", p));
+				const newQuery = query.toString();
+				// slice to remove the ? prefix
+				if (newQuery !== prevQuery.slice(1)) {
+					window.parent.postMessage(
+						{
+							queryString: query.toString(),
+						},
+						"https://huggingface.co"
+					);
+					goto(`?${query}`, { replaceState: true });
 				}
 			});
 		});
