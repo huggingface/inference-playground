@@ -1,9 +1,10 @@
+import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import {
 	isCustomModel,
 	type Conversation,
 	type ConversationMessage,
 	type CustomModel,
-	type ModelWithTokenizer,
+	type Model,
 } from "$lib/types.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
@@ -174,10 +175,9 @@ export async function handleNonStreamingResponse(
 	throw new Error("No response from the model");
 }
 
-export function isSystemPromptSupported(model: ModelWithTokenizer | CustomModel) {
+export function isSystemPromptSupported(model: Model | CustomModel) {
 	if (isCustomModel(model)) return true; // OpenAI-compatible models support system messages
-	if ("tokenizerConfig" in model) return model?.tokenizerConfig?.chat_template?.includes("system");
-	return false;
+	return model?.config.tokenizer_config?.chat_template?.includes("system");
 }
 
 export const defaultSystemMessage: { [key: string]: string } = {
@@ -251,7 +251,7 @@ const GET_SNIPPET_FN = {
 export type GetInferenceSnippetReturn = (InferenceSnippet & { language: InferenceSnippetLanguage })[];
 
 export function getInferenceSnippet(
-	model: ModelWithTokenizer,
+	model: Model,
 	provider: InferenceProvider,
 	language: InferenceSnippetLanguage,
 	accessToken: string,
@@ -277,10 +277,45 @@ export function getInferenceSnippet(
  * - If language is defined, the function checks if in an inference snippet is available for that specific language
  */
 export function hasInferenceSnippet(
-	model: ModelWithTokenizer,
+	model: Model,
 	provider: InferenceProvider,
 	language: InferenceSnippetLanguage
 ): boolean {
 	if (isCustomModel(model)) return false;
 	return getInferenceSnippet(model, provider, language, "").length > 0;
+}
+
+const tokenizers = new Map<string, PreTrainedTokenizer>();
+
+export async function getTokenizer(model: Model) {
+	if (tokenizers.has(model.id)) return tokenizers.get(model.id)!;
+	const tokenizer = await AutoTokenizer.from_pretrained(model.id);
+	tokenizers.set(model.id, tokenizer);
+	return tokenizer;
+}
+
+export async function getTokens(conversation: Conversation): Promise<number> {
+	const model = conversation.model;
+	if (isCustomModel(model)) return 0;
+	const tokenizer = await getTokenizer(model);
+
+	// This is a simplified version - you might need to adjust based on your exact needs
+	let formattedText = "";
+
+	conversation.messages.forEach((message, index) => {
+		let content = `<|start_header_id|>${message.role}<|end_header_id|>\n\n${message.content?.trim()}<|eot_id|>`;
+
+		// Add BOS token to the first message
+		if (index === 0) {
+			content = "<|begin_of_text|>" + content;
+		}
+
+		formattedText += content;
+	});
+
+	// Encode the text to get tokens
+	const encodedInput = tokenizer.encode(formattedText);
+
+	// Return the number of tokens
+	return encodedInput.length;
 }

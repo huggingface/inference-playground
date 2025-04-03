@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { autofocus } from "$lib/actions/autofocus.js";
 	import { models } from "$lib/state/models.svelte.js";
-	import type { Conversation, CustomModel, ModelWithTokenizer } from "$lib/types.js";
+	import type { Conversation, CustomModel, Model } from "$lib/types.js";
 	import { noop } from "$lib/utils/noop.js";
 	import fuzzysearch from "$lib/utils/search.js";
 	import { sleep } from "$lib/utils/sleep.js";
@@ -92,7 +92,7 @@
 				/>
 			</div>
 			<div class="max-h-[300px] overflow-x-hidden overflow-y-auto" {...combobox.content} popover={undefined}>
-				{#snippet modelEntry(model: ModelWithTokenizer | CustomModel, trending?: boolean)}
+				{#snippet modelEntry(model: Model | CustomModel, trending?: boolean)}
 					{@const [nameSpace, modelName] = model.id.split("/")}
 					<button
 						class="flex w-full cursor-pointer items-center px-2 py-1.5 text-sm

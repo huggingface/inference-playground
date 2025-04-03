@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isConversationWithHFModel, isCustomModel, type Conversation, type ModelWithTokenizer } from "$lib/types.js";
+	import { isConversationWithHFModel, isCustomModel, type Conversation, type Model } from "$lib/types.js";
 
 	import { models } from "$lib/state/models.svelte.js";
 	import IconCaret from "~icons/carbon/chevron-down";
@@ -17,7 +17,7 @@
 	let showModelPickerModal = $state(false);
 
 	// Model
-	function changeModel(modelId: ModelWithTokenizer["id"]) {
+	function changeModel(modelId: Model["id"]) {
 		const model = models.all.find(m => m.id === modelId);
 		if (!model) {
 			return;

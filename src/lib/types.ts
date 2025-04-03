@@ -8,7 +8,7 @@ export type ConversationMessage = Pick<ChatCompletionInputMessage, "name" | "rol
 };
 
 export type Conversation = {
-	model: ModelWithTokenizer | CustomModel;
+	model: Model | CustomModel;
 	config: GenerationConfig;
 	messages: ConversationMessage[];
 	systemMessage: ConversationMessage;
@@ -21,7 +21,7 @@ export type ConversationWithCustomModel = Conversation & {
 };
 
 export type ConversationWithHFModel = Conversation & {
-	model: ModelWithTokenizer;
+	model: Model;
 };
 
 export const isConversationWithHFModel = typia.createIs<ConversationWithHFModel>();
@@ -50,9 +50,9 @@ interface TokenizerConfig {
 	model_max_length?: number;
 }
 
-export type ModelWithTokenizer = Model & {
-	tokenizerConfig: TokenizerConfig;
-};
+// export type ModelWithTokenizer = Model & {
+// 	tokenizerConfig: TokenizerConfig;
+// };
 
 export type Model = {
 	_id: string;

@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { type ConversationMessage, type ModelWithTokenizer, type Project } from "$lib/types.js";
+	import { type ConversationMessage, type Model, type Project } from "$lib/types.js";
 
-	import { handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
+	import { getTokens, handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
 
 	import { AbortManager } from "$lib/spells/abort-manager.svelte.js";
 	import { models } from "$lib/state/models.svelte.js";
 	import { session } from "$lib/state/session.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { isMac } from "$lib/utils/platform.js";
+	import { watch } from "runed";
 	import typia from "typia";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconCode from "~icons/carbon/code";
@@ -48,6 +49,15 @@
 			| [GenerationStatistics, GenerationStatistics]
 	);
 
+	watch(
+		() => $state.snapshot(session.project),
+		() => {
+			session.project.conversations.forEach(async (c, i) => {
+				generationStats[i] = { latency: 0, ...generationStats[i], generatedTokensCount: await getTokens(c) };
+			});
+		}
+	);
+
 	const systemPromptSupported = $derived(
 		session.project.conversations.some(conversation => isSystemPromptSupported(conversation.model))
 	);
@@ -83,9 +93,6 @@
 						conversation.messages = [...conversation.messages, streamingMessage];
 						addedMessage = true;
 					}
-					// session.project.conversations[conversationIdx] = conversation;
-					const c = generationStats[conversationIdx];
-					if (c) c.generatedTokensCount += 1;
 				},
 				abortManager.createController()
 			);
@@ -176,7 +183,7 @@
 		}
 	}
 
-	function addCompareModel(modelId: ModelWithTokenizer["id"]) {
+	function addCompareModel(modelId: Model["id"]) {
 		const model = models.all.find(m => m.id === modelId);
 		if (!model || session.project.conversations.length === 2) {
 			return;

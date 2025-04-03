@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isConversationWithHFModel, type Conversation, type ModelWithTokenizer } from "$lib/types.js";
+	import { isConversationWithHFModel, type Conversation, type Model } from "$lib/types.js";
 
 	import { createEventDispatcher } from "svelte";
 
@@ -21,7 +21,7 @@
 
 	let modelSelectorOpen = $state(false);
 
-	function changeModel(newModelId: ModelWithTokenizer["id"]) {
+	function changeModel(newModelId: Model["id"]) {
 		const model = models.all.find(m => m.id === newModelId);
 		if (!model) {
 			return;
