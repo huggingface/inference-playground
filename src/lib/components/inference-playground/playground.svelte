@@ -205,9 +205,14 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="motion-safe:animate-fade-in grid h-dvh divide-gray-200 overflow-hidden bg-gray-100/50 max-md:grid-rows-[120px_1fr] max-md:divide-y dark:divide-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:[color-scheme:dark] {compareActive
-		? 'md:grid-cols-[clamp(220px,20%,350px)_minmax(0,1fr)]'
-		: 'md:grid-cols-[clamp(220px,20%,350px)_minmax(0,1fr)_clamp(270px,25%,300px)]'}"
+	class={[
+		"motion-safe:animate-fade-in grid h-dvh divide-gray-200 overflow-hidden bg-gray-100/50",
+		"max-md:grid-rows-[120px_1fr] max-md:divide-y",
+		"dark:divide-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:[color-scheme:dark]",
+		compareActive
+			? "md:grid-cols-[clamp(220px,20%,350px)_minmax(0,1fr)]"
+			: "md:grid-cols-[clamp(220px,20%,350px)_minmax(0,1fr)_clamp(270px,25%,300px)]",
+	]}
 >
 	<!-- First column -->
 	<div class="flex flex-col gap-2 overflow-y-auto py-3 pr-3 max-md:pl-3">
@@ -239,13 +244,13 @@
 	</div>
 
 	<!-- Center column -->
-	<div class="relative divide-y divide-gray-200 dark:divide-gray-800" onkeydown={onKeydown}>
+	<div class="relative flex h-full flex-col overflow-hidden" onkeydown={onKeydown}>
 		<Toaster />
 		<div
-			class="flex h-[calc(100dvh-5rem-120px)] divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:h-[calc(100dvh-5rem)] md:pt-3 dark:divide-gray-800"
+			class="flex flex-1 divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:pt-3 dark:divide-gray-800"
 		>
 			{#each session.project.conversations as conversation, conversationIdx (conversation)}
-				<div class="max-sm:min-w-full">
+				<div class="flex h-full flex-col overflow-hidden max-sm:min-w-full">
 					{#if compareActive}
 						<PlaygroundConversationHeader
 							{conversationIdx}
@@ -266,8 +271,10 @@
 				</div>
 			{/each}
 		</div>
+
+		<!-- Bottom bar -->
 		<div
-			class="fixed inset-x-0 bottom-0 flex h-20 items-center justify-center gap-2 overflow-hidden px-3 whitespace-nowrap md:absolute"
+			class="mt-auto flex h-20 shrink-0 items-center justify-center gap-2 overflow-hidden border-t border-gray-200 px-3 whitespace-nowrap dark:border-gray-800"
 		>
 			<div class="flex flex-1 justify-start gap-x-2">
 				{#if !compareActive}
@@ -279,7 +286,7 @@
 						<div class="text-black dark:text-white">
 							<IconSettings />
 						</div>
-						{!viewSettings ? "Settings" : "Hide Settings"}
+						{!viewSettings ? "Settings" : "Hide"}
 					</button>
 				{/if}
 				<Tooltip>
@@ -340,74 +347,83 @@
 
 	<!-- Last column -->
 	{#if !compareActive}
-		<div class="flex flex-col p-3 {viewSettings ? 'max-md:fixed' : 'max-md:hidden'} max-md:inset-x-0 max-md:bottom-20">
+		<div class={[viewSettings && "max-md:fixed max-md:inset-0 max-md:bottom-20 max-md:backdrop-blur-lg"]}>
 			<div
-				class="flex flex-1 flex-col gap-6 overflow-y-hidden rounded-xl border border-gray-200/80 bg-white bg-linear-to-b from-white via-white p-3 shadow-xs dark:border-white/5 dark:bg-gray-900 dark:from-gray-800/40 dark:via-gray-800/40"
+				class={[
+					"flex flex-col p-3  max-md:absolute max-md:inset-x-0 max-md:bottom-0",
+					viewSettings ? "max-md:fixed" : "max-md:hidden",
+				]}
 			>
-				<div class="flex flex-col gap-2">
-					<ModelSelector bind:conversation={session.project.conversations[0]!} />
-					<div class="flex items-center gap-2 self-end px-2 text-xs whitespace-nowrap">
-						<button
-							class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-							onclick={() => (selectCompareModelOpen = true)}
-						>
-							<IconCompare />
-							Compare
-						</button>
-						<a
-							href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
-								.project.conversations[0]?.provider}"
-							target="_blank"
-							class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-						>
-							<IconExternal class="text-2xs" />
-							Model page
-						</a>
+				<div
+					class="flex flex-1 flex-col gap-6 overflow-y-hidden rounded-xl border border-gray-200/80 bg-white bg-linear-to-b from-white via-white p-3 shadow-xs dark:border-white/5 dark:bg-gray-900 dark:from-gray-800/40 dark:via-gray-800/40"
+				>
+					<div class="flex flex-col gap-2">
+						<ModelSelector bind:conversation={session.project.conversations[0]!} />
+						<div class="flex items-center gap-2 self-end px-2 text-xs whitespace-nowrap">
+							<button
+								class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+								onclick={() => (selectCompareModelOpen = true)}
+							>
+								<IconCompare />
+								Compare
+							</button>
+							<a
+								href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
+									.project.conversations[0]?.provider}"
+								target="_blank"
+								class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+							>
+								<IconExternal class="text-2xs" />
+								Model page
+							</a>
+						</div>
 					</div>
-				</div>
 
-				<GenerationConfig bind:conversation={session.project.conversations[0]!} />
+					<GenerationConfig bind:conversation={session.project.conversations[0]!} />
 
-				<div class="mt-auto flex items-center justify-end gap-4">
-					<button
-						onclick={() => showShareModal(session.project)}
-						class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-					>
-						<IconShare class="text-xs" />
-						Share
-					</button>
-					{#if token.value}
+					<div class="mt-auto flex items-center justify-end gap-4">
 						<button
-							onclick={token.reset}
+							onclick={() => showShareModal(session.project)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" class="text-xs" width="1em" height="1em" viewBox="0 0 32 32">
-								<path
-									fill="currentColor"
-									d="M23.216 4H26V2h-7v6h2V5.096A11.96 11.96 0 0 1 28 16c0 6.617-5.383 12-12 12v2c7.72 0 14-6.28 14-14c0-5.009-2.632-9.512-6.784-12"
-								/>
-								<path fill="currentColor" d="M16 20a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M15 9h2v9h-2z" /><path
-									fill="currentColor"
-									d="M16 4V2C8.28 2 2 8.28 2 16c0 4.977 2.607 9.494 6.784 12H6v2h7v-6h-2v2.903A11.97 11.97 0 0 1 4 16C4 9.383 9.383 4 16 4"
-								/>
-							</svg>
-							Reset token
+							<IconShare class="text-xs" />
+							Share
 						</button>
-					{/if}
-				</div>
-
-				<div class="mt-auto hidden">
-					<div class="mb-3 flex items-center justify-between gap-2">
-						<label for="default-range" class="block text-sm font-medium text-gray-900 dark:text-white">API Quota</label>
-						<span
-							class="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-							>Free</span
-						>
-
-						<div class="ml-auto w-12 text-right text-sm">76%</div>
+						{#if token.value}
+							<button
+								onclick={token.reset}
+								class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" class="text-xs" width="1em" height="1em" viewBox="0 0 32 32">
+									<path
+										fill="currentColor"
+										d="M23.216 4H26V2h-7v6h2V5.096A11.96 11.96 0 0 1 28 16c0 6.617-5.383 12-12 12v2c7.72 0 14-6.28 14-14c0-5.009-2.632-9.512-6.784-12"
+									/>
+									<path fill="currentColor" d="M16 20a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M15 9h2v9h-2z" /><path
+										fill="currentColor"
+										d="M16 4V2C8.28 2 2 8.28 2 16c0 4.977 2.607 9.494 6.784 12H6v2h7v-6h-2v2.903A11.97 11.97 0 0 1 4 16C4 9.383 9.383 4 16 4"
+									/>
+								</svg>
+								Reset token
+							</button>
+						{/if}
 					</div>
-					<div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-						<div class="h-2 rounded-full bg-black dark:bg-gray-400" style="width: 75%"></div>
+
+					<div class="mt-auto hidden">
+						<div class="mb-3 flex items-center justify-between gap-2">
+							<label for="default-range" class="block text-sm font-medium text-gray-900 dark:text-white"
+								>API Quota</label
+							>
+							<span
+								class="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+								>Free</span
+							>
+
+							<div class="ml-auto w-12 text-right text-sm">76%</div>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+							<div class="h-2 rounded-full bg-black dark:bg-gray-400" style="width: 75%"></div>
+						</div>
 					</div>
 				</div>
 			</div>

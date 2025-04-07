@@ -53,7 +53,7 @@
 		>
 			<!-- Content -->
 			<div
-				class="relative w-xl rounded-xl bg-white shadow-sm dark:bg-gray-900"
+				class="relative w-xl max-w-[calc(100dvw-2rem)] rounded-xl bg-white shadow-sm dark:bg-gray-900"
 				use:clickOutside={() => close()}
 				transition:scale={{ start: 0.975, duration: 250 }}
 			>
