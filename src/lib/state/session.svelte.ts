@@ -92,20 +92,22 @@ class SessionState {
 			const searchProviders = searchParams.getAll("provider");
 			const searchModelIds = searchParams.getAll("modelId");
 			const modelsFromSearch = searchModelIds.map(id => models.remote.find(model => model.id === id)).filter(Boolean);
-			if (modelsFromSearch.length > 0) savedSession.activeProjectId = "default";
+			if (modelsFromSearch.length > 0) {
+				savedSession.activeProjectId = "default";
 
-			let min = Math.min(dp.conversations.length, modelsFromSearch.length, searchProviders.length);
-			min = Math.max(1, min);
-			const convos = dp.conversations.slice(0, min);
-			if (typia.is<Project["conversations"]>(convos)) dp.conversations = convos;
+				let min = Math.min(dp.conversations.length, modelsFromSearch.length, searchProviders.length);
+				min = Math.max(1, min);
+				const convos = dp.conversations.slice(0, min);
+				if (typia.is<Project["conversations"]>(convos)) dp.conversations = convos;
 
-			for (let i = 0; i < min; i++) {
-				const conversation = dp.conversations[i] ?? defaultConversation;
-				dp.conversations[i] = {
-					...conversation,
-					model: modelsFromSearch[i] ?? conversation.model,
-					provider: searchProviders[i] ?? conversation.provider,
-				};
+				for (let i = 0; i < min; i++) {
+					const conversation = dp.conversations[i] ?? defaultConversation;
+					dp.conversations[i] = {
+						...conversation,
+						model: modelsFromSearch[i] ?? conversation.model,
+						provider: searchProviders[i] ?? conversation.provider,
+					};
+				}
 			}
 		}
 
