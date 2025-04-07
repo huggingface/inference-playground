@@ -170,7 +170,8 @@
 		const RE_HF_TOKEN = /\bhf_[a-zA-Z0-9]{34}\b/;
 		if (RE_HF_TOKEN.test(submittedHfToken)) {
 			token.value = submittedHfToken;
-			submit();
+			// TODO: Only submit when previous action was trying to submit
+			// submit();
 		} else {
 			alert("Please provide a valid HF token.");
 		}
@@ -210,7 +211,7 @@
 >
 	<!-- First column -->
 	<div class="flex flex-col gap-2 overflow-y-auto py-3 pr-3 max-md:pl-3">
-		<div class="pl-2">
+		<div class="md:pl-2">
 			<ProjectSelect />
 		</div>
 		<div
