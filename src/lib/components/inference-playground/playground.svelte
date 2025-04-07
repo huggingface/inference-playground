@@ -274,7 +274,7 @@
 
 		<!-- Bottom bar -->
 		<div
-			class="mt-auto flex h-20 shrink-0 items-center justify-center gap-2 overflow-hidden border-t border-gray-200 px-3 whitespace-nowrap dark:border-gray-800"
+			class="relative mt-auto flex h-20 shrink-0 items-center justify-center gap-2 overflow-hidden border-t border-gray-200 px-3 whitespace-nowrap dark:border-gray-800"
 		>
 			<div class="flex flex-1 justify-start gap-x-2">
 				{#if !compareActive}
@@ -298,9 +298,11 @@
 					Clear conversation
 				</Tooltip>
 			</div>
-			<div class="flex flex-1 shrink-0 items-center justify-center gap-x-8 text-center text-sm text-gray-500">
+			<div
+				class="absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
+			>
 				{#each generationStats as { latency, generatedTokensCount }}
-					<span class="max-xl:hidden">{generatedTokensCount} tokens · Latency {latency}ms</span>
+					<span>{generatedTokensCount} tokens · Latency {latency}ms</span>
 				{/each}
 			</div>
 			<div class="flex flex-1 justify-end gap-x-2">
