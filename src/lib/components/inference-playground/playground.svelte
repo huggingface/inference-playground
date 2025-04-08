@@ -299,7 +299,7 @@
 				</Tooltip>
 			</div>
 			<div
-				class="absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
+				class="pointer-events-none absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 			>
 				{#each generationStats as { latency, generatedTokensCount }}
 					<span>{generatedTokensCount} tokens · Latency {latency}ms</span>
