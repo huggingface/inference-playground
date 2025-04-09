@@ -85,8 +85,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2
       melt:
-        specifier: ^0.28.2
-        version: 0.28.2(@floating-ui/dom@1.6.13)(svelte@5.23.0)
+        specifier: ^0.29.1
+        version: 0.29.1(@floating-ui/dom@1.6.13)(svelte@5.23.0)
       openai:
         specifier: ^4.90.0
         version: 4.90.0
@@ -1098,6 +1098,10 @@ packages:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
     engines: {node: '>=0.4.0'}
 
+  dequal@2.0.3:
+    resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
+    engines: {node: '>=6'}
+
   detect-libc@1.0.3:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
@@ -1642,8 +1646,8 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  melt@0.28.2:
-    resolution: {integrity: sha512-55DGQ4B3bHKnDnK1ECJ46D+xythNKvuil60k0RXWJ3eEY5XsGjT6WZPVpRooYLfMlAki2J7JCWglCMYzvXwxVw==}
+  melt@0.29.1:
+    resolution: {integrity: sha512-ThkNrIdE7fm7bKwYJ4U6Pt9mZ5U437K0jn3RUkWb/RcfYp/bkg8cD5p+hMdHDCA1fUaZnQ1oU7ZWmP0Hv1N51g==}
     peerDependencies:
       '@floating-ui/dom': ^1.6.0
       svelte: ^5.0.0
@@ -1700,8 +1704,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.1.2:
-    resolution: {integrity: sha512-b+CiXQCNMUGe0Ri64S9SXFcP9hogjAJ2Rd6GdVxhPLRm7mhGaM7VgOvCAJ1ZshfHbqVDI3uqTI5C8/GaKuLI7g==}
+  nanoid@5.1.5:
+    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -3153,6 +3157,8 @@ snapshots:
 
   delayed-stream@1.0.0: {}
 
+  dequal@2.0.3: {}
+
   detect-libc@1.0.3: {}
 
   devalue@5.1.1: {}
@@ -3716,11 +3722,12 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  melt@0.28.2(@floating-ui/dom@1.6.13)(svelte@5.23.0):
+  melt@0.29.1(@floating-ui/dom@1.6.13)(svelte@5.23.0):
     dependencies:
       '@floating-ui/dom': 1.6.13
+      dequal: 2.0.3
       jest-axe: 9.0.0
-      nanoid: 5.1.2
+      nanoid: 5.1.5
       runed: 0.23.4(svelte@5.23.0)
       svelte: 5.23.0
 
@@ -3766,7 +3773,7 @@ snapshots:
 
   nanoid@3.3.8: {}
 
-  nanoid@5.1.2: {}
+  nanoid@5.1.5: {}
 
   natural-compare@1.4.0: {}
 

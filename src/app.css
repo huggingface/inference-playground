@@ -41,6 +41,13 @@
 	}
 }
 
+/* Custom variants */
+@custom-variant nd {
+	&:not(:disabled) {
+		@slot;
+	}
+}
+
 /* Utilities */
 @utility abs-x-center {
 	left: 50%;

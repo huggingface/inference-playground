@@ -19,7 +19,6 @@ class Checkpoints {
 			serializer: {
 				serialize: JSON.stringify,
 				deserialize: v => {
-					console.log(v);
 					return JSON.parse(v);
 				},
 			},

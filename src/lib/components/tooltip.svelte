@@ -1,18 +1,20 @@
 <script lang="ts">
-	import { type ComponentProps, type Extracted } from "melt";
+	import { getters, type ComponentProps, type Extracted } from "melt";
 	import { Tooltip, type TooltipProps } from "melt/builders";
 	import type { Snippet } from "svelte";
 
 	type FloatingConfig = NonNullable<Extracted<TooltipProps["floatingConfig"]>>;
 
-	interface Props {
+	interface Props extends Omit<ComponentProps<TooltipProps>, "floatingConfig"> {
 		children: Snippet;
 		trigger: Snippet<[Tooltip]>;
 		placement?: NonNullable<FloatingConfig["computePosition"]>["placement"];
 		openDelay?: ComponentProps<TooltipProps>["openDelay"];
+		disabled?: boolean;
 	}
-	const { children, trigger, placement = "top", openDelay = 500 }: Props = $props();
+	const { children, trigger, placement = "top", openDelay = 500, disabled, ...rest }: Props = $props();
 
+	let open = $state(false);
 	const tooltip = new Tooltip({
 		forceVisible: true,
 		floatingConfig: () => ({
@@ -22,7 +24,12 @@
 				padding: 10,
 			},
 		}),
+		open: () => (disabled ? false : open),
+		onOpenChange(v) {
+			open = v;
+		},
 		openDelay: () => openDelay,
+		...getters(rest),
 	});
 </script>
 

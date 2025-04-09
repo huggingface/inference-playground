@@ -30,6 +30,10 @@
 	import IconCross from "~icons/carbon/close";
 	import typia from "typia";
 	import { handleNonStreamingResponse } from "./utils.js";
+	import { watch } from "runed";
+	import Tooltip from "../tooltip.svelte";
+	import { createFieldValidation } from "$lib/utils/form.svelte.js";
+	import { isValidURL } from "$lib/utils/url.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));
@@ -55,12 +59,24 @@
 	const success = (content: string) => (message = { type: "success", content }) satisfies Message;
 	const clear = () => (message = null);
 
+	watch(
+		() => $state.snapshot(model),
+		(_, prev) => {
+			if (prev === undefined) testSuccessful = exists;
+			else testSuccessful = false;
+		},
+		{ lazy: true }
+	);
+
+	let testing = $state(false);
+	let testSuccessful = $state(false);
 	const onsubmit: HTMLFormAttributes["onsubmit"] = async e => {
 		e.preventDefault();
 		clear();
 		const isTest = e.submitter?.dataset.form === "test";
 		if (isTest) {
 			testing = true;
+			testSuccessful = true;
 
 			const conv: Conversation = {
 				model: {
@@ -83,6 +99,7 @@
 			try {
 				await handleNonStreamingResponse(conv);
 				success("Test successful!");
+				testSuccessful = true;
 			} catch (err) {
 				if (err instanceof Error) {
 					error(`Test failed: ${err.message}`);
@@ -101,7 +118,13 @@
 		}
 	};
 
-	let testing = $state(false);
+	const endpointValidation = createFieldValidation({
+		validate: v => {
+			if (!v) return "Endpoint URL is required";
+			if (!isValidURL(v)) return "Invalid URL";
+			if (!v.endsWith("/v1")) return "Endpoint URL should *probably* end with /v1";
+		},
+	});
 </script>
 
 <dialog class="backdrop:bg-transparent" bind:this={dialog} onclose={() => close()}>
@@ -158,7 +181,9 @@
 							required
 							type="text"
 							class="input block w-full"
+							{...endpointValidation.attrs}
 						/>
+						<p class="text-xs text-red-300">{endpointValidation.msg}</p>
 					</label>
 					<label class="flex flex-col gap-2">
 						<p class="block text-sm font-medium text-gray-900 dark:text-white">Access Token</p>
@@ -204,17 +229,28 @@
 					{/if}
 					<!-- Reverse flex so that submit is the button called on enter -->
 					<div class="ml-auto flex flex-row-reverse items-center gap-2">
-						<button
-							data-form="submit"
-							type="submit"
-							class="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white
-									hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none
-									disabled:!bg-black dark:border-gray-700
-									dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:disabled:!bg-gray-800"
-							disabled={testing}
-						>
-							Submit
-						</button>
+						<Tooltip disabled={testSuccessful} openDelay={0} closeOnPointerDown={false}>
+							{#snippet trigger(tooltip)}
+								<button
+									data-form="submit"
+									type="submit"
+									class={[
+										"rounded-lg bg-black px-5 py-2.5 text-sm",
+										"font-medium text-white",
+										"hover:nd:bg-gray-900 focus:ring-4 focus:ring-gray-300",
+										"focus:outline-none disabled:cursor-not-allowed disabled:opacity-75",
+										"dark:hover:nd:bg-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-gray-700",
+									]}
+									disabled={testing || !testSuccessful}
+									{...tooltip.trigger}
+								>
+									Submit
+								</button>
+							{/snippet}
+							{#if !testSuccessful}
+								<p>Test your model before saving</p>
+							{/if}
+						</Tooltip>
 						<button
 							data-form="test"
 							type="submit"

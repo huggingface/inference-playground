@@ -101,7 +101,6 @@
 	};
 
 	function highlight(code?: string, language?: InferenceSnippetLanguage) {
-		console.log({ code, language });
 		if (!code || !language) return "";
 		return hljs.highlight(code, { language: language === "curl" ? "http" : language }).value;
 	}
