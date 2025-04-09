@@ -352,7 +352,7 @@
 		<div class={[viewSettings && "max-md:fixed max-md:inset-0 max-md:bottom-20 max-md:backdrop-blur-lg"]}>
 			<div
 				class={[
-					"flex flex-col p-3  max-md:absolute max-md:inset-x-0 max-md:bottom-0",
+					"flex h-full flex-col  p-3 max-md:absolute max-md:inset-x-0 max-md:bottom-0",
 					viewSettings ? "max-md:fixed" : "max-md:hidden",
 				]}
 			>
