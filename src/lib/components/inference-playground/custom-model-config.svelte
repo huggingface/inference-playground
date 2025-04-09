@@ -76,7 +76,7 @@
 		const isTest = e.submitter?.dataset.form === "test";
 		if (isTest) {
 			testing = true;
-			testSuccessful = true;
+			testSuccessful = false;
 
 			const conv: Conversation = {
 				model: {

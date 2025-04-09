@@ -24,9 +24,10 @@
 				padding: 10,
 			},
 		}),
-		open: () => (disabled ? false : open),
+		open: () => open,
 		onOpenChange(v) {
-			open = v;
+			if (disabled) open = false;
+			else open = v;
 		},
 		openDelay: () => openDelay,
 		...getters(rest),
