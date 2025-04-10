@@ -12,6 +12,7 @@ import {
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
 import { models } from "./models.svelte";
+import { checkpoints } from "./checkpoints.svelte";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_session";
 
@@ -148,6 +149,8 @@ class SessionState {
 			id: crypto.randomUUID(),
 		};
 
+		checkpoints.migrate(defaultProject.id, project.id);
+
 		defaultProject.conversations = [getDefaults().defaultConversation];
 
 		this.addProject(project);
@@ -169,6 +172,7 @@ class SessionState {
 
 		const currProject = projects.find(p => p.id === this.$.activeProjectId);
 		this.#setAnySession({ ...this.$, projects, activeProjectId: currProject?.id ?? projects[0]?.id });
+		checkpoints.clear(id);
 	};
 
 	updateProject = (id: string, data: Partial<Project>) => {

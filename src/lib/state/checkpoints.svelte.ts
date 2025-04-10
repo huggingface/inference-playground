@@ -8,6 +8,7 @@ type Checkpoint = {
 	id: string;
 	timestamp: string;
 	projectState: Project;
+	favorite?: boolean;
 };
 
 class Checkpoints {
@@ -26,7 +27,14 @@ class Checkpoints {
 	);
 
 	for(projectId: Project["id"]) {
-		return this.#checkpoints.current[projectId] ?? [];
+		return (
+			this.#checkpoints.current[projectId]?.toSorted((a, b) => {
+				if (a.favorite === b.favorite) {
+					return b.timestamp.localeCompare(a.timestamp);
+				}
+				return a.favorite ? -1 : 1;
+			}) ?? []
+		);
 	}
 
 	commit(projectId: Project["id"]) {
@@ -47,9 +55,29 @@ class Checkpoints {
 		session.project = checkpoint.projectState;
 	}
 
+	toggleFavorite(projectId: Project["id"], checkpoint: Checkpoint) {
+		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
+		this.#checkpoints.current[projectId] = prev.map(c => {
+			if (c.id == checkpoint.id) {
+				return { ...c, favorite: !c.favorite };
+			}
+			return c;
+		});
+	}
+
 	delete(projectId: Project["id"], checkpoint: Checkpoint) {
 		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
 		this.#checkpoints.current[projectId] = prev.filter(c => c.id != checkpoint.id);
+	}
+
+	clear(projectId: Project["id"]) {
+		this.#checkpoints.current[projectId] = [];
+	}
+
+	migrate(from: Project["id"], to: Project["id"]) {
+		const fromArr = this.#checkpoints.current[from] ?? [];
+		this.#checkpoints.current[to] = [...fromArr];
+		this.#checkpoints.current[from] = [];
 	}
 }
 

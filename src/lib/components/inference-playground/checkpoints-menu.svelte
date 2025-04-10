@@ -6,6 +6,8 @@
 	import { fly } from "svelte/transition";
 	import IconHistory from "~icons/carbon/recently-viewed";
 	import IconDelete from "~icons/carbon/trash-can";
+	import IconStar from "~icons/carbon/star";
+	import IconStarFilled from "~icons/carbon/star-filled";
 
 	const popover = new Popover();
 </script>
@@ -61,6 +63,19 @@
 						</span>
 					</button>
 
+					<button
+						class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
+						onclick={e => {
+							e.stopPropagation();
+							checkpoints.toggleFavorite(session.project.id, checkpoint);
+						}}
+					>
+						{#if checkpoint.favorite}
+							<IconStarFilled class="text-yellow-500" />
+						{:else}
+							<IconStar />
+						{/if}
+					</button>
 					<button
 						class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
 						onclick={e => {
