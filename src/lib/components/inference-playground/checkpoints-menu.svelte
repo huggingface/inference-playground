@@ -124,7 +124,7 @@
 									]}
 								>
 									<p class="text-2xs pl-1.5 font-mono font-medium text-gray-500 uppercase">
-										temperature: {conversation.config.temperature}
+										temp: {conversation.config.temperature}
 										| max tokens: {conversation.config.max_tokens}
 									</p>
 									{#each sliced as msg, i}
