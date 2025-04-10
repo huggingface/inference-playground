@@ -94,10 +94,14 @@
 						transition:fly={{ x: -2 }}
 					>
 						<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
+						<p class="text-2xs pl-1.5 font-mono font-medium text-gray-500 uppercase">
+							temperature: {state.conversations[0].config.temperature} | max tokens: {state.conversations[0].config
+								.max_tokens}
+						</p>
 						{#each sliced as msg, i}
 							{@const isLast = i === sliced.length - 1}
 							<div class="flex flex-col gap-1 p-2">
-								<p class="font-mono text-xs font-medium text-gray-500 uppercase">{msg.role}</p>
+								<p class="font-mono text-xs font-medium text-gray-400 uppercase">{msg.role}</p>
 								<p class="line-clamp-2 text-sm">{msg.content}</p>
 							</div>
 							{#if !isLast}
