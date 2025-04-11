@@ -72,8 +72,8 @@
 									<IconCompare class="text-xs text-gray-400" />
 								{/if}
 								{#each state.conversations as { messages }, i}
-									<span class={["text-gray-200"]}>
-										{messages.length} messages
+									<span class={["text-gray-800 dark:text-gray-200"]}>
+										{messages.length} message{messages.length === 1 ? "" : "s"}
 									</span>
 									{#if multiple && i === 0}
 										<span class="text-gray-500">|</span>
@@ -108,13 +108,15 @@
 
 					{#if tooltip.open}
 						<div
-							class={["flex rounded-xl border border-gray-700 bg-gray-800 p-2 shadow"]}
+							class={[
+								"flex rounded-xl border border-gray-100 bg-gray-50 p-2 shadow dark:border-gray-700 dark:bg-gray-800",
+							]}
 							{...tooltip.content}
 							transition:fly={{ x: -2 }}
 						>
 							<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
 							{#each state.conversations as conversation, i}
-								{@const msgs = conversation.messages.filter(m => m.content?.trim())}
+								{@const msgs = conversation.messages}
 								{@const sliced = msgs.slice(0, 4)}
 								<div
 									class={[
@@ -131,7 +133,11 @@
 										{@const isLast = i === sliced.length - 1}
 										<div class="flex flex-col gap-1 p-2">
 											<p class="font-mono text-xs font-medium text-gray-400 uppercase">{msg.role}</p>
-											<p class="line-clamp-2 text-sm">{msg.content}</p>
+											{#if msg.content?.trim()}
+												<p class="line-clamp-2 text-sm">{msg.content.trim()}</p>
+											{:else}
+												<p class="text-sm text-gray-500 italic">No content</p>
+											{/if}
 										</div>
 										{#if !isLast}
 											<div class="my-2 h-px w-full bg-gray-200 dark:bg-gray-700"></div>

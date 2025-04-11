@@ -12,10 +12,9 @@
 		conversation: Conversation;
 		loading: boolean;
 		viewCode: boolean;
-		compareActive: boolean;
 	}
 
-	let { conversation = $bindable(), loading, viewCode, compareActive }: Props = $props();
+	let { conversation = $bindable(), loading, viewCode }: Props = $props();
 	let messageContainer: HTMLDivElement | null = $state(null);
 	const scrollState = new ScrollState({
 		element: () => messageContainer,
