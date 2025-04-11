@@ -5,7 +5,7 @@ import {
 	type Conversation,
 	type ConversationMessage,
 	type DefaultProject,
-	type ModelWithTokenizer,
+	type Model,
 	type Project,
 	type Session,
 } from "$lib/types.js";
@@ -22,14 +22,13 @@ const systemMessage: ConversationMessage = {
 	content: "",
 };
 
-export const emptyModel: ModelWithTokenizer = {
+export const emptyModel: Model = {
 	_id: "",
 	inferenceProviderMapping: [],
 	pipeline_tag: PipelineTag.TextGeneration,
 	trendingScore: 0,
 	tags: ["text-generation"],
 	id: "",
-	tokenizerConfig: {},
 	config: {
 		architectures: [] as string[],
 		model_type: "",

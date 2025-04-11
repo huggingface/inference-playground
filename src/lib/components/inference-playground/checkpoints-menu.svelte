@@ -22,7 +22,7 @@
 <button class="btn relative size-[32px] p-0" {...popover.trigger}>
 	<IconHistory />
 	{#if projCheckpoints.length > 0}
-		<div class="absolute -top-1 -right-1 size-3 rounded-full bg-amber-500" aria-label="Project has checkpoints"></div>
+		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-500" aria-label="Project has checkpoints"></div>
 	{/if}
 </button>
 
@@ -83,7 +83,7 @@
 						</button>
 
 						<button
-							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
+							class="mr-0.5 grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
 							onclick={e => {
 								e.stopPropagation();
 								checkpoints.toggleFavorite(session.project.id, checkpoint);

@@ -1,4 +1,4 @@
-import type { Model, ModelWithTokenizer } from "$lib/types.js";
+import type { Model } from "$lib/types.js";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types.js";
 
@@ -9,7 +9,7 @@ enum CacheStatus {
 }
 
 type Cache = {
-	data: ModelWithTokenizer[] | undefined;
+	data: Model[] | undefined;
 	timestamp: number;
 	status: CacheStatus;
 	// Track failed models to selectively refetch them
@@ -107,7 +107,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		const needImgTextFetch = elapsed >= FULL_CACHE_REFRESH || cache.failedApiCalls.imageTextToText;
 
 		// Track the existing models we'll keep
-		const existingModels = new Map<string, ModelWithTokenizer>();
+		const existingModels = new Map<string, Model>();
 		if (cache.data) {
 			cache.data.forEach(model => {
 				existingModels.set(model.id, model);
@@ -181,84 +181,13 @@ export const GET: RequestHandler = async ({ fetch }) => {
 				.map(model => model as Model);
 		}
 
-		const allModels: Model[] = [...textGenModels, ...imgText2TextModels];
-
-		const modelsNeedingTokenizer: Model[] = [];
-
-		// First, use existing model data when possible
-		allModels.forEach(model => {
-			const existingModel = existingModels.get(model.id);
-
-			// Only fetch tokenizer if:
-			// 1. We don't have this model yet, OR
-			// 2. It's in our failed tokenizers list AND we're doing a refresh, OR
-			// 3. We're doing a full refresh
-			if (
-				!existingModel ||
-				(cache.failedTokenizers.includes(model.id) && elapsed >= PARTIAL_CACHE_REFRESH) ||
-				elapsed >= FULL_CACHE_REFRESH
-			) {
-				modelsNeedingTokenizer.push(model);
-			}
-		});
-
-		console.log(`Total models: ${allModels.length}, Models needing tokenizer fetch: ${modelsNeedingTokenizer.length}`);
-
-		// Prepare result - start with existing models we want to keep
-		const models: ModelWithTokenizer[] = [];
-
-		// Add models we're not re-fetching tokenizers for
-		allModels.forEach(model => {
-			const existingModel = existingModels.get(model.id);
-			if (existingModel && !modelsNeedingTokenizer.some(m => m.id === model.id)) {
-				models.push(existingModel);
-			}
-		});
-
-		// Fetch tokenizer configs only for models that need it, with concurrency limit
-		const batchSize = 10; // Limit concurrent requests
-
-		for (let i = 0; i < modelsNeedingTokenizer.length; i += batchSize) {
-			const batch = modelsNeedingTokenizer.slice(i, i + batchSize);
-			const batchPromises = batch.map(async model => {
-				try {
-					const configUrl = `https://huggingface.co/${model.id}/raw/main/tokenizer_config.json`;
-					const res = await fetch(configUrl, {
-						credentials: "include",
-						headers,
-						method: "GET",
-						mode: "cors",
-					});
-
-					if (!res.ok) {
-						if (!newFailedTokenizers.includes(model.id)) {
-							newFailedTokenizers.push(model.id);
-						}
-						return null;
-					}
-
-					const tokenizerConfig = await res.json();
-					return { ...model, tokenizerConfig } satisfies ModelWithTokenizer;
-				} catch (error) {
-					console.error(`Error processing tokenizer for ${model.id}:`, error);
-					if (!newFailedTokenizers.includes(model.id)) {
-						newFailedTokenizers.push(model.id);
-					}
-					return null;
-				}
-			});
-
-			const batchResults = await Promise.all(batchPromises);
-			models.push(...batchResults.filter((model): model is ModelWithTokenizer => model !== null));
-		}
-
+		const models: Model[] = [...textGenModels, ...imgText2TextModels];
 		models.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
 
 		// Determine cache status based on failures
 		const hasApiFailures = newFailedApiCalls.textGeneration || newFailedApiCalls.imageTextToText;
-		const hasSignificantTokenizerFailures = newFailedTokenizers.length > modelsNeedingTokenizer.length * 0.2;
 
-		const cacheStatus = hasApiFailures || hasSignificantTokenizerFailures ? CacheStatus.PARTIAL : CacheStatus.SUCCESS;
+		const cacheStatus = hasApiFailures ? CacheStatus.PARTIAL : CacheStatus.SUCCESS;
 
 		cache.data = models;
 		cache.timestamp = timestamp;

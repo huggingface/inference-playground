@@ -1,6 +1,6 @@
 import { page } from "$app/state";
 import { createInit } from "$lib/spells/create-init.svelte";
-import type { CustomModel, ModelWithTokenizer } from "$lib/types.js";
+import type { CustomModel, Model } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
 import { session } from "./session.svelte";
@@ -9,7 +9,7 @@ import { randomPick } from "$lib/utils/array.js";
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
 class Models {
-	remote = $derived(page.data.models as ModelWithTokenizer[]);
+	remote = $derived(page.data.models as Model[]);
 	trending = $derived(this.remote.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
 	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)));
 
