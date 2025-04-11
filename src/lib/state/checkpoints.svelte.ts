@@ -29,10 +29,7 @@ class Checkpoints {
 	for(projectId: Project["id"]) {
 		return (
 			this.#checkpoints.current[projectId]?.toSorted((a, b) => {
-				if (a.favorite === b.favorite) {
-					return b.timestamp.localeCompare(a.timestamp);
-				}
-				return a.favorite ? -1 : 1;
+				return b.timestamp.localeCompare(a.timestamp);
 			}) ?? []
 		);
 	}
