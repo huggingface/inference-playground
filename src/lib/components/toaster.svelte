@@ -14,7 +14,6 @@
 
 		const toastEls = Array.from(rootEl.querySelectorAll("[data-melt-toaster-toast-content]"));
 		toastHeights = toastEls.map(el => el.clientHeight);
-		// console.log(toastHeights);
 	});
 
 	const isComparing = $derived(session.project.conversations.length > 1);
