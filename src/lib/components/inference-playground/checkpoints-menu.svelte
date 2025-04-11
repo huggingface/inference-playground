@@ -83,7 +83,7 @@
 						</button>
 
 						<button
-							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
+							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600 mr-0.5"
 							onclick={e => {
 								e.stopPropagation();
 								checkpoints.toggleFavorite(session.project.id, checkpoint);
