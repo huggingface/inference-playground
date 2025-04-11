@@ -22,7 +22,7 @@
 <button class="btn relative size-[32px] p-0" {...popover.trigger}>
 	<IconHistory />
 	{#if projCheckpoints.length > 0}
-		<div class="absolute -top-1 -right-1 size-3 rounded-full bg-amber-500" aria-label="Project has checkpoints"></div>
+		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-500" aria-label="Project has checkpoints"></div>
 	{/if}
 </button>
 
