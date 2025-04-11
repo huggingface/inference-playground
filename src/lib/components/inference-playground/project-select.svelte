@@ -2,6 +2,7 @@
 	import { session } from "$lib/state/session.svelte.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
+	import IconHistory from "~icons/carbon/recently-viewed";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import IconCross from "~icons/carbon/close";
 	import IconEdit from "~icons/carbon/edit";
@@ -9,6 +10,8 @@
 	import IconDelete from "~icons/carbon/trash-can";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
+	import CheckpointsMenu from "./checkpoints-menu.svelte";
+	import { checkpoints } from "$lib/state/checkpoints.svelte";
 
 	interface Props {
 		class?: string;
@@ -50,6 +53,7 @@
 	</button>
 
 	<div class="flex items-center gap-2">
+		<CheckpointsMenu />
 		{#if isDefault}
 			<Tooltip>
 				{#snippet trigger(tooltip)}
@@ -79,11 +83,22 @@
 <div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
 	{#each session.$.projects as { name, id } (id)}
 		{@const option = select.getOption(id)}
+		{@const hasCheckpoints = checkpoints.for(id).length > 0}
 		<div {...option} class="group block w-full p-1 text-sm dark:text-white">
 			<div
 				class="flex items-center gap-2 rounded-md py-1.5 pr-1 pl-2 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 			>
-				{name}
+				<div class="flex items-center gap-2">
+					{name}
+					{#if hasCheckpoints}
+						<div
+							class="text-3xs grid aspect-square place-items-center rounded bg-yellow-400/25 p-0.5 text-yellow-400"
+							aria-label="Project has checkpoints"
+						>
+							<IconHistory />
+						</div>
+					{/if}
+				</div>
 				{#if id !== "default"}
 					<div class="ml-auto flex items-center gap-1">
 						<button
