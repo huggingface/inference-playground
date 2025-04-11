@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { autofocus as autofocusAction } from "$lib/actions/autofocus.js";
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { PipelineTag, type Conversation, type ConversationMessage } from "$lib/types.js";
@@ -71,14 +72,14 @@
 			{message.role}
 		</div>
 		<div class="flex w-full gap-4">
-			<!-- svelte-ignore a11y_autofocus -->
 			<textarea
 				bind:this={element}
-				{autofocus}
+				use:autofocusAction={autofocus}
 				bind:value={message.content}
 				placeholder="Enter {message.role} message"
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"
+				data-message
 			></textarea>
 
 			{#if canUploadImgs}
