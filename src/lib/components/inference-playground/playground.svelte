@@ -272,7 +272,6 @@
 							v => (session.project.conversations[conversationIdx] = v)
 						}
 						{viewCode}
-						{compareActive}
 						on:closeCode={() => (viewCode = false)}
 					/>
 				</div>
