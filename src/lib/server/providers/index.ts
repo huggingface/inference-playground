@@ -5,6 +5,7 @@ import { fetchTogetherData } from "./together.js";
 import { fetchFireworksData } from "./fireworks.js";
 import { fetchHyperbolicData } from "./hyperbolic.js";
 import { fetchReplicateData } from "./replicate.js";
+import { fetchNebiusData } from "./nebius.js";
 
 // --- Constants ---
 const CACHE_FILE_PATH = path.resolve("src/lib/server/data/max_tokens.json");
@@ -23,6 +24,7 @@ export interface ApiKeys {
 	FIREWORKS_API_KEY?: string;
 	HYPERBOLIC_API_KEY?: string;
 	REPLICATE_API_KEY?: string;
+	NEBIUS_API_KEY?: string;
 }
 
 // --- Cache Handling ---
@@ -140,6 +142,10 @@ export async function getMaxTokens(
 				fetchedProviderData = await fetchReplicateData(apiKey);
 				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
+			case "nebius":
+				fetchedProviderData = await fetchNebiusData(apiKey);
+				liveData = fetchedProviderData?.[modelId] ?? null;
+				break;
 			default:
 				serverLog(`Live fetch not supported or implemented for provider: ${provider}`);
 				return null;
@@ -173,8 +179,8 @@ export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensC
 		{ name: "together", fetcher: () => fetchTogetherData(apiKeys.TOGETHER_API_KEY) },
 		{ name: "fireworks-ai", fetcher: () => fetchFireworksData(apiKeys.FIREWORKS_API_KEY) },
 		{ name: "hyperbolic", fetcher: () => fetchHyperbolicData(apiKeys.HYPERBOLIC_API_KEY) },
-		// Not sure how to get Replicate data, there is no field for max tokens.
-		// { name: "replicate", fetcher: () => fetchReplicateData(apiKeys.REPLICATE_API_KEY) },
+		{ name: "replicate", fetcher: () => fetchReplicateData(apiKeys.REPLICATE_API_KEY) },
+		{ name: "nebius", fetcher: () => fetchNebiusData(apiKeys.NEBIUS_API_KEY) },
 	];
 
 	const settledResults = await Promise.allSettled(providerFetchers.map(p => p.fetcher()));

@@ -17,7 +17,7 @@ async function runUpdate() {
 		FIREWORKS_API_KEY: process.env.FIREWORKS_API_KEY,
 		HYPERBOLIC_API_KEY: process.env.HYPERBOLIC_API_KEY,
 		REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
-		// Add other keys here if needed by fetchAllProviderData
+		NEBIUS_API_KEY: process.env.NEBIUS_API_KEY,
 	};
 
 	try {
