@@ -16,6 +16,7 @@ async function runUpdate() {
 		TOGETHER_API_KEY: process.env.TOGETHER_API_KEY,
 		FIREWORKS_API_KEY: process.env.FIREWORKS_API_KEY,
 		HYPERBOLIC_API_KEY: process.env.HYPERBOLIC_API_KEY,
+		REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
 		// Add other keys here if needed by fetchAllProviderData
 	};
 

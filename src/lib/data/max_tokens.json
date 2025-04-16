@@ -1,8 +1,5 @@
 {
-	"replicate": {
-		"meta/meta-llama-3-70b-instruct": 8192,
-		"owner/model-name": 4096
-	},
+	"replicate": {},
 	"sambanova": {
 		"samba/model-name": 8192
 	},

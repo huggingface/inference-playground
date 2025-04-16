@@ -4,6 +4,7 @@ import { fetchCohereData } from "./cohere.js";
 import { fetchTogetherData } from "./together.js";
 import { fetchFireworksData } from "./fireworks.js";
 import { fetchHyperbolicData } from "./hyperbolic.js";
+import { fetchReplicateData } from "./replicate.js";
 
 // --- Constants ---
 const CACHE_FILE_PATH = path.resolve("src/lib/server/data/max_tokens.json");
@@ -21,7 +22,7 @@ export interface ApiKeys {
 	TOGETHER_API_KEY?: string;
 	FIREWORKS_API_KEY?: string;
 	HYPERBOLIC_API_KEY?: string;
-	// Add other keys as needed
+	REPLICATE_API_KEY?: string;
 }
 
 // --- Cache Handling ---
@@ -135,6 +136,10 @@ export async function getMaxTokens(
 				fetchedProviderData = await fetchHyperbolicData(apiKey); // Pass apiKey
 				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
+			case "replicate":
+				fetchedProviderData = await fetchReplicateData(apiKey);
+				liveData = fetchedProviderData?.[modelId] ?? null;
+				break;
 			default:
 				serverLog(`Live fetch not supported or implemented for provider: ${provider}`);
 				return null;
@@ -168,6 +173,8 @@ export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensC
 		{ name: "together", fetcher: () => fetchTogetherData(apiKeys.TOGETHER_API_KEY) },
 		{ name: "fireworks-ai", fetcher: () => fetchFireworksData(apiKeys.FIREWORKS_API_KEY) },
 		{ name: "hyperbolic", fetcher: () => fetchHyperbolicData(apiKeys.HYPERBOLIC_API_KEY) },
+		// Not sure how to get Replicate data, there is no field for max tokens.
+		// { name: "replicate", fetcher: () => fetchReplicateData(apiKeys.REPLICATE_API_KEY) },
 	];
 
 	const settledResults = await Promise.allSettled(providerFetchers.map(p => p.fetcher()));
@@ -185,8 +192,7 @@ export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensC
 				results[providerName] = result.value;
 				serverLog(`Successfully fetched data for ${providerName}`);
 			} else {
-				// Don't log missing key warning here, it's logged in the fetcher function
-				// console.log(`No data returned for ${providerName}.`);
+				serverLog(`No data returned for ${providerName}.`);
 			}
 		} else if (result.status === "rejected") {
 			serverError(`Error fetching ${providerName} data:`, result.reason);
