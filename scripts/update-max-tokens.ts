@@ -18,6 +18,7 @@ async function runUpdate() {
 		HYPERBOLIC_API_KEY: process.env.HYPERBOLIC_API_KEY,
 		REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
 		NEBIUS_API_KEY: process.env.NEBIUS_API_KEY,
+		NOVITA_API_KEY: process.env.NOVITA_API_KEY,
 	};
 
 	try {

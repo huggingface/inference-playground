@@ -17,7 +17,6 @@ export async function fetchReplicateData(apiKey: string | undefined): Promise<Ma
 			throw new Error(`Replicate API request failed: ${response.status} ${response.statusText}`);
 		}
 		const data: any = await response.json();
-		console.log(data);
 		const modelsData: MaxTokensCache["replicate"] = {};
 
 		if (data?.results && Array.isArray(data.results)) {
