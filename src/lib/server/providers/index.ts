@@ -1,6 +1,5 @@
 import fs from "fs/promises";
 import path from "path";
-// Removed: import { env } from '$env/dynamic/private'; // No longer needed here
 import { fetchCohereData } from "./cohere.js";
 import { fetchTogetherData } from "./together.js";
 import { fetchFireworksData } from "./fireworks.js";
@@ -58,6 +57,18 @@ async function readCache(): Promise<MaxTokensCache> {
 	return cacheReadPromise;
 }
 
+const isBrowser = typeof window !== "undefined";
+
+function serverLog(...txt: unknown[]) {
+	if (isBrowser) return;
+	console.log(...txt);
+}
+
+function serverError(...txt: unknown[]) {
+	if (isBrowser) return;
+	console.error(...txt);
+}
+
 async function updateCache(provider: string, modelId: string, maxTokens: number): Promise<void> {
 	try {
 		let cache: MaxTokensCache;
@@ -79,9 +90,9 @@ async function updateCache(provider: string, modelId: string, maxTokens: number)
 		await fs.writeFile(tempFilePath, JSON.stringify(cache, null, "\t"), "utf-8");
 		await fs.rename(tempFilePath, CACHE_FILE_PATH);
 		memoryCache = cache;
-		console.log(`Cache updated for ${provider} - ${modelId}: ${maxTokens}`);
+		serverLog(`Cache updated for ${provider} - ${modelId}: ${maxTokens}`);
 	} catch (error) {
-		console.error(`Error updating max_tokens cache for ${provider} - ${modelId}:`, error);
+		serverError(`Error updating max_tokens cache for ${provider} - ${modelId}:`, error);
 		memoryCache = null;
 	}
 }
@@ -100,7 +111,7 @@ export async function getMaxTokens(
 		return cachedValue;
 	}
 
-	console.log(`Cache miss for ${provider} - ${modelId}. Attempting live fetch...`);
+	serverLog(`Cache miss for ${provider} - ${modelId}. Attempting live fetch...`);
 
 	let liveData: number | null = null;
 	let fetchedProviderData: MaxTokensCache[string] | null = null;
@@ -125,22 +136,22 @@ export async function getMaxTokens(
 				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
 			default:
-				console.log(`Live fetch not supported or implemented for provider: ${provider}`);
+				serverLog(`Live fetch not supported or implemented for provider: ${provider}`);
 				return null;
 		}
 
 		if (liveData !== null) {
-			console.log(`Live fetch successful for ${provider} - ${modelId}: ${liveData}`);
+			serverLog(`Live fetch successful for ${provider} - ${modelId}: ${liveData}`);
 			updateCache(provider, modelId, liveData).catch(err => {
-				console.error(`Async cache update failed for ${provider} - ${modelId}:`, err);
+				serverError(`Async cache update failed for ${provider} - ${modelId}:`, err);
 			});
 			return liveData;
 		} else {
-			console.log(`Live fetch for ${provider} did not return data for model ${modelId}.`);
+			serverLog(`Live fetch for ${provider} did not return data for model ${modelId}.`);
 			return null;
 		}
 	} catch (error) {
-		console.error(`Error during live fetch for ${provider} - ${modelId}:`, error);
+		serverError(`Error during live fetch for ${provider} - ${modelId}:`, error);
 		return null;
 	}
 }
@@ -148,7 +159,7 @@ export async function getMaxTokens(
 // --- Helper for Build Script ---
 // Now accepts an apiKeys object
 export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensCache> {
-	console.log("Fetching data for all providers...");
+	serverLog("Fetching data for all providers...");
 	const results: MaxTokensCache = {};
 
 	// Define fetchers, passing the specific key from the apiKeys object
@@ -164,7 +175,7 @@ export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensC
 	settledResults.forEach((result, index) => {
 		const providerInfo = providerFetchers[index];
 		if (!providerInfo) {
-			console.error(`Error: No provider info found for index ${index}`);
+			serverError(`Error: No provider info found for index ${index}`);
 			return;
 		}
 		const providerName = providerInfo.name;
@@ -172,16 +183,16 @@ export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensC
 		if (result.status === "fulfilled" && result.value) {
 			if (Object.keys(result.value).length > 0) {
 				results[providerName] = result.value;
-				console.log(`Successfully fetched data for ${providerName}`);
+				serverLog(`Successfully fetched data for ${providerName}`);
 			} else {
 				// Don't log missing key warning here, it's logged in the fetcher function
 				// console.log(`No data returned for ${providerName}.`);
 			}
 		} else if (result.status === "rejected") {
-			console.error(`Error fetching ${providerName} data:`, result.reason);
+			serverError(`Error fetching ${providerName} data:`, result.reason);
 		}
 	});
 
-	console.log("Finished fetching provider data.");
+	serverLog("Finished fetching provider data.");
 	return results;
 }
