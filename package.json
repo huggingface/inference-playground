@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "pnpm run update-max-tokens && vite dev",
 		"build": "pnpm run update-max-tokens && vite build",
 		"preview": "vite preview",
 		"prepare": "ts-patch install && svelte-kit sync || echo ''",

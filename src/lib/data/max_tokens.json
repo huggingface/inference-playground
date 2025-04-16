@@ -1,7 +1,22 @@
 {
 	"replicate": {},
 	"sambanova": {
-		"samba/model-name": 8192
+		"DeepSeek-R1": 16384,
+		"DeepSeek-R1-Distill-Llama-70B": 131072,
+		"DeepSeek-V3-0324": 16384,
+		"E5-Mistral-7B-Instruct": 4096,
+		"Llama-3.2-11B-Vision-Instruct": 4096,
+		"Llama-3.2-90B-Vision-Instruct": 4096,
+		"Llama-4-Maverick-17B-128E-Instruct": 8192,
+		"Llama-4-Scout-17B-16E-Instruct": 8192,
+		"Meta-Llama-3.1-405B-Instruct": 16384,
+		"Meta-Llama-3.1-8B-Instruct": 16384,
+		"Meta-Llama-3.2-1B-Instruct": 16384,
+		"Meta-Llama-3.2-3B-Instruct": 4096,
+		"Meta-Llama-3.3-70B-Instruct": 131072,
+		"Meta-Llama-Guard-3-8B": 16384,
+		"QwQ-32B": 16384,
+		"Qwen2-Audio-7B-Instruct": 4096
 	},
 	"nebius": {
 		"meta-llama/Meta-Llama-3.1-8B-Instruct-fast": 131072,
@@ -245,5 +260,34 @@
 		"meta-llama/Llama-Guard-3-11B-Vision-Turbo": 131072,
 		"meta-llama/Llama-3.2-3B-Instruct-Turbo": 131072,
 		"Qwen/Qwen2.5-72B-Instruct-Turbo": 131072
+	},
+	"fireworks-ai": {
+		"accounts/fireworks/models/mixtral-8x7b-instruct": 32768,
+		"accounts/fireworks/models/qwq-32b": 131072,
+		"accounts/fireworks/models/qwen2-vl-72b-instruct": 32768,
+		"accounts/fireworks/models/deepseek-v3": 131072,
+		"accounts/fireworks/models/llama-v3p1-8b-instruct": 131072,
+		"accounts/fireworks/models/llama-v3p1-70b-instruct": 131072,
+		"accounts/fireworks/models/llama-v3p2-90b-vision-instruct": 131072,
+		"accounts/fireworks/models/llama4-maverick-instruct-basic": 1048576,
+		"accounts/fireworks/models/llama-v3-70b-instruct": 8192,
+		"accounts/fireworks/models/deepseek-v3-0324": 163840,
+		"accounts/fireworks/models/qwen2p5-vl-32b-instruct": 128000,
+		"accounts/fireworks/models/llama4-scout-instruct-basic": 131072,
+		"accounts/fireworks/models/deepseek-r1-basic": 163840,
+		"accounts/fireworks/models/qwen-qwq-32b-preview": 32768,
+		"accounts/fireworks/models/phi-3-vision-128k-instruct": 32064,
+		"accounts/fireworks/models/firesearch-ocr-v6": 131072,
+		"accounts/fireworks/models/llama-v3p3-70b-instruct": 131072,
+		"accounts/fireworks/models/qwen2p5-coder-32b-instruct": 131072,
+		"accounts/fireworks/models/llama-v3p2-11b-vision-instruct": 131072,
+		"accounts/fireworks/models/deepseek-r1": 163840,
+		"accounts/yi-01-ai/models/yi-large": 32768,
+		"accounts/fireworks/models/llama-v3p1-405b-instruct": 131072,
+		"accounts/fireworks/models/llama-guard-3-8b": 131072,
+		"accounts/sentientfoundation/models/dobby-unhinged-llama-3-3-70b-new": 131072,
+		"accounts/fireworks/models/mixtral-8x22b-instruct": 65536,
+		"accounts/fireworks/models/qwen2p5-72b-instruct": 32768,
+		"accounts/perplexity/models/r1-1776": 163840
 	}
 }

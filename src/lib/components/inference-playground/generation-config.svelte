@@ -3,6 +3,7 @@
 
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import { customMaxTokens } from "./utils.js";
+	import maxTokensData from "$lib/data/max_tokens.json";
 
 	interface Props {
 		conversation: Conversation;
@@ -11,8 +12,21 @@
 
 	let { conversation = $bindable(), classNames = "" }: Props = $props();
 
-	let modelMaxLength = $derived(customMaxTokens[conversation.model.id] ?? 100000);
-	let maxTokens = $derived(Math.min(modelMaxLength ?? GENERATION_CONFIG_SETTINGS["max_tokens"].max, 64_000));
+	const maxTokensFromCache = $derived.by(() => {
+		const { provider, model } = conversation;
+		if (!provider || !model) return;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const res = (maxTokensData as any)[provider]?.[model.id.toLowerCase()] as number | undefined;
+		console.log("Start Logs");
+		console.log(provider);
+		console.log(model.id.toLowerCase());
+		console.log(res);
+		console.log("End Logs\n\n");
+		return res;
+	});
+
+	const modelMaxLength = $derived(maxTokensFromCache ?? customMaxTokens[conversation.model.id] ?? 100000);
+	const maxTokens = $derived(Math.min(modelMaxLength ?? GENERATION_CONFIG_SETTINGS["max_tokens"].max, 64_000));
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">

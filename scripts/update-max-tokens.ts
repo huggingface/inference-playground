@@ -19,6 +19,7 @@ async function runUpdate() {
 		REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
 		NEBIUS_API_KEY: process.env.NEBIUS_API_KEY,
 		NOVITA_API_KEY: process.env.NOVITA_API_KEY,
+		SAMBANOVA_API_KEY: process.env.SAMBANOVA_API_KEY,
 	};
 
 	try {

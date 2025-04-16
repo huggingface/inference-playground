@@ -7,6 +7,7 @@ import { fetchHyperbolicData } from "./hyperbolic.js";
 import { fetchReplicateData } from "./replicate.js";
 import { fetchNebiusData } from "./nebius.js";
 import { fetchNovitaData } from "./novita.js";
+import { fetchSambanovaData } from "./sambanova.js";
 
 // --- Constants ---
 const CACHE_FILE_PATH = path.resolve("src/lib/server/data/max_tokens.json");
@@ -27,6 +28,7 @@ export interface ApiKeys {
 	REPLICATE_API_KEY?: string;
 	NEBIUS_API_KEY?: string;
 	NOVITA_API_KEY?: string;
+	SAMBANOVA_API_KEY?: string;
 }
 
 // --- Cache Handling ---
@@ -152,6 +154,10 @@ export async function getMaxTokens(
 				fetchedProviderData = await fetchNovitaData(apiKey);
 				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
+			case "sambanova":
+				fetchedProviderData = await fetchSambanovaData(apiKey);
+				liveData = fetchedProviderData?.[modelId] ?? null;
+				break;
 			default:
 				serverLog(`Live fetch not supported or implemented for provider: ${provider}`);
 				return null;
@@ -188,6 +194,7 @@ export async function fetchAllProviderData(apiKeys: ApiKeys): Promise<MaxTokensC
 		{ name: "replicate", fetcher: () => fetchReplicateData(apiKeys.REPLICATE_API_KEY) },
 		{ name: "nebius", fetcher: () => fetchNebiusData(apiKeys.NEBIUS_API_KEY) },
 		{ name: "novita", fetcher: () => fetchNovitaData(apiKeys.NOVITA_API_KEY) },
+		{ name: "sambanova", fetcher: () => fetchSambanovaData(apiKeys.SAMBANOVA_API_KEY) },
 	];
 
 	const settledResults = await Promise.allSettled(providerFetchers.map(p => p.fetcher()));
