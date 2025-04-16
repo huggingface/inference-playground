@@ -1,17 +1,16 @@
-import { env } from "$env/dynamic/private";
-import type { MaxTokensCache } from "../server/providers.js.js";
+import type { MaxTokensCache } from "./index.js";
 
 const HYPERBOLIC_API_URL = "https://api.hyperbolic.xyz/v1/models"; // Assumed
 
-export async function fetchHyperbolicData(): Promise<MaxTokensCache["hyperbolic"]> {
-	if (!env.HYPERBOLIC_API_KEY) {
-		console.warn("HYPERBOLIC_API_KEY not set. Skipping Hyperbolic fetch.");
+export async function fetchHyperbolicData(apiKey: string | undefined): Promise<MaxTokensCache["hyperbolic"]> {
+	if (!apiKey) {
+		console.warn("Hyperbolic API key not provided. Skipping Hyperbolic fetch.");
 		return {};
 	}
 	try {
 		const response = await fetch(HYPERBOLIC_API_URL, {
 			headers: {
-				Authorization: `Bearer ${env.HYPERBOLIC_API_KEY}`,
+				Authorization: `Bearer ${apiKey}`,
 			},
 		});
 		if (!response.ok) {

@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config(); // Load .env file into process.env
 
-import { fetchAllProviderData, type ApiKeys } from "../src/lib/server/providers.js"; // Import ApiKeys type
+import { fetchAllProviderData, type ApiKeys } from "../src/lib/server/providers/index.js"; // Import ApiKeys type
 import fs from "fs/promises";
 import path from "path";
 
-const CACHE_FILE_PATH = path.resolve("src/lib/server/data/max_tokens.json");
+const CACHE_FILE_PATH = path.resolve("src/lib/data/max_tokens.json");
 
 async function runUpdate() {
 	console.log("Starting max tokens cache update...");

@@ -1,4 +1,4 @@
-import type { MaxTokensCache } from "../providers.js";
+import type { MaxTokensCache } from "./index.js";
 
 const COHERE_API_URL = "https://api.cohere.ai/v1/models";
 

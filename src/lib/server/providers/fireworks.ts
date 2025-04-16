@@ -1,17 +1,16 @@
-import { env } from "$env/dynamic/private";
-import type { MaxTokensCache } from "../providers.js";
+import type { MaxTokensCache } from "./index.js";
 
 const FIREWORKS_API_URL = "https://api.fireworks.ai/inference/v1/models"; // Assumed
 
-export async function fetchFireworksData(): Promise<MaxTokensCache["fireworks-ai"]> {
-	if (!env.FIREWORKS_API_KEY) {
-		console.warn("FIREWORKS_API_KEY not set. Skipping Fireworks AI fetch.");
+export async function fetchFireworksData(apiKey: string | undefined): Promise<MaxTokensCache["fireworks-ai"]> {
+	if (!apiKey) {
+		console.warn("Fireworks AI API key not provided. Skipping Fireworks AI fetch.");
 		return {};
 	}
 	try {
 		const response = await fetch(FIREWORKS_API_URL, {
 			headers: {
-				Authorization: `Bearer ${env.FIREWORKS_API_KEY}`,
+				Authorization: `Bearer ${apiKey}`,
 			},
 		});
 		if (!response.ok) {

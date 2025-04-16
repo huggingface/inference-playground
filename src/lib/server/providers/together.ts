@@ -1,4 +1,4 @@
-import type { MaxTokensCache } from "../providers.js";
+import type { MaxTokensCache } from "./index.js";
 
 const TOGETHER_API_URL = "https://api.together.xyz/v1/models";
 

@@ -1,10 +1,10 @@
 import fs from "fs/promises";
 import path from "path";
 // Removed: import { env } from '$env/dynamic/private'; // No longer needed here
-import { fetchCohereData } from "./providers/cohere.js";
-import { fetchTogetherData } from "./providers/together.js";
-import { fetchFireworksData } from "./providers/fireworks.js";
-import { fetchHyperbolicData } from "./providers/hyperbolic.js";
+import { fetchCohereData } from "./cohere.js";
+import { fetchTogetherData } from "./together.js";
+import { fetchFireworksData } from "./fireworks.js";
+import { fetchHyperbolicData } from "./hyperbolic.js";
 
 // --- Constants ---
 const CACHE_FILE_PATH = path.resolve("src/lib/server/data/max_tokens.json");
@@ -110,19 +110,19 @@ export async function getMaxTokens(
 		switch (provider) {
 			case "cohere":
 				fetchedProviderData = await fetchCohereData(apiKey); // Pass apiKey
-				liveData = fetchedProviderData[modelId] ?? null;
+				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
 			case "together":
 				fetchedProviderData = await fetchTogetherData(apiKey); // Pass apiKey
-				liveData = fetchedProviderData[modelId] ?? null;
+				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
 			case "fireworks-ai":
 				fetchedProviderData = await fetchFireworksData(apiKey); // Pass apiKey
-				liveData = fetchedProviderData[modelId] ?? null;
+				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
 			case "hyperbolic":
 				fetchedProviderData = await fetchHyperbolicData(apiKey); // Pass apiKey
-				liveData = fetchedProviderData[modelId] ?? null;
+				liveData = fetchedProviderData?.[modelId] ?? null;
 				break;
 			default:
 				console.log(`Live fetch not supported or implemented for provider: ${provider}`);
