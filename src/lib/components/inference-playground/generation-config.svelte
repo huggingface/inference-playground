@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { Conversation } from "$lib/types.js";
-
+	import maxTokensData from "$lib/data/max_tokens.json";
+	import { isHFModel, type Conversation } from "$lib/types.js";
+	import { tryGet } from "$lib/utils/object.js";
+	import { watch } from "runed";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import { customMaxTokens } from "./utils.js";
-	import maxTokensData from "$lib/data/max_tokens.json";
 
 	interface Props {
 		conversation: Conversation;
@@ -14,19 +15,27 @@
 
 	const maxTokensFromCache = $derived.by(() => {
 		const { provider, model } = conversation;
-		if (!provider || !model) return;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const res = (maxTokensData as any)[provider]?.[model.id.toLowerCase()] as number | undefined;
-		console.log("Start Logs");
-		console.log(provider);
-		console.log(model.id.toLowerCase());
-		console.log(res);
-		console.log("End Logs\n\n");
-		return res;
+		if (!provider || !isHFModel(model)) return;
+
+		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
+		if (!idOnProvider) return;
+
+		const models = tryGet(maxTokensData, provider);
+		if (!models) return;
+
+		return tryGet(models, idOnProvider) as number | undefined;
 	});
 
-	const modelMaxLength = $derived(maxTokensFromCache ?? customMaxTokens[conversation.model.id] ?? 100000);
-	const maxTokens = $derived(Math.min(modelMaxLength ?? GENERATION_CONFIG_SETTINGS["max_tokens"].max, 64_000));
+	const maxTokens = $derived(maxTokensFromCache ?? customMaxTokens[conversation.model.id] ?? 100000);
+
+	watch(
+		() => maxTokens,
+		() => {
+			const curr = conversation.config.max_tokens;
+			if (!curr || curr <= maxTokens) return;
+			conversation.config.max_tokens = maxTokens;
+		}
+	);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -40,7 +49,7 @@
 				>
 				<input
 					type="number"
-					class="w-18 rounded-sm border bg-transparent px-1 py-0.5 text-right text-sm dark:border-gray-700"
+					class="w-20 rounded-sm border bg-transparent px-1 py-0.5 text-right text-sm dark:border-gray-700"
 					{min}
 					{max}
 					{step}

@@ -27,6 +27,7 @@ export type ConversationWithHFModel = Conversation & {
 export const isConversationWithHFModel = typia.createIs<ConversationWithHFModel>();
 export const isConversationWithCustomModel = typia.createIs<ConversationWithCustomModel>();
 
+export const isHFModel = typia.createIs<Model>();
 export const isCustomModel = typia.createIs<CustomModel>();
 
 export type Project = {
