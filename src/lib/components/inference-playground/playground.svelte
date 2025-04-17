@@ -6,7 +6,6 @@
 	import { token } from "$lib/state/token.svelte.js";
 	import { type ConversationMessage, type Model, type Project } from "$lib/types.js";
 	import { isMac } from "$lib/utils/platform.js";
-	import { watch } from "runed";
 	import typia from "typia";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconCode from "~icons/carbon/code";
@@ -27,7 +26,8 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import { getTokens, handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
+	import { handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
+	import { generationStats } from "$lib/state/generation-stats.svelte";
 
 	const startMessageUser: ConversationMessage = { role: "user", content: "" };
 
@@ -37,25 +37,6 @@
 
 	const abortManager = new AbortManager();
 	let selectCompareModelOpen = $state(false);
-
-	interface GenerationStatistics {
-		latency: number;
-		generatedTokensCount: number;
-	}
-	let generationStats = $state(
-		session.project.conversations.map(_ => ({ latency: 0, generatedTokensCount: 0 })) as
-			| [GenerationStatistics]
-			| [GenerationStatistics, GenerationStatistics]
-	);
-
-	watch(
-		() => $state.snapshot(session.project),
-		() => {
-			session.project.conversations.forEach(async (c, i) => {
-				generationStats[i] = { latency: 0, ...generationStats[i], generatedTokensCount: await getTokens(c) };
-			});
-		}
-	);
 
 	const systemPromptSupported = $derived(
 		session.project.conversations.some(conversation => isSystemPromptSupported(conversation.model))
@@ -96,10 +77,8 @@
 				abortManager.createController()
 			);
 		} else {
-			const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conversation);
+			const { message: newMessage } = await handleNonStreamingResponse(conversation);
 			conversation.messages = [...conversation.messages, newMessage];
-			const c = generationStats[conversationIdx];
-			if (c) c.generatedTokensCount += newTokensCount;
 		}
 
 		const endTime = performance.now();
@@ -190,14 +169,14 @@
 		}
 		const newConversation = { ...JSON.parse(JSON.stringify(session.project.conversations[0])), model };
 		session.project.conversations = [...session.project.conversations, newConversation];
-		generationStats = [generationStats[0], { latency: 0, generatedTokensCount: 0 }];
+		generationStats.set([generationStats[0]!, { latency: 0, generatedTokensCount: 0 }]);
 	}
 
 	function removeCompareModal(conversationIdx: number) {
 		session.project.conversations.splice(conversationIdx, 1)[0];
 		session.$ = session.$;
 		generationStats.splice(conversationIdx, 1)[0];
-		generationStats = generationStats;
+		generationStats.set(generationStats);
 	}
 </script>
 

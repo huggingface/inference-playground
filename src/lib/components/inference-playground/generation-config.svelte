@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Conversation } from "$lib/types.js";
-
+	import { type Conversation } from "$lib/types.js";
+	import { watch } from "runed";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
-	import { customMaxTokens } from "./utils.js";
+	import { maxAllowedTokens } from "./utils.js";
 
 	interface Props {
 		conversation: Conversation;
@@ -11,8 +11,16 @@
 
 	let { conversation = $bindable(), classNames = "" }: Props = $props();
 
-	let modelMaxLength = $derived(customMaxTokens[conversation.model.id] ?? 100000);
-	let maxTokens = $derived(Math.min(modelMaxLength ?? GENERATION_CONFIG_SETTINGS["max_tokens"].max, 64_000));
+	const maxTokens = $derived(maxAllowedTokens(conversation));
+
+	watch(
+		() => maxTokens,
+		() => {
+			const curr = conversation.config.max_tokens;
+			if (!curr || curr <= maxTokens) return;
+			conversation.config.max_tokens = maxTokens;
+		}
+	);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -26,7 +34,7 @@
 				>
 				<input
 					type="number"
-					class="w-18 rounded-sm border bg-transparent px-1 py-0.5 text-right text-sm dark:border-gray-700"
+					class="w-20 rounded-sm border bg-transparent px-1 py-0.5 text-right text-sm dark:border-gray-700"
 					{min}
 					{max}
 					{step}

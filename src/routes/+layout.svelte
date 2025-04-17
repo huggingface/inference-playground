@@ -6,6 +6,7 @@
 	import ShareModal from "$lib/components/share-modal.svelte";
 	import "../app.css";
 	import { session } from "$lib/state/session.svelte";
+	import { generationStats } from "$lib/state/generation-stats.svelte";
 
 	interface Props {
 		children?: import("svelte").Snippet;
@@ -13,6 +14,7 @@
 
 	let { children }: Props = $props();
 	session.init.fn();
+	generationStats.init();
 </script>
 
 {@render children?.()}
