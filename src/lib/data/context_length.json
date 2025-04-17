@@ -206,7 +206,6 @@
 		"meta-llama/LlamaGuard-2-8b": 8192,
 		"cartesia/sonic-2": 0,
 		"togethercomputer/m2-bert-80M-8k-retrieval": 8192,
-		"meta-llama/Llama-3.3-70B-Instruct-Turbo": 131072,
 		"meta-llama/Llama-3.3-70B-Instruct-Turbo-Free": 131072,
 		"upstage/SOLAR-10.7B-Instruct-v1.0": 4096,
 		"togethercomputer/MoA-1": 32768,
@@ -248,7 +247,6 @@
 		"meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo": 131072,
 		"meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": 524288,
 		"meta-llama/Meta-Llama-3-8B-Instruct-Lite": 8192,
-		"meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": 131072,
 		"Qwen/QwQ-32B": 131072,
 		"meta-llama/Llama-4-Scout-17B-16E-Instruct": 327680,
 		"mistralai/Mixtral-8x7B-Instruct-v0.1": 32768,
@@ -260,7 +258,9 @@
 		"meta-llama/Llama-Vision-Free": 131072,
 		"meta-llama/Llama-Guard-3-11B-Vision-Turbo": 131072,
 		"meta-llama/Llama-3.2-3B-Instruct-Turbo": 131072,
-		"Qwen/Qwen2.5-72B-Instruct-Turbo": 131072
+		"Qwen/Qwen2.5-72B-Instruct-Turbo": 131072,
+		"meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": 131072,
+		"meta-llama/Llama-3.3-70B-Instruct-Turbo": 131072
 	},
 	"fireworks-ai": {
 		"accounts/fireworks/models/mixtral-8x7b-instruct": 32768,

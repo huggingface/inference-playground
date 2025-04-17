@@ -1,12 +1,8 @@
 <script lang="ts">
-	import ctxLengthData from "$lib/data/context_length.json";
-	import { isHFModel, type Conversation } from "$lib/types.js";
-	import { tryGet } from "$lib/utils/object.js";
+	import { type Conversation } from "$lib/types.js";
 	import { watch } from "runed";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
-	import { customMaxTokens } from "./utils.js";
-	import { generationStats } from "$lib/state/generation-stats.svelte.js";
-	import { session } from "$lib/state/session.svelte.js";
+	import { maxAllowedTokens } from "./utils.js";
 
 	interface Props {
 		conversation: Conversation;
@@ -15,27 +11,7 @@
 
 	let { conversation = $bindable(), classNames = "" }: Props = $props();
 
-	const ctxLength = $derived.by(() => {
-		const { provider, model } = conversation;
-		if (!provider || !isHFModel(model)) return;
-
-		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
-		if (!idOnProvider) return;
-
-		const models = tryGet(ctxLengthData, provider);
-		if (!models) return;
-
-		return tryGet(models, idOnProvider) as number | undefined;
-	});
-
-	const convIdx = $derived(session.project.conversations.indexOf(conversation));
-	const currTokens = $derived(generationStats[convIdx]?.generatedTokensCount ?? 0);
-	const maxTokens = $derived.by(() => {
-		if (!ctxLength) {
-			return customMaxTokens[conversation.model.id] ?? 100000;
-		}
-		return ctxLength - currTokens;
-	});
+	const maxTokens = $derived(maxAllowedTokens(conversation));
 
 	watch(
 		() => maxTokens,

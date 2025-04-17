@@ -1,6 +1,8 @@
+import ctxLengthData from "$lib/data/context_length.json";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import {
 	isCustomModel,
+	isHFModel,
 	type Conversation,
 	type ConversationMessage,
 	type CustomModel,
@@ -11,6 +13,7 @@ import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { token } from "$lib/state/token.svelte";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
 import OpenAI from "openai";
+import { tryGet } from "$lib/utils/object.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -70,7 +73,25 @@ function parseOpenAIMessages(
 	];
 }
 
-function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal): CompletionMetadata {
+export function maxAllowedTokens(conversation: Conversation) {
+	const ctxLength = (() => {
+		const { provider, model } = conversation;
+		if (!provider || !isHFModel(model)) return;
+
+		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
+		if (!idOnProvider) return;
+
+		const models = tryGet(ctxLengthData, provider);
+		if (!models) return;
+
+		return tryGet(models, idOnProvider) as number | undefined;
+	})();
+
+	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
+	return ctxLength;
+}
+
+async function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal): Promise<CompletionMetadata> {
 	const { model, systemMessage } = conversation;
 
 	// Handle OpenAI-compatible models
@@ -99,6 +120,7 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
 		...conversation.messages,
 	];
+	const currTokens = await getTokens(conversation);
 
 	return {
 		type: "huggingface",
@@ -108,6 +130,7 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 			messages: messages.map(parseMessage),
 			provider: conversation.provider,
 			...conversation.config,
+			max_tokens: maxAllowedTokens(conversation) - currTokens,
 		},
 	};
 }
@@ -117,7 +140,7 @@ export async function handleStreamingResponse(
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
-	const metadata = getCompletionMetadata(conversation, abortController.signal);
+	const metadata = await getCompletionMetadata(conversation, abortController.signal);
 
 	if (metadata.type === "openai") {
 		const stream = await metadata.client.chat.completions.create({
@@ -148,7 +171,7 @@ export async function handleStreamingResponse(
 export async function handleNonStreamingResponse(
 	conversation: Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const metadata = getCompletionMetadata(conversation);
+	const metadata = await getCompletionMetadata(conversation);
 
 	if (metadata.type === "openai") {
 		const response = await metadata.client.chat.completions.create({
