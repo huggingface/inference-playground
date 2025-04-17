@@ -116,7 +116,7 @@
 						>
 							<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
 							{#each state.conversations as conversation, i}
-								{@const msgs = conversation.messages}
+								{@const msgs = [conversation.systemMessage, ...conversation.messages].filter(m => m.content?.trim())}
 								{@const sliced = msgs.slice(0, 4)}
 								<div
 									class={[
@@ -134,7 +134,9 @@
 										<div class="flex flex-col gap-1 p-2">
 											<p class="font-mono text-xs font-medium text-gray-400 uppercase">{msg.role}</p>
 											{#if msg.content?.trim()}
-												<p class="line-clamp-2 text-sm">{msg.content.trim()}</p>
+												<p class={[msg.role === "system" ? "line-clamp-4 " : "line-clamp-2 ", "text-sm"]}>
+													{msg.content.trim()}
+												</p>
 											{:else}
 												<p class="text-sm text-gray-500 italic">No content</p>
 											{/if}
