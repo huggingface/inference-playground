@@ -5,10 +5,10 @@ import { fetchAllProviderData, type ApiKeys } from "../src/lib/server/providers/
 import fs from "fs/promises";
 import path from "path";
 
-const CACHE_FILE_PATH = path.resolve("src/lib/data/max_tokens.json");
+const CACHE_FILE_PATH = path.resolve("src/lib/data/context_length.json");
 
 async function runUpdate() {
-	console.log("Starting max tokens cache update...");
+	console.log("Starting context length cache update...");
 
 	// Gather API keys from process.env
 	const apiKeys: ApiKeys = {
@@ -44,10 +44,10 @@ async function runUpdate() {
 		await fs.writeFile(tempFilePath, JSON.stringify(combinedData, null, "\t"), "utf-8");
 		await fs.rename(tempFilePath, CACHE_FILE_PATH);
 
-		console.log("Max tokens cache update complete.");
+		console.log("Context length cache update complete.");
 		console.log(`Cache file written to: ${CACHE_FILE_PATH}`);
 	} catch (error) {
-		console.error("Error during max tokens cache update:", error);
+		console.error("Error during context length cache update:", error);
 		process.exit(1); // Exit with error code
 	}
 }

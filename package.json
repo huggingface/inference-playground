@@ -12,7 +12,7 @@
 		"lint": "prettier . --check . && eslint src/",
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
-		"update-max-tokens": "jiti scripts/update-max-tokens.ts"
+		"update-ctx-length": "jiti scripts/update-ctx-length.ts"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.3.0",

@@ -304,11 +304,20 @@ export async function getTokenizer(model: Model) {
 	}
 }
 
+// When you don't have access to a tokenizer, guesstimate
+export function estimateTokens(conversation: Conversation) {
+	const content = conversation.messages.reduce((acc, curr) => {
+		return acc + (curr?.content ?? "");
+	}, "");
+
+	return content.length / 4; // 1 token ~ 4 characters
+}
+
 export async function getTokens(conversation: Conversation): Promise<number> {
 	const model = conversation.model;
-	if (isCustomModel(model)) return 0;
+	if (isCustomModel(model)) return estimateTokens(conversation);
 	const tokenizer = await getTokenizer(model);
-	if (tokenizer === null) return 0;
+	if (tokenizer === null) return estimateTokens(conversation);
 
 	// This is a simplified version - you might need to adjust based on your exact needs
 	let formattedText = "";

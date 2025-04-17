@@ -10,7 +10,7 @@ import { fetchNovitaData } from "./novita.js";
 import { fetchSambanovaData } from "./sambanova.js";
 
 // --- Constants ---
-const CACHE_FILE_PATH = path.resolve("src/lib/server/data/max_tokens.json");
+const CACHE_FILE_PATH = path.resolve("src/lib/server/data/context_length.json");
 
 // --- Types ---
 export interface MaxTokensCache {
@@ -54,7 +54,7 @@ async function readCache(): Promise<MaxTokensCache> {
 				memoryCache = {};
 				return {};
 			}
-			console.error("Error reading max_tokens cache file:", error);
+			console.error("Error reading context length cache file:", error);
 			memoryCache = {};
 			return {};
 		} finally {
@@ -99,7 +99,7 @@ async function updateCache(provider: string, modelId: string, maxTokens: number)
 		memoryCache = cache;
 		serverLog(`Cache updated for ${provider} - ${modelId}: ${maxTokens}`);
 	} catch (error) {
-		serverError(`Error updating max_tokens cache for ${provider} - ${modelId}:`, error);
+		serverError(`Error updating context length cache for ${provider} - ${modelId}:`, error);
 		memoryCache = null;
 	}
 }

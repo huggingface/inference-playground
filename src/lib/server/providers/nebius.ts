@@ -33,7 +33,7 @@ export async function fetchNebiusData(apiKey: string | undefined): Promise<MaxTo
 
 		if (data?.data && Array.isArray(data.data)) {
 			for (const model of data.data) {
-				const contextLength = model.config?.max_tokens ?? model.context_length ?? null;
+				const contextLength = model.context_length ?? model.config?.max_tokens ?? null;
 				if (model.id && typeof contextLength === "number") {
 					modelsData[model.id] = contextLength;
 				}

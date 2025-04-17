@@ -24,7 +24,7 @@ export async function fetchHyperbolicData(apiKey: string | undefined): Promise<M
 		if (data?.data && Array.isArray(data.data)) {
 			for (const model of data.data) {
 				// Check for common context length fields (OpenAI uses context_window)
-				const contextLength = model.context_window ?? model.context_length ?? model.max_tokens ?? null;
+				const contextLength = model.context_length ?? model.context_window ?? model.config?.max_tokens ?? null;
 				// Assuming Hyperbolic uses model.id
 				if (model.id && typeof contextLength === "number") {
 					modelsData[model.id] = contextLength;

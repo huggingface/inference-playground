@@ -23,7 +23,7 @@ export async function fetchTogetherData(apiKey: string | undefined): Promise<Max
 
 		if (Array.isArray(data)) {
 			for (const model of data) {
-				const contextLength = model.context_length ?? model.max_tokens ?? null;
+				const contextLength = model.context_length ?? model.config?.max_tokens ?? null;
 				if (model.id && typeof contextLength === "number") {
 					modelsData[model.id] = contextLength;
 				}

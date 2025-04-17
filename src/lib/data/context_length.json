@@ -128,6 +128,7 @@
 		"jondurbin/airoboros-l2-70b": 4096,
 		"sophosympatheia/midnight-rose-70b": 4096,
 		"sao10k/l3-8b-lunaris": 8192,
+		"qwen/qwen2.5-7b-instruct": 32000,
 		"meta-llama/llama-3.2-1b-instruct": 131000,
 		"meta-llama/llama-3.2-11b-vision-instruct": 32768,
 		"meta-llama/llama-3.2-3b-instruct": 32768,

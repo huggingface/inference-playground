@@ -21,7 +21,7 @@ export async function fetchReplicateData(apiKey: string | undefined): Promise<Ma
 
 		if (data?.results && Array.isArray(data.results)) {
 			for (const model of data.results) {
-				const contextLength = model.config?.max_tokens ?? model.context_length ?? null;
+				const contextLength = model.context_length ?? model.config?.max_tokens ?? null;
 				if (model.id && typeof contextLength === "number") {
 					modelsData[model.id] = contextLength;
 				}
