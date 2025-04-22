@@ -1,8 +1,8 @@
 import type { ValueOf } from "$lib/types.js";
 
 // typed Object.keys
-export function keys<T extends object>(o: T): (keyof T)[] {
-	return Object.keys(o) as (keyof T)[];
+export function keys<T extends object>(o: T) {
+	return Object.keys(o) as Array<`${keyof T & (string | number | boolean | null | undefined)}`>;
 }
 
 // typed Object.entries
