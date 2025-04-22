@@ -86,6 +86,7 @@ export default ts.config(
 			"**/pnpm-lock.yaml",
 			"**/package-lock.json",
 			"**/yarn.lock",
+			"context_length.json",
 		],
 	},
 	{
