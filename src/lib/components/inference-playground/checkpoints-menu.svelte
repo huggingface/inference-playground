@@ -9,12 +9,18 @@
 	import IconStar from "~icons/carbon/star";
 	import IconStarFilled from "~icons/carbon/star-filled";
 	import IconCompare from "~icons/carbon/compare";
+	import { clickOutside } from "$lib/actions/click-outside.js";
 
 	const popover = new Popover({
 		floatingConfig: {
 			offset: { crossAxis: -12 },
 		},
+		onOpenChange: open => {
+			if (open) dialog?.showModal();
+			else dialog?.close();
+		},
 	});
+	let dialog = $state<HTMLDialogElement>();
 
 	const projCheckpoints = $derived(checkpoints.for(session.project.id));
 </script>
@@ -26,10 +32,16 @@
 	{/if}
 </button>
 
-<div
-	class="mb-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+<dialog
+	bind:this={dialog}
+	class="mb-2 !overflow-visible rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+	use:clickOutside={() => (popover.open = false)}
 	{...popover.content}
 >
+	<div
+		class="size-4 translate-x-3 rounded-tl border-t border-l border-gray-200 dark:border-gray-700"
+		{...popover.arrow}
+	></div>
 	<div class="max-h-120 w-80 overflow-x-clip overflow-y-auto p-3 pb-1">
 		<div class="mb-2 flex items-center justify-between px-1">
 			<h3 class="text-sm font-medium dark:text-white">Checkpoints</h3>
@@ -42,8 +54,8 @@
 		</div>
 
 		{#each projCheckpoints as checkpoint (checkpoint.id)}
-			{@const state = checkpoint.projectState}
-			{@const multiple = state.conversations.length > 1}
+			{@const conversations = checkpoint.conversations}
+			{@const multiple = conversations.length > 1}
 			<Tooltip
 				openDelay={0}
 				floatingConfig={{
@@ -63,7 +75,10 @@
 					>
 						<button
 							class="flex flex-1 flex-col text-left text-sm transition-colors"
-							onclick={() => checkpoints.restore(checkpoint)}
+							onclick={e => {
+								e.stopPropagation();
+								checkpoints.restore(checkpoint);
+							}}
 						>
 							<span class="font-medium text-gray-400">{checkpoint.timestamp}</span>
 
@@ -71,7 +86,7 @@
 								{#if multiple}
 									<IconCompare class="text-xs text-gray-400" />
 								{/if}
-								{#each state.conversations as { messages }, i}
+								{#each conversations as { messages }, i}
 									<span class={["text-gray-800 dark:text-gray-200"]}>
 										{messages.length} message{messages.length === 1 ? "" : "s"}
 									</span>
@@ -114,8 +129,11 @@
 							{...tooltip.content}
 							transition:fly={{ x: -2 }}
 						>
-							<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
-							{#each state.conversations as conversation, i}
+							<div
+								class="size-4 rounded-tl border-t border-l border-gray-200 dark:border-gray-700"
+								{...tooltip.arrow}
+							></div>
+							{#each conversations as conversation, i}
 								{@const msgs = conversation.messages}
 								{@const sliced = msgs.slice(0, 4)}
 								<div
@@ -155,4 +173,4 @@
 			</div>
 		{/each}
 	</div>
-</div>
+</dialog>

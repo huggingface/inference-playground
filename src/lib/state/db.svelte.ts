@@ -41,7 +41,7 @@ const versions = {
 		},
 		upgrade: async trans => {
 			// Get a reference to the checkpoint table within this transaction
-			const checkpointsTable = trans.table("checkpoint");
+			const checkpointsTable = trans.table("checkpoints");
 
 			// Use `modify` to iterate over each record and update it
 			await checkpointsTable.toCollection().modify(checkpoint => {
