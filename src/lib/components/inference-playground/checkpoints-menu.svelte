@@ -63,7 +63,7 @@
 					>
 						<button
 							class="flex flex-1 flex-col text-left text-sm transition-colors"
-							onclick={() => checkpoints.restore(session.project.id, checkpoint)}
+							onclick={() => checkpoints.restore(checkpoint)}
 						>
 							<span class="font-medium text-gray-400">{checkpoint.timestamp}</span>
 

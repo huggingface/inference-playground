@@ -3,7 +3,7 @@
 	import { token } from "$lib/state/token.svelte.js";
 	import { isConversationWithCustomModel, isCustomModel, PipelineTag, type Conversation } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
-	import { entries, fromEntries, keys } from "$lib/utils/object.js";
+	import { entries, fromEntries, keys } from "$lib/utils/object.svelte.js";
 	import type { InferenceProvider } from "@huggingface/inference";
 	import hljs from "highlight.js/lib/core";
 	import http from "highlight.js/lib/languages/http";

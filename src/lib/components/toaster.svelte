@@ -3,7 +3,7 @@
 	import { toaster } from "./toaster.svelte.js";
 	import { Progress } from "melt/components";
 	import Close from "~icons/carbon/close";
-	import { omit } from "$lib/utils/object.js";
+	import { omit } from "$lib/utils/object.svelte.js";
 	import { session } from "$lib/state/session.svelte.js";
 	import { AnimationFrames } from "runed";
 

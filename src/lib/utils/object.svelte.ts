@@ -32,3 +32,8 @@ export function pick<T extends Record<string, unknown>, K extends keyof T>(obj: 
 	}
 	return result;
 }
+
+// $state.snapshot but types are preserved
+export function snapshot<T>(s: T): T {
+	return $state.snapshot(s) as T;
+}

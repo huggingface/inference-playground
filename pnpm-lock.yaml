@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      dequal:
+        specifier: ^2.0.3
+        version: 2.0.3
       dexie:
         specifier: ^4.0.11
         version: 4.0.11
