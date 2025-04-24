@@ -4,7 +4,7 @@
 	import { models } from "$lib/state/models.svelte.js";
 	import { session } from "$lib/state/session.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import { type ConversationMessage, type Model, type Project } from "$lib/types.js";
+	import { isConversationWithHFModel, type ConversationMessage, type Model, type Project } from "$lib/types.js";
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
 	import { Popover } from "melt/components";
 	import { watch } from "runed";
@@ -480,15 +480,17 @@
 								<IconCompare />
 								Compare
 							</button>
-							<a
-								href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
-									.project.conversations[0]?.provider}"
-								target="_blank"
-								class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-							>
-								<IconExternal class="text-2xs" />
-								Model page
-							</a>
+							{#if isConversationWithHFModel(session.project.conversations[0])}
+								<a
+									href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
+										.project.conversations[0]?.provider}"
+									target="_blank"
+									class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+								>
+									<IconExternal class="text-2xs" />
+									Model page
+								</a>
+							{/if}
 						</div>
 					</div>
 
