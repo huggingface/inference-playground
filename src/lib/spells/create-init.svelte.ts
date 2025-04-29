@@ -7,9 +7,12 @@ export function createInit(cb: () => void) {
 		cb();
 	}
 
-	return Object.assign(init, {
-		get called() {
-			return called;
+	return Object.defineProperties(init, {
+		called: {
+			get() {
+				return called;
+			},
+			enumerable: true,
 		},
-	});
+	}) as typeof init & { readonly called: boolean };
 }

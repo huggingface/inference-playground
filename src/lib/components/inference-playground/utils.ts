@@ -48,30 +48,13 @@ type OpenAICompletionMetadata = {
 
 type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
 
-function parseOpenAIMessages(
-	messages: ConversationMessage[],
-	systemMessage?: ConversationMessage
-): OpenAI.ChatCompletionMessageParam[] {
-	const parsedMessages: OpenAI.ChatCompletionMessageParam[] = [];
-
-	if (systemMessage?.content) {
-		parsedMessages.push({
-			role: "system",
-			content: systemMessage.content,
-		});
-	}
-
-	return [
-		...parsedMessages,
-		...messages.map(msg => ({
-			role: msg.role === "assistant" ? ("assistant" as const) : ("user" as const),
-			content: msg.content || "",
-		})),
-	];
-}
-
 function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal): CompletionMetadata {
 	const { model, systemMessage } = conversation;
+
+	const messages = [
+		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
+		...conversation.messages,
+	];
 
 	// Handle OpenAI-compatible models
 	if (isCustomModel(model)) {
@@ -88,17 +71,14 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 			type: "openai",
 			client: openai,
 			args: {
-				messages: parseOpenAIMessages(conversation.messages, systemMessage),
+				messages: messages.map(parseMessage) as OpenAI.ChatCompletionMessageParam[],
+				...conversation.config,
 				model: model.id,
 			},
 		};
 	}
 
 	// Handle HuggingFace models
-	const messages = [
-		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
-		...conversation.messages,
-	];
 
 	return {
 		type: "huggingface",

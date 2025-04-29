@@ -71,6 +71,8 @@ export type CustomModel = {
 	_id: string;
 	endpointUrl: string;
 	accessToken?: string;
+	/** @default "text-generation" */
+	pipeline_tag?: PipelineTag;
 };
 
 export type Config = {
@@ -195,6 +197,11 @@ export enum PipelineTag {
 	TextGeneration = "text-generation",
 	ImageTextToText = "image-text-to-text",
 }
+
+export const pipelineTagLabel: Record<PipelineTag, string> = {
+	[PipelineTag.TextGeneration]: "Text Generation",
+	[PipelineTag.ImageTextToText]: "Image Text to Text",
+};
 
 export type MaybeGetter<T> = T | (() => T);
 
