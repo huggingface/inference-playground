@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { observe, observed, ObservedElements } from "$lib/actions/observe.svelte.js";
-	import { AbortManager } from "$lib/spells/abort-manager.svelte.js";
 	import { models } from "$lib/state/models.svelte.js";
 	import { session } from "$lib/state/session.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
@@ -10,10 +9,8 @@
 	import { watch } from "runed";
 	import typia from "typia";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
-	import { showQuotaModal } from "../quota-modal.svelte";
 	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
-	import { addToast } from "../toaster.svelte.js";
 	import Tooltip from "../tooltip.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
@@ -22,8 +19,9 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import { getTokens, handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
+	import { getTokens, isSystemPromptSupported } from "./utils.js";
 
+	import { iterate } from "$lib/utils/array.js";
 	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
 	import IconChatRight from "~icons/carbon/align-box-bottom-right";
 	import IconExternal from "~icons/carbon/arrow-up-right";
@@ -41,26 +39,19 @@
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
-	let loading = $state(false);
+	const loading = $derived(session.generating);
 
-	const abortManager = new AbortManager();
 	let selectCompareModelOpen = $state(false);
-
-	interface GenerationStatistics {
-		latency: number;
-		generatedTokensCount: number;
-	}
-	let generationStats = $state(
-		session.project.conversations.map(_ => ({ latency: 0, generatedTokensCount: 0 })) as
-			| [GenerationStatistics]
-			| [GenerationStatistics, GenerationStatistics]
-	);
 
 	watch(
 		() => $state.snapshot(session.project),
 		() => {
 			session.project.conversations.forEach(async (c, i) => {
-				generationStats[i] = { latency: 0, ...generationStats[i], generatedTokensCount: await getTokens(c) };
+				session.generationStats[i] = {
+					latency: 0,
+					...session.generationStats[i],
+					generatedTokensCount: await getTokens(c),
+				};
 			});
 		}
 	);
@@ -81,109 +72,15 @@
 		if (typia.is<Project["conversations"]>(c)) session.project.conversations = c;
 	}
 
-	async function runInference(conversationIdx: number) {
-		const conversation = session.project.conversations[conversationIdx];
-		if (!conversation) return;
-
-		const startTime = performance.now();
-
-		if (conversation.streaming) {
-			let addedMessage = false;
-			let streamingMessage = $state({ role: "assistant", content: "" });
-
-			await handleStreamingResponse(
-				conversation,
-				content => {
-					if (!streamingMessage) return;
-					streamingMessage.content = content;
-					if (!addedMessage) {
-						conversation.messages = [...conversation.messages, streamingMessage];
-						addedMessage = true;
-					}
-				},
-				abortManager.createController()
-			);
-		} else {
-			const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conversation);
-			conversation.messages = [...conversation.messages, newMessage];
-			const c = generationStats[conversationIdx];
-			if (c) c.generatedTokensCount += newTokensCount;
-		}
-
-		const endTime = performance.now();
-		const c = generationStats[conversationIdx];
-		if (c) c.latency = Math.round(endTime - startTime);
-	}
-
-	async function submit(c: "left" | "right" | "both" = "both") {
-		if (!token.value) {
-			token.showModal = true;
-			return;
-		}
-
-		const conversations = session.project.conversations.filter(
-			(_, idx) => c === "both" || (c === "left" ? idx === 0 : idx === 1)
-		);
-
-		for (const [idx, conversation] of conversations.entries()) {
-			if (conversation.messages.at(-1)?.role !== "assistant") continue;
-			let prefix = "";
-			if (conversations.length === 2) {
-				prefix = `Error on ${idx === 0 ? "left" : "right"} conversation. `;
-			}
-			return addToast({
-				title: "Failed to run inference",
-				description: `${prefix}Messages must alternate between user/assistant roles.`,
-				variant: "error",
-			});
-		}
-
-		(document.activeElement as HTMLElement).blur();
-		loading = true;
-
-		try {
-			const promises = conversations.map((_, idx) => runInference(idx));
-			await Promise.all(promises);
-		} catch (error) {
-			for (const conversation of conversations) {
-				if (conversation.messages.at(-1)?.role === "assistant" && !conversation.messages.at(-1)?.content?.trim()) {
-					conversation.messages.pop();
-					conversation.messages = [...conversation.messages];
-				}
-				session.$ = session.$;
-			}
-
-			if (error instanceof Error) {
-				const msg = error.message;
-				if (msg.toLowerCase().includes("montly") || msg.toLowerCase().includes("pro")) {
-					showQuotaModal();
-				}
-
-				if (error.message.includes("token seems invalid")) {
-					token.reset();
-				}
-
-				if (error.name !== "AbortError") {
-					addToast({ title: "Error", description: error.message, variant: "error" });
-				}
-			} else {
-				addToast({ title: "Error", description: "An unknown error occurred", variant: "error" });
-			}
-		} finally {
-			loading = false;
-			abortManager.clear();
-		}
-	}
-
 	function onKeydown(event: KeyboardEvent) {
 		if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-			submit();
+			session.run();
 		}
 		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "l") {
-			submit("left");
+			session.run("left");
 		}
 		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "r") {
-			submit("right");
+			session.run("right");
 		}
 	}
 
@@ -208,14 +105,14 @@
 		}
 		const newConversation = { ...JSON.parse(JSON.stringify(session.project.conversations[0])), model };
 		session.project.conversations = [...session.project.conversations, newConversation];
-		generationStats = [generationStats[0], { latency: 0, generatedTokensCount: 0 }];
+		session.generationStats = [session.generationStats[0], { latency: 0, generatedTokensCount: 0 }];
 	}
 
 	function removeCompareModal(conversationIdx: number) {
 		session.project.conversations.splice(conversationIdx, 1)[0];
 		session.$ = session.$;
-		generationStats.splice(conversationIdx, 1)[0];
-		generationStats = generationStats;
+		session.generationStats.splice(conversationIdx, 1)[0];
+		session.generationStats = session.generationStats;
 	}
 </script>
 
@@ -324,8 +221,7 @@
 			<div
 				class="pointer-events-none absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 			>
-				{#each generationStats as { latency, generatedTokensCount }, index}
-					{@const isLast = index === generationStats.length - 1}
+				{#each iterate(session.generationStats) as [{ latency, generatedTokensCount }, isLast]}
 					{@const baLeft = observed["bottom-actions"].rect.left}
 					{@const tceRight = observed["token-count-end"].offset.right}
 					<span
@@ -349,7 +245,7 @@
 					<button
 						onclick={() => {
 							viewCode = false;
-							loading ? abortManager.abortAll() : submit();
+							session.runOrStop();
 						}}
 						type="button"
 						class={[
@@ -415,7 +311,7 @@
 										class="group py-1 text-sm"
 										onclick={() => {
 											viewCode = false;
-											loading ? abortManager.abortAll() : submit("left");
+											session.runOrStop("left");
 											popover.open = false;
 										}}
 									>
@@ -434,7 +330,7 @@
 										class="group py-1 text-sm"
 										onclick={() => {
 											viewCode = false;
-											loading ? abortManager.abortAll() : submit("right");
+											session.runOrStop("right");
 											popover.open = false;
 										}}
 									>

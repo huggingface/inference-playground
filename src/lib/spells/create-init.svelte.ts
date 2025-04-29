@@ -1,14 +1,15 @@
 export function createInit(cb: () => void) {
 	let called = $state(false);
 
-	return {
-		fn: () => {
-			if (called) return;
-			called = true;
-			cb();
-		},
+	function init() {
+		if (called) return;
+		called = true;
+		cb();
+	}
+
+	return Object.assign(init, {
 		get called() {
 			return called;
 		},
-	};
+	});
 }

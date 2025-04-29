@@ -1,15 +1,16 @@
 <script lang="ts">
+	import { clickOutside } from "$lib/actions/click-outside.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { session } from "$lib/state/session.svelte.js";
+	import { iterate } from "$lib/utils/array.js";
 	import { Popover } from "melt/builders";
 	import { Tooltip } from "melt/components";
 	import { fly } from "svelte/transition";
+	import IconCompare from "~icons/carbon/compare";
 	import IconHistory from "~icons/carbon/recently-viewed";
-	import IconDelete from "~icons/carbon/trash-can";
 	import IconStar from "~icons/carbon/star";
 	import IconStarFilled from "~icons/carbon/star-filled";
-	import IconCompare from "~icons/carbon/compare";
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import IconDelete from "~icons/carbon/trash-can";
 
 	const popover = new Popover({
 		floatingConfig: {
@@ -144,8 +145,7 @@
 										temp: {conversation.config.temperature}
 										| max tokens: {conversation.config.max_tokens}
 									</p>
-									{#each sliced as msg, i}
-										{@const isLast = i === sliced.length - 1}
+									{#each iterate(sliced) as [msg, isLast]}
 										<div class="flex flex-col gap-1 p-2">
 											<p class="font-mono text-xs font-medium text-gray-400 uppercase">{msg.role}</p>
 											{#if msg.content?.trim()}

@@ -1,4 +1,7 @@
 import { defaultGenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - Svelte imports are broken in TS files
+import { showQuotaModal } from "$lib/components/quota-modal.svelte";
 import { createInit } from "$lib/spells/create-init.svelte.js";
 import {
 	PipelineTag,
@@ -13,8 +16,17 @@ import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
 import { models } from "./models.svelte";
 import { checkpoints } from "./checkpoints.svelte";
+import { handleNonStreamingResponse, handleStreamingResponse } from "$lib/components/inference-playground/utils.js";
+import { AbortManager } from "$lib/spells/abort-manager.svelte";
+import { addToast } from "$lib/components/toaster.svelte.js";
+import { token } from "./token.svelte";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_session";
+
+interface GenerationStatistics {
+	latency: number;
+	generatedTokensCount: number;
+}
 
 const startMessageUser: ConversationMessage = { role: "user", content: "" };
 const systemMessage: ConversationMessage = {
@@ -58,6 +70,13 @@ function getDefaults() {
 
 class SessionState {
 	#value = $state<Session>({} as Session);
+
+	generationStats = $state([{ latency: 0, generatedTokensCount: 0 }] as
+		| [GenerationStatistics]
+		| [GenerationStatistics, GenerationStatistics]);
+	generating = $state(false);
+
+	#abortManager = new AbortManager();
 
 	// Call once in layout
 	init = createInit(() => {
@@ -111,6 +130,10 @@ class SessionState {
 		}
 
 		this.$ = savedSession;
+		session.generationStats = session.project.conversations.map(_ => ({ latency: 0, generatedTokensCount: 0 })) as
+			| [GenerationStatistics]
+			| [GenerationStatistics, GenerationStatistics];
+		this.#abortManager.init();
 	});
 
 	constructor() {
@@ -190,6 +213,120 @@ class SessionState {
 		const projects = this.$.projects.map(p => (p.id === np.id ? np : p));
 		this.#setAnySession({ ...this.$, projects });
 	}
+
+	async #runInference(conversation: Conversation) {
+		const idx = session.project.conversations.indexOf(conversation);
+
+		const startTime = performance.now();
+
+		if (conversation.streaming) {
+			let addedMessage = false;
+			const streamingMessage = $state({ role: "assistant", content: "" });
+
+			await handleStreamingResponse(
+				conversation,
+				content => {
+					if (!streamingMessage) return;
+					streamingMessage.content = content;
+					if (!addedMessage) {
+						conversation.messages = [...conversation.messages, streamingMessage];
+						addedMessage = true;
+					}
+				},
+				this.#abortManager.createController()
+			);
+		} else {
+			const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conversation);
+			conversation.messages = [...conversation.messages, newMessage];
+			const c = session.generationStats[idx];
+			if (c) c.generatedTokensCount += newTokensCount;
+		}
+
+		const endTime = performance.now();
+		const c = session.generationStats[idx];
+		if (c) c.latency = Math.round(endTime - startTime);
+	}
+
+	async run(conv: "left" | "right" | "both" | Conversation = "both") {
+		if (!token.value) {
+			token.showModal = true;
+			return;
+		}
+
+		const conversations = (() => {
+			if (typeof conv === "string") {
+				return session.project.conversations.filter((_, idx) => {
+					return conv === "both" || (conv === "left" ? idx === 0 : idx === 1);
+				});
+			}
+			return [conv];
+		})();
+
+		for (let idx = 0; idx < conversations.length; idx++) {
+			const conversation = conversations[idx];
+			if (!conversation || conversation.messages.at(-1)?.role !== "assistant") continue;
+
+			let prefix = "";
+			if (session.project.conversations.length === 2) {
+				prefix = `Error on ${idx === 0 ? "left" : "right"} conversation. `;
+			}
+			return addToast({
+				title: "Failed to run inference",
+				description: `${prefix}Messages must alternate between user/assistant roles.`,
+				variant: "error",
+			});
+		}
+
+		(document.activeElement as HTMLElement).blur();
+		session.generating = true;
+
+		try {
+			const promises = conversations.map(c => this.#runInference(c));
+			await Promise.all(promises);
+		} catch (error) {
+			for (const conversation of conversations) {
+				if (conversation.messages.at(-1)?.role === "assistant" && !conversation.messages.at(-1)?.content?.trim()) {
+					conversation.messages.pop();
+					conversation.messages = [...conversation.messages];
+				}
+				// eslint-disable-next-line no-self-assign
+				session.$ = session.$;
+			}
+
+			if (error instanceof Error) {
+				const msg = error.message;
+				if (msg.toLowerCase().includes("montly") || msg.toLowerCase().includes("pro")) {
+					showQuotaModal();
+				}
+
+				if (error.message.includes("token seems invalid")) {
+					token.reset();
+				}
+
+				if (error.name !== "AbortError") {
+					addToast({ title: "Error", description: error.message, variant: "error" });
+				}
+			} else {
+				addToast({ title: "Error", description: "An unknown error occurred", variant: "error" });
+			}
+		} finally {
+			session.generating = false;
+			this.#abortManager.clear();
+		}
+	}
+
+	stopGenerating = () => {
+		this.#abortManager.abortAll();
+		session.generating = false;
+	};
+
+	runOrStop = (c?: Parameters<typeof this.run>[0]) => {
+		if (session.generating) {
+			this.stopGenerating();
+		} else {
+			this.run(c);
+		}
+	};
 }
 
 export const session = new SessionState();
