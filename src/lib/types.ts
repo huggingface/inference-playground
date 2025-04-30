@@ -199,8 +199,8 @@ export enum PipelineTag {
 }
 
 export const pipelineTagLabel: Record<PipelineTag, string> = {
-	[PipelineTag.TextGeneration]: "Text Generation",
-	[PipelineTag.ImageTextToText]: "Image Text to Text",
+	[PipelineTag.TextGeneration]: "Text→Text",
+	[PipelineTag.ImageTextToText]: "Image+Text→Text",
 };
 
 export type MaybeGetter<T> = T | (() => T);
