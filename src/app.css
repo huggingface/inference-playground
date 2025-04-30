@@ -67,6 +67,18 @@
 	@apply flex h-[39px] items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700;
 }
 
+@utility btn-sm {
+	@apply flex h-[32px] items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-2 text-xs font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700;
+}
+
+@utility btn-xs {
+	@apply flex h-[28px] items-center justify-center gap-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700;
+}
+
+@utility btn-mini {
+	@apply flex h-[24px] items-center justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-1.5 py-1 text-[10px] font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:ring-2 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700;
+}
+
 @utility custom-outline {
 	@apply outline-hidden;
 	@apply border-blue-500 ring ring-blue-500;

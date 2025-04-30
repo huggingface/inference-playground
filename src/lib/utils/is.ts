@@ -1,4 +1,5 @@
 import { SvelteSet } from "svelte/reactivity";
+import typia from "typia";
 
 export function isHtmlElement(element: unknown): element is HTMLElement {
 	return element instanceof HTMLElement;
@@ -35,3 +36,5 @@ export function isTouch(event: PointerEvent): boolean {
 export function isPromise(value: unknown): value is Promise<unknown> {
 	return value instanceof Promise;
 }
+
+export const isNumber = typia.createIs<number>();

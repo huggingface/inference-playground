@@ -120,7 +120,6 @@ async function getCompletionMetadata(conversation: Conversation, signal?: AbortS
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
 		...conversation.messages,
 	];
-	const currTokens = await getTokens(conversation);
 
 	return {
 		type: "huggingface",
@@ -130,7 +129,7 @@ async function getCompletionMetadata(conversation: Conversation, signal?: AbortS
 			messages: messages.map(parseMessage),
 			provider: conversation.provider,
 			...conversation.config,
-			max_tokens: maxAllowedTokens(conversation) - currTokens,
+			// max_tokens: maxAllowedTokens(conversation) - currTokens,
 		},
 	};
 }
