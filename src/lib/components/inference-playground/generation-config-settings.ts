@@ -7,7 +7,7 @@ export type GenerationConfigKey = (typeof GENERATION_CONFIG_KEYS)[number];
 export type GenerationConfig = Pick<ChatCompletionInput, GenerationConfigKey>;
 
 interface GenerationKeySettings {
-	default: number;
+	default?: number;
 	step: number;
 	min: number;
 	max: number;
@@ -23,7 +23,6 @@ export const GENERATION_CONFIG_SETTINGS: Record<GenerationConfigKey, GenerationK
 		label: "Temperature",
 	},
 	max_tokens: {
-		default: 2048,
 		step: 256,
 		min: 0,
 		max: 8192, // changed dynamically based on model
