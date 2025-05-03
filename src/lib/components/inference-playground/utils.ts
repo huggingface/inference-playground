@@ -1,11 +1,14 @@
+import ctxLengthData from "$lib/data/context_length.json";
 import { token } from "$lib/state/token.svelte";
 import {
 	isCustomModel,
+	isHFModel,
 	type Conversation,
 	type ConversationMessage,
 	type CustomModel,
 	type Model,
 } from "$lib/types.js";
+import { tryGet } from "$lib/utils/object.js";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
@@ -48,6 +51,24 @@ type OpenAICompletionMetadata = {
 
 type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
 
+export function maxAllowedTokens(conversation: Conversation) {
+	const ctxLength = (() => {
+		const { provider, model } = conversation;
+		if (!provider || !isHFModel(model)) return;
+
+		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
+		if (!idOnProvider) return;
+
+		const models = tryGet(ctxLengthData, provider);
+		if (!models) return;
+
+		return tryGet(models, idOnProvider) as number | undefined;
+	})();
+
+	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
+	return ctxLength;
+}
+
 function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal): CompletionMetadata {
 	const { model, systemMessage } = conversation;
 
@@ -79,6 +100,7 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 	}
 
 	// Handle HuggingFace models
+
 	return {
 		type: "huggingface",
 		client: new HfInference(token.value),
@@ -87,6 +109,7 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 			messages: messages.map(parseMessage),
 			provider: conversation.provider,
 			...conversation.config,
+			// max_tokens: maxAllowedTokens(conversation) - currTokens,
 		},
 	};
 }
