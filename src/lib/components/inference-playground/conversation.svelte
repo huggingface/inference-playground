@@ -7,6 +7,8 @@
 	import IconPlus from "~icons/carbon/add";
 	import CodeSnippets from "./code-snippets.svelte";
 	import Message from "./message.svelte";
+	import { iterate } from "$lib/utils/array.js";
+	import { session } from "$lib/state/session.svelte";
 
 	interface Props {
 		conversation: Conversation;
@@ -52,6 +54,19 @@
 	function deleteMessage(idx: number) {
 		conversation.messages = conversation.messages.slice(0, idx);
 	}
+
+	function regenMessage(idx: number) {
+		const msg = conversation.messages[idx];
+		if (!msg) return;
+		if (msg.role === "user") {
+			conversation.messages = conversation.messages.slice(0, idx + 1);
+		} else {
+			conversation.messages = conversation.messages.slice(0, idx);
+		}
+
+		session.stopGenerating();
+		session.run(conversation);
+	}
 </script>
 
 <div
@@ -61,13 +76,15 @@
 	id="test-this"
 >
 	{#if !viewCode}
-		{#each conversation.messages as _msg, idx}
+		{#each iterate(conversation.messages) as [_msg, { isLast }], idx}
 			<Message
 				bind:message={conversation.messages[idx]!}
 				{conversation}
 				autofocus={idx === conversation.messages.length - 1}
 				{loading}
 				onDelete={() => deleteMessage(idx)}
+				onRegen={() => regenMessage(idx)}
+				{isLast}
 			/>
 		{/each}
 

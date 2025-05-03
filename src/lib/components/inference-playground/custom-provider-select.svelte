@@ -88,13 +88,13 @@
 
 <div {...select.content} class="rounded-lg border bg-gray-100 outline-hidden dark:border-gray-700 dark:bg-gray-800">
 	{#each providers as p}
-		<button {...select.getOption(p)} class="group block w-full p-1 text-sm dark:text-white" type="button">
+		<div {...select.getOption(p)} class="group block w-full p-1 text-sm dark:text-white">
 			<div
 				class="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 			>
 				<IconProvider provider={p} />
 				{formatName(p)}
 			</div>
-		</button>
+		</div>
 	{/each}
 </div>

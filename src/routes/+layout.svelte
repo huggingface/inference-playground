@@ -13,7 +13,7 @@
 	}
 
 	let { children }: Props = $props();
-	session.init.fn();
+	session.init();
 	generationStats.init();
 </script>
 

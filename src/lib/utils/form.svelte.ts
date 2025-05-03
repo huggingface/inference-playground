@@ -27,6 +27,10 @@ export function createFieldValidation(args: CreateFieldValidationArgs) {
 		get msg() {
 			return msg;
 		},
+		reset() {
+			valid = true;
+			msg = undefined;
+		},
 		attrs: {
 			onblur,
 			oninput,

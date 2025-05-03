@@ -1,17 +1,20 @@
 <script lang="ts">
+	import { autofocus } from "$lib/actions/autofocus.js";
+	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { session } from "$lib/state/session.svelte.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
-	import IconHistory from "~icons/carbon/recently-viewed";
+	import type { EventHandler } from "svelte/elements";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import IconCross from "~icons/carbon/close";
 	import IconEdit from "~icons/carbon/edit";
+	import IconHistory from "~icons/carbon/recently-viewed";
 	import IconSave from "~icons/carbon/save";
 	import IconDelete from "~icons/carbon/trash-can";
+	import Dialog from "../dialog.svelte";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
 	import CheckpointsMenu from "./checkpoints-menu.svelte";
-	import { checkpoints } from "$lib/state/checkpoints.svelte";
 
 	interface Props {
 		class?: string;
@@ -29,9 +32,34 @@
 		sameWidth: true,
 	});
 
-	async function saveProject() {
-		session.saveProject((await prompt("Set project name")) || "Project #" + (session.$.projects.length + 1));
+	type SaveDialogState = {
+		open: boolean;
+		moveCheckpoints: boolean;
+		name: string;
+	};
+
+	const defaultSdState: SaveDialogState = {
+		open: false,
+		moveCheckpoints: true,
+		name: "",
+	};
+
+	let sdState = $state(defaultSdState);
+	const projectPlaceholder = $derived(`Project #${session.$.projects.length}`);
+
+	function openSaveDialog() {
+		sdState = { ...defaultSdState, open: true };
 	}
+
+	const saveDialog = async function (e) {
+		e.preventDefault();
+		session.saveProject({
+			...sdState,
+			name: sdState.name || projectPlaceholder,
+		});
+
+		sdState = { ...defaultSdState };
+	} satisfies EventHandler<SubmitEvent>;
 </script>
 
 <div class={cn("flex w-full items-stretch gap-2 ", classNames)}>
@@ -57,11 +85,11 @@
 		{#if isDefault}
 			<Tooltip>
 				{#snippet trigger(tooltip)}
-					<button class="btn size-[32px] p-0" {...tooltip.trigger} onclick={saveProject}>
+					<button class="btn size-[32px] p-0" {...tooltip.trigger} onclick={openSaveDialog}>
 						<IconSave />
 					</button>
 				{/snippet}
-				Save to Project
+				Save as Project
 			</Tooltip>
 		{:else}
 			<Tooltip>
@@ -92,7 +120,7 @@
 					{name}
 					{#if hasCheckpoints}
 						<div
-							class="text-3xs grid aspect-square place-items-center rounded bg-yellow-400/25 p-0.5 text-yellow-400"
+							class="text-3xs grid aspect-square place-items-center rounded bg-yellow-300 p-0.5 text-yellow-700 dark:bg-yellow-400/25 dark:text-yellow-400"
 							aria-label="Project has checkpoints"
 						>
 							<IconHistory />
@@ -125,3 +153,29 @@
 		</div>
 	{/each}
 </div>
+
+<Dialog title="Set project name" open={sdState.open} onClose={() => (sdState.open = false)} onSubmit={saveDialog}>
+	<label class="flex flex-col gap-2 font-medium text-gray-900 dark:text-white">
+		<p>Project name</p>
+		<input
+			bind:value={sdState.name}
+			placeholder={projectPlaceholder}
+			use:autofocus
+			type="text"
+			class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+		/>
+	</label>
+	<label class="mt-4 flex gap-2 font-medium text-gray-900 dark:text-white">
+		<input bind:checked={sdState.moveCheckpoints} type="checkbox" />
+		<p>Move checkpoints over</p>
+	</label>
+
+	{#snippet footer()}
+		<button
+			type="submit"
+			class="ml-auto rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+		>
+			Submit
+		</button>
+	{/snippet}
+</Dialog>

@@ -1,23 +1,15 @@
 <script lang="ts">
 	import { observe, observed, ObservedElements } from "$lib/actions/observe.svelte.js";
-	import { AbortManager } from "$lib/spells/abort-manager.svelte.js";
 	import { models } from "$lib/state/models.svelte.js";
 	import { session } from "$lib/state/session.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import { type ConversationMessage, type Model, type Project } from "$lib/types.js";
-	import { isMac } from "$lib/utils/platform.js";
+	import { isConversationWithHFModel, type ConversationMessage, type Model, type Project } from "$lib/types.js";
+	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
+	import { Popover } from "melt/components";
 	import typia from "typia";
-	import IconExternal from "~icons/carbon/arrow-up-right";
-	import IconCode from "~icons/carbon/code";
-	import IconCompare from "~icons/carbon/compare";
-	import IconInfo from "~icons/carbon/information";
-	import IconSettings from "~icons/carbon/settings";
-	import IconShare from "~icons/carbon/share";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
-	import { showQuotaModal } from "../quota-modal.svelte";
 	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
-	import { addToast } from "../toaster.svelte.js";
 	import Tooltip from "../tooltip.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
@@ -26,16 +18,28 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import { handleNonStreamingResponse, handleStreamingResponse, isSystemPromptSupported } from "./utils.js";
-	import { generationStats } from "$lib/state/generation-stats.svelte";
+	import { isSystemPromptSupported } from "./utils.js";
+
+	import { iterate } from "$lib/utils/array.js";
+	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
+	import IconChatRight from "~icons/carbon/align-box-bottom-right";
+	import IconExternal from "~icons/carbon/arrow-up-right";
+	import IconWaterfall from "~icons/carbon/chart-waterfall";
+	import IconChevronDown from "~icons/carbon/chevron-down";
+	import IconCode from "~icons/carbon/code";
+	import IconCompare from "~icons/carbon/compare";
+	import IconInfo from "~icons/carbon/information";
+	import IconSettings from "~icons/carbon/settings";
+	import IconShare from "~icons/carbon/share";
+
+	const multiple = $derived(session.project.conversations.length > 1);
 
 	const startMessageUser: ConversationMessage = { role: "user", content: "" };
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
-	let loading = $state(false);
+	const loading = $derived(session.generating);
 
-	const abortManager = new AbortManager();
 	let selectCompareModelOpen = $state(false);
 
 	const systemPromptSupported = $derived(
@@ -54,97 +58,15 @@
 		if (typia.is<Project["conversations"]>(c)) session.project.conversations = c;
 	}
 
-	async function runInference(conversationIdx: number) {
-		const conversation = session.project.conversations[conversationIdx];
-		if (!conversation) return;
-
-		const startTime = performance.now();
-
-		if (conversation.streaming) {
-			let addedMessage = false;
-			let streamingMessage = $state({ role: "assistant", content: "" });
-
-			await handleStreamingResponse(
-				conversation,
-				content => {
-					if (!streamingMessage) return;
-					streamingMessage.content = content;
-					if (!addedMessage) {
-						conversation.messages = [...conversation.messages, streamingMessage];
-						addedMessage = true;
-					}
-				},
-				abortManager.createController()
-			);
-		} else {
-			const { message: newMessage } = await handleNonStreamingResponse(conversation);
-			conversation.messages = [...conversation.messages, newMessage];
-		}
-
-		const endTime = performance.now();
-		const c = generationStats[conversationIdx];
-		if (c) c.latency = Math.round(endTime - startTime);
-	}
-
-	async function submit() {
-		if (!token.value) {
-			token.showModal = true;
-			return;
-		}
-
-		for (const [idx, conversation] of session.project.conversations.entries()) {
-			if (conversation.messages.at(-1)?.role !== "assistant") continue;
-			let prefix = "";
-			if (session.project.conversations.length === 2) {
-				prefix = `Error on ${idx === 0 ? "left" : "right"} conversation. `;
-			}
-			return addToast({
-				title: "Failed to run inference",
-				description: `${prefix}Messages must alternate between user/assistant roles.`,
-				variant: "error",
-			});
-		}
-
-		(document.activeElement as HTMLElement).blur();
-		loading = true;
-
-		try {
-			const promises = session.project.conversations.map((_, idx) => runInference(idx));
-			await Promise.all(promises);
-		} catch (error) {
-			for (const conversation of session.project.conversations) {
-				if (conversation.messages.at(-1)?.role === "assistant" && !conversation.messages.at(-1)?.content?.trim()) {
-					conversation.messages.pop();
-					conversation.messages = [...conversation.messages];
-				}
-				session.$ = session.$;
-			}
-
-			if (error instanceof Error) {
-				const msg = error.message;
-				if (msg.toLowerCase().includes("montly") || msg.toLowerCase().includes("pro")) {
-					showQuotaModal();
-				}
-
-				if (error.message.includes("token seems invalid")) {
-					token.reset();
-				}
-
-				if (error.name !== "AbortError") {
-					addToast({ title: "Error", description: error.message, variant: "error" });
-				}
-			} else {
-				addToast({ title: "Error", description: "An unknown error occurred", variant: "error" });
-			}
-		} finally {
-			loading = false;
-			abortManager.clear();
-		}
-	}
-
 	function onKeydown(event: KeyboardEvent) {
 		if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-			submit();
+			session.run();
+		}
+		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "l") {
+			session.run("left");
+		}
+		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "r") {
+			session.run("right");
 		}
 	}
 
@@ -169,14 +91,14 @@
 		}
 		const newConversation = { ...JSON.parse(JSON.stringify(session.project.conversations[0])), model };
 		session.project.conversations = [...session.project.conversations, newConversation];
-		generationStats.set([generationStats[0]!, { latency: 0, generatedTokensCount: 0 }]);
+		session.generationStats = [session.generationStats[0], { latency: 0, generatedTokensCount: 0 }];
 	}
 
 	function removeCompareModal(conversationIdx: number) {
 		session.project.conversations.splice(conversationIdx, 1)[0];
 		session.$ = session.$;
-		generationStats.splice(conversationIdx, 1)[0];
-		generationStats.set(generationStats);
+		session.generationStats.splice(conversationIdx, 1)[0];
+		session.generationStats = session.generationStats;
 	}
 </script>
 
@@ -285,8 +207,7 @@
 			<div
 				class="pointer-events-none absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 			>
-				{#each generationStats as { latency, generatedTokensCount }, index}
-					{@const isLast = index === generationStats.length - 1}
+				{#each iterate(session.generationStats) as [{ latency, generatedTokensCount }, isLast]}
 					{@const baLeft = observed["bottom-actions"].rect.left}
 					{@const tceRight = observed["token-count-end"].offset.right}
 					<span
@@ -306,39 +227,115 @@
 					<IconCode />
 					{!viewCode ? "View Code" : "Hide Code"}
 				</button>
-				<button
-					onclick={() => {
-						viewCode = false;
-						loading ? abortManager.abortAll() : submit();
-					}}
-					type="button"
-					class="flex h-[39px] w-24 items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:border-gray-700 dark:focus:ring-gray-700 {loading
-						? 'bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700'
-						: 'bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700'}"
-				>
-					{#if loading}
-						<div class="flex flex-none items-center gap-[3px]">
-							<span class="mr-2">
-								{#if session.project.conversations[0]?.streaming || session.project.conversations[1]?.streaming}
-									Stop
-								{:else}
-									Cancel
-								{/if}
+				<div class="flex">
+					<button
+						onclick={() => {
+							viewCode = false;
+							session.runOrStop();
+						}}
+						type="button"
+						class={[
+							"flex h-[39px]  items-center justify-center gap-2 rounded-l-lg px-3.5 py-2.5 text-sm font-medium text-white focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
+							multiple ? "rounded-l-lg" : "rounded-lg",
+							loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
+							!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
+						]}
+					>
+						{#if loading}
+							<div class="flex flex-none items-center gap-[3px]">
+								<span class="mr-2">
+									{#if session.project.conversations[0]?.streaming || session.project.conversations[1]?.streaming}
+										Stop
+									{:else}
+										Cancel
+									{/if}
+								</span>
+								{#each { length: 3 } as _, i}
+									<div
+										class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-500 dark:bg-gray-100"
+										style="animation-delay: {(i + 1) * 0.25}s;"
+									></div>
+								{/each}
+							</div>
+						{:else}
+							{multiple ? "Run all" : "Run"}
+							<span
+								class="inline-flex gap-0.5 rounded-sm border border-white/20 bg-white/10 px-0.5 text-xs text-white/70"
+							>
+								{cmdOrCtrl}<span class="translate-y-px">↵</span>
 							</span>
-							{#each { length: 3 } as _, i}
-								<div
-									class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-500 dark:bg-gray-100"
-									style="animation-delay: {(i + 1) * 0.25}s;"
-								></div>
-							{/each}
-						</div>
-					{:else}
-						Run <span
-							class="inline-flex gap-0.5 rounded-sm border border-white/20 bg-white/10 px-0.5 text-xs text-white/70"
-							>{isMac() ? "⌘" : "Ctrl"}<span class="translate-y-px">↵</span></span
+						{/if}
+					</button>
+					{#if multiple}
+						<div class="w-[1px] bg-gray-800" aria-hidden="true"></div>
+						<Popover
+							open
+							floatingConfig={{
+								computePosition: {
+									placement: "top-end",
+								},
+							}}
 						>
+							{#snippet children(popover)}
+								<button
+									class={[
+										"flex items-center justify-center gap-2 rounded-r-lg px-1.5 text-sm font-medium text-white",
+										"focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
+										loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
+										!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
+									]}
+									{...popover.trigger}
+									disabled={loading}
+								>
+									<IconChevronDown />
+								</button>
+								<div
+									class={["flex-col rounded-lg bg-white px-2 py-1 shadow dark:bg-gray-800", popover.open && "flex"]}
+									{...popover.content}
+								>
+									<button
+										class="group py-1 text-sm"
+										onclick={() => {
+											viewCode = false;
+											session.runOrStop("left");
+											popover.open = false;
+										}}
+									>
+										<div
+											class="flex items-center gap-2 rounded p-1 group-hover:bg-gray-200 dark:group-hover:bg-gray-700"
+										>
+											<IconChatLeft />
+											<span class="mr-2">Only run left conversation</span>
+											<span class="ml-auto rounded-sm border border-white/20 bg-gray-500/10 px-0.5 text-xs">
+												{cmdOrCtrl}
+												{optOrAlt} L
+											</span>
+										</div>
+									</button>
+									<button
+										class="group py-1 text-sm"
+										onclick={() => {
+											viewCode = false;
+											session.runOrStop("right");
+											popover.open = false;
+										}}
+									>
+										<div
+											class="flex items-center gap-2 rounded p-1 group-hover:bg-gray-200 dark:group-hover:bg-gray-700"
+										>
+											<IconChatRight />
+											<span class="mr-2">Only run right conversation</span>
+											<span class="ml-auto rounded-sm border border-white/20 bg-gray-500/10 px-0.5 text-xs">
+												{cmdOrCtrl}
+												{optOrAlt} R
+											</span>
+										</div>
+									</button>
+								</div>
+							{/snippet}
+						</Popover>
 					{/if}
-				</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -348,7 +345,7 @@
 		<div class={[viewSettings && "max-md:fixed max-md:inset-0 max-md:bottom-20 max-md:backdrop-blur-lg"]}>
 			<div
 				class={[
-					"flex h-full flex-col  p-3 max-md:absolute max-md:inset-x-0 max-md:bottom-0",
+					"flex h-full flex-col p-3 max-md:absolute max-md:inset-x-0 max-md:bottom-0",
 					viewSettings ? "max-md:fixed" : "max-md:hidden",
 				]}
 			>
@@ -365,21 +362,23 @@
 								<IconCompare />
 								Compare
 							</button>
-							<a
-								href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
-									.project.conversations[0]?.provider}"
-								target="_blank"
-								class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-							>
-								<IconExternal class="text-2xs" />
-								Model page
-							</a>
+							{#if isConversationWithHFModel(session.project.conversations[0])}
+								<a
+									href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
+										.project.conversations[0]?.provider}"
+									target="_blank"
+									class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+								>
+									<IconExternal class="text-2xs" />
+									Model page
+								</a>
+							{/if}
 						</div>
 					</div>
 
 					<GenerationConfig bind:conversation={session.project.conversations[0]!} />
 
-					<div class="mt-auto flex items-center justify-end gap-4">
+					<div class="mt-auto flex items-center justify-end gap-4 whitespace-nowrap">
 						<button
 							onclick={() => showShareModal(session.project)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
@@ -387,6 +386,14 @@
 							<IconShare class="text-xs" />
 							Share
 						</button>
+						<a
+							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+							href="https://huggingface.co/spaces/victor/providers-metrics"
+							target="_blank"
+						>
+							<IconWaterfall class="text-xs" />
+							Metrics
+						</a>
 						{#if token.value}
 							<button
 								onclick={token.reset}

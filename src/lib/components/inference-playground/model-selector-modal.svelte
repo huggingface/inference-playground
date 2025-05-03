@@ -93,7 +93,7 @@
 		>
 			{#snippet modelEntry(model: Model | CustomModel, trending?: boolean)}
 				{@const [nameSpace, modelName] = model.id.split("/")}
-				<button
+				<div
 					class="flex w-full cursor-pointer items-center px-2 py-1.5 text-sm
 						data-[highlighted]:bg-gray-100 data-[highlighted]:dark:bg-gray-800"
 					data-model
@@ -165,7 +165,7 @@
 							<span class="text-sm">Edit</span>
 						</Tooltip>
 					{/if}
-				</button>
+				</div>
 			{/snippet}
 			{#if trending.length > 0}
 				<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Trending</div>
@@ -179,7 +179,7 @@
 					{@render modelEntry(model, false)}
 				{/each}
 			{/if}
-			<button
+			<div
 				class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 data-[highlighted]:bg-blue-500/15 data-[highlighted]:text-blue-600 dark:text-gray-400 dark:data-[highlighted]:text-blue-300"
 				{...combobox.getOption("__custom__", () => {
 					onClose?.();
@@ -192,7 +192,7 @@
 			>
 				<IconAdd class="rounded bg-blue-500/10 text-blue-600" />
 				Add a custom endpoint
-			</button>
+			</div>
 			{#if other.length > 0}
 				<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Other models</div>
 				{#each other as model}

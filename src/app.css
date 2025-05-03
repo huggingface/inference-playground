@@ -105,3 +105,14 @@ body {
 body.dark {
 	color-scheme: dark;
 }
+
+@layer base {
+	:focus-visible {
+		outline: 3px solid var(--color-blue-400);
+		outline-offset: 2px;
+
+		@variant dark {
+			outline-color: var(--color-blue-500);
+		}
+	}
+}

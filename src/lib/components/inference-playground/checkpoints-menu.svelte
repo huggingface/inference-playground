@@ -1,20 +1,27 @@
 <script lang="ts">
+	import { clickOutside } from "$lib/actions/click-outside.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { session } from "$lib/state/session.svelte.js";
+	import { iterate } from "$lib/utils/array.js";
 	import { Popover } from "melt/builders";
 	import { Tooltip } from "melt/components";
 	import { fly } from "svelte/transition";
+	import IconCompare from "~icons/carbon/compare";
 	import IconHistory from "~icons/carbon/recently-viewed";
-	import IconDelete from "~icons/carbon/trash-can";
 	import IconStar from "~icons/carbon/star";
 	import IconStarFilled from "~icons/carbon/star-filled";
-	import IconCompare from "~icons/carbon/compare";
+	import IconDelete from "~icons/carbon/trash-can";
 
 	const popover = new Popover({
 		floatingConfig: {
 			offset: { crossAxis: -12 },
 		},
+		onOpenChange: open => {
+			if (open) dialog?.showModal();
+			else dialog?.close();
+		},
 	});
+	let dialog = $state<HTMLDialogElement>();
 
 	const projCheckpoints = $derived(checkpoints.for(session.project.id));
 </script>
@@ -26,10 +33,16 @@
 	{/if}
 </button>
 
-<div
-	class="mb-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+<dialog
+	bind:this={dialog}
+	class="mb-2 !overflow-visible rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+	use:clickOutside={() => (popover.open = false)}
 	{...popover.content}
 >
+	<div
+		class="size-4 translate-x-3 rounded-tl border-t border-l border-gray-200 dark:border-gray-700"
+		{...popover.arrow}
+	></div>
 	<div class="max-h-120 w-80 overflow-x-clip overflow-y-auto p-3 pb-1">
 		<div class="mb-2 flex items-center justify-between px-1">
 			<h3 class="text-sm font-medium dark:text-white">Checkpoints</h3>
@@ -114,7 +127,10 @@
 							{...tooltip.content}
 							transition:fly={{ x: -2 }}
 						>
-							<div class="size-4 rounded-tl border-t border-l border-gray-700" {...tooltip.arrow}></div>
+							<div
+								class="size-4 rounded-tl border-t border-l border-gray-200 dark:border-gray-700"
+								{...tooltip.arrow}
+							></div>
 							{#each state.conversations as conversation, i}
 								{@const msgs = conversation.messages}
 								{@const sliced = msgs.slice(0, 4)}
@@ -129,8 +145,7 @@
 										temp: {conversation.config.temperature}
 										| max tokens: {conversation.config.max_tokens}
 									</p>
-									{#each sliced as msg, i}
-										{@const isLast = i === sliced.length - 1}
+									{#each iterate(sliced) as [msg, isLast]}
 										<div class="flex flex-col gap-1 p-2">
 											<p class="font-mono text-xs font-medium text-gray-400 uppercase">{msg.role}</p>
 											{#if msg.content?.trim()}
@@ -155,4 +170,4 @@
 			</div>
 		{/each}
 	</div>
-</div>
+</dialog>

@@ -96,14 +96,14 @@
 
 	<div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
 		{#each conversation.model.inferenceProviderMapping as { provider, providerId } (provider + providerId)}
-			<button {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
+			<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
 				<div
 					class="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 				>
 					<IconProvider {provider} />
 					{formatName(provider)}
 				</div>
-			</button>
+			</div>
 		{/each}
 	</div>
 </div>

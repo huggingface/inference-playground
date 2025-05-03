@@ -8,6 +8,7 @@
 	import { fade } from "svelte/transition";
 	import IconImage from "~icons/carbon/image-reference";
 	import IconMaximize from "~icons/carbon/maximize";
+	import IconCustom from "../icon-custom.svelte";
 	import ImgPreview from "./img-preview.svelte";
 
 	type Props = {
@@ -16,9 +17,11 @@
 		loading?: boolean;
 		autofocus?: boolean;
 		onDelete?: () => void;
+		onRegen?: () => void;
+		isLast?: boolean;
 	};
 
-	let { message = $bindable(), conversation, loading, autofocus, onDelete }: Props = $props();
+	let { message = $bindable(), conversation, loading, autofocus, onDelete, onRegen, isLast }: Props = $props();
 
 	let element = $state<HTMLTextAreaElement>();
 	new TextareaAutosize({
@@ -48,6 +51,11 @@
 	});
 
 	let previewImg = $state<string>();
+
+	const regenLabel = $derived.by(() => {
+		if (message.role === "assistant") return "Regenerate";
+		return isLast ? "Generate from here" : "Regenerate from here";
+	});
 </script>
 
 <div
@@ -103,6 +111,25 @@
 					Add image
 				</Tooltip>
 			{/if}
+
+			<Tooltip>
+				{#snippet trigger(tooltip)}
+					<button
+						tabindex="0"
+						onclick={onRegen}
+						type="button"
+						class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+			group-focus-within/message:visible group-hover/message:visible hover:bg-gray-100
+			hover:text-blue-700 focus:z-10 focus:ring-4
+			focus:ring-gray-100 focus:outline-hidden sm:invisible dark:border-gray-600 dark:bg-gray-800
+			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+						{...tooltip.trigger}
+					>
+						<IconCustom icon="regen" />
+					</button>
+				{/snippet}
+				{regenLabel}
+			</Tooltip>
 
 			<Tooltip>
 				{#snippet trigger(tooltip)}
