@@ -8,7 +8,7 @@ import {
 	type CustomModel,
 	type Model,
 } from "$lib/types.js";
-import { tryGet } from "$lib/utils/object.js";
+import { tryGet } from "$lib/utils/object.svelte.js";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";

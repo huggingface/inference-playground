@@ -35,7 +35,7 @@
 	import { createFieldValidation } from "$lib/utils/form.svelte.js";
 	import { isValidURL } from "$lib/utils/url.js";
 	import { Select } from "melt/components";
-	import { keys } from "$lib/utils/object.js";
+	import { keys } from "$lib/utils/object.svelte.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));
