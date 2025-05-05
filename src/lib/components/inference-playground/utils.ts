@@ -1,15 +1,18 @@
-import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
+import ctxLengthData from "$lib/data/context_length.json";
+import { token } from "$lib/state/token.svelte";
 import {
 	isCustomModel,
+	isHFModel,
 	type Conversation,
 	type ConversationMessage,
 	type CustomModel,
 	type Model,
 } from "$lib/types.js";
+import { tryGet } from "$lib/utils/object.js";
+import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
-import { token } from "$lib/state/token.svelte";
-import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
+import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import OpenAI from "openai";
 
 type ChatCompletionInputMessageChunk =
@@ -48,30 +51,31 @@ type OpenAICompletionMetadata = {
 
 type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
 
-function parseOpenAIMessages(
-	messages: ConversationMessage[],
-	systemMessage?: ConversationMessage
-): OpenAI.ChatCompletionMessageParam[] {
-	const parsedMessages: OpenAI.ChatCompletionMessageParam[] = [];
+export function maxAllowedTokens(conversation: Conversation) {
+	const ctxLength = (() => {
+		const { provider, model } = conversation;
+		if (!provider || !isHFModel(model)) return;
 
-	if (systemMessage?.content) {
-		parsedMessages.push({
-			role: "system",
-			content: systemMessage.content,
-		});
-	}
+		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
+		if (!idOnProvider) return;
 
-	return [
-		...parsedMessages,
-		...messages.map(msg => ({
-			role: msg.role === "assistant" ? ("assistant" as const) : ("user" as const),
-			content: msg.content || "",
-		})),
-	];
+		const models = tryGet(ctxLengthData, provider);
+		if (!models) return;
+
+		return tryGet(models, idOnProvider) as number | undefined;
+	})();
+
+	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
+	return ctxLength;
 }
 
 function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal): CompletionMetadata {
 	const { model, systemMessage } = conversation;
+
+	const messages = [
+		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
+		...conversation.messages,
+	];
 
 	// Handle OpenAI-compatible models
 	if (isCustomModel(model)) {
@@ -88,17 +92,14 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 			type: "openai",
 			client: openai,
 			args: {
-				messages: parseOpenAIMessages(conversation.messages, systemMessage),
+				messages: messages.map(parseMessage) as OpenAI.ChatCompletionMessageParam[],
+				...conversation.config,
 				model: model.id,
 			},
 		};
 	}
 
 	// Handle HuggingFace models
-	const messages = [
-		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
-		...conversation.messages,
-	];
 
 	return {
 		type: "huggingface",
@@ -108,6 +109,7 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 			messages: messages.map(parseMessage),
 			provider: conversation.provider,
 			...conversation.config,
+			// max_tokens: maxAllowedTokens(conversation) - currTokens,
 		},
 	};
 }
@@ -304,11 +306,20 @@ export async function getTokenizer(model: Model) {
 	}
 }
 
+// When you don't have access to a tokenizer, guesstimate
+export function estimateTokens(conversation: Conversation) {
+	const content = conversation.messages.reduce((acc, curr) => {
+		return acc + (curr?.content ?? "");
+	}, "");
+
+	return content.length / 4; // 1 token ~ 4 characters
+}
+
 export async function getTokens(conversation: Conversation): Promise<number> {
 	const model = conversation.model;
-	if (isCustomModel(model)) return 0;
+	if (isCustomModel(model)) return estimateTokens(conversation);
 	const tokenizer = await getTokenizer(model);
-	if (tokenizer === null) return 0;
+	if (tokenizer === null) return estimateTokens(conversation);
 
 	// This is a simplified version - you might need to adjust based on your exact needs
 	let formattedText = "";

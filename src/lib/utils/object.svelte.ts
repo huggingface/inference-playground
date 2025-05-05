@@ -37,3 +37,12 @@ export function pick<T extends Record<string, unknown>, K extends keyof T>(obj: 
 export function snapshot<T>(s: T): T {
 	return $state.snapshot(s) as T;
 }
+
+/**
+ * Try and get a value from an object, or return undefined.
+ * The key does not need to match the type of the object, so the
+ * returned type is an union of all values, and undefined
+ */
+export function tryGet<T extends Record<string, unknown>>(obj: T, key: string): T[keyof T] | undefined {
+	return obj[key as keyof T];
+}

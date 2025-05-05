@@ -16,3 +16,5 @@ node_modules
 # Ignore files for PNPM, NPM and YARN
 pnpm-lock.yaml
 yarn.lock
+
+context_length.json

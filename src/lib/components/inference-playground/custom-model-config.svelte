@@ -21,10 +21,10 @@
 
 <script lang="ts">
 	import { autofocus } from "$lib/actions/autofocus.js";
-
+	import IconCaret from "~icons/carbon/chevron-down";
 	import { clickOutside } from "$lib/actions/click-outside.js";
 	import { models } from "$lib/state/models.svelte";
-	import { type Conversation, type CustomModel } from "$lib/types.js";
+	import { PipelineTag, pipelineTagLabel, type Conversation, type CustomModel } from "$lib/types.js";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import { fade, scale } from "svelte/transition";
 	import IconCross from "~icons/carbon/close";
@@ -34,6 +34,8 @@
 	import Tooltip from "../tooltip.svelte";
 	import { createFieldValidation } from "$lib/utils/form.svelte.js";
 	import { isValidURL } from "$lib/utils/url.js";
+	import { Select } from "melt/components";
+	import { keys } from "$lib/utils/object.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));
@@ -187,7 +189,7 @@
 						<p class="text-xs text-red-300">{endpointValidation.msg}</p>
 					</label>
 					<label class="flex flex-col gap-2">
-						<p class="block text-sm font-medium text-gray-900 dark:text-white">Access Token</p>
+						<p class="block text-sm font-medium text-gray-900 dark:text-white">Access token</p>
 						<input
 							bind:value={model.accessToken}
 							placeholder="XXXXXXXXXXXXXXXXXXXX"
@@ -196,6 +198,50 @@
 						/>
 						<p class="text-sm text-gray-500">Stored locally - not sent to our server</p>
 					</label>
+
+					<div class="flex flex-col gap-2">
+						<Select bind:value={model.pipeline_tag}>
+							{#snippet children(select)}
+								<label for={select.ids.trigger} class="block text-sm font-medium text-gray-900 dark:text-white">
+									Supported task
+								</label>
+
+								<button
+									{...select.trigger}
+									class={[
+										"relative flex grow items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
+										"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
+									]}
+								>
+									<div class="flex items-center gap-1 text-sm">
+										{pipelineTagLabel[model?.pipeline_tag ?? PipelineTag.TextGeneration]}
+									</div>
+									<div
+										class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
+									>
+										<IconCaret />
+									</div>
+								</button>
+
+								<div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+									{#each keys(PipelineTag) as key (key)}
+										{@const tag = PipelineTag[key]}
+										{@const label = pipelineTagLabel[tag]}
+										{@const option = select.getOption(tag)}
+										<div {...option} class="group block w-full p-1 text-sm dark:text-white">
+											<div
+												class="rounded-md py-1.5 pr-1 pl-2 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
+											>
+												<span>
+													{label}
+												</span>
+											</div>
+										</div>
+									{/each}
+								</div>
+							{/snippet}
+						</Select>
+					</div>
 
 					{#if message}
 						<div

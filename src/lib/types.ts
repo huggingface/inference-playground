@@ -27,6 +27,7 @@ export type ConversationWithHFModel = Conversation & {
 export const isConversationWithHFModel = typia.createIs<ConversationWithHFModel>();
 export const isConversationWithCustomModel = typia.createIs<ConversationWithCustomModel>();
 
+export const isHFModel = typia.createIs<Model>();
 export const isCustomModel = typia.createIs<CustomModel>();
 
 export type Project = {
@@ -71,6 +72,8 @@ export type CustomModel = {
 	_id: string;
 	endpointUrl: string;
 	accessToken?: string;
+	/** @default "text-generation" */
+	pipeline_tag?: PipelineTag;
 };
 
 export type Config = {
@@ -195,6 +198,11 @@ export enum PipelineTag {
 	TextGeneration = "text-generation",
 	ImageTextToText = "image-text-to-text",
 }
+
+export const pipelineTagLabel: Record<PipelineTag, string> = {
+	[PipelineTag.TextGeneration]: "Text→Text",
+	[PipelineTag.ImageTextToText]: "Image+Text→Text",
+};
 
 export type MaybeGetter<T> = T | (() => T);
 

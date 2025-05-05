@@ -1,4 +1,5 @@
 import { onDestroy } from "svelte";
+import { createInit } from "./create-init.svelte";
 
 /**
  * Manages abort controllers, and aborts them when the component unmounts.
@@ -7,8 +8,16 @@ export class AbortManager {
 	private controllers: AbortController[] = [];
 
 	constructor() {
-		onDestroy(() => this.abortAll());
+		this.init();
 	}
+
+	init = createInit(() => {
+		try {
+			onDestroy(() => this.abortAll());
+		} catch {
+			// no-op
+		}
+	});
 
 	/**
 	 * Creates a new abort controller and adds it to the manager.
