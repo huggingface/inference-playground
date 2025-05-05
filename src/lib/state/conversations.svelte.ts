@@ -4,6 +4,8 @@ import { snapshot } from "$lib/utils/object.svelte";
 import { dequal } from "dequal";
 import { db, type ConversationFromDb } from "./db.svelte";
 import { models } from "./models.svelte";
+import { AbortManager } from "$lib/spells/abort-manager.svelte";
+import { message } from "typia/lib/protobuf";
 
 const startMessageUser: ConversationMessage = { role: "user", content: "" };
 const systemMessage: ConversationMessage = {
@@ -36,12 +38,47 @@ function getDefaultConversation(projectId: string): ConversationFromDb {
 	};
 }
 
-export type CoolConversation = ConversationFromDb & {
+export type CoolConversationOld = ConversationFromDb & {
 	readonly model: Model | CustomModel;
 };
 
+export class CoolConversation {
+	data = $state() as ConversationFromDb;
+	readonly model = $derived(models.all.find(m => m.id === this.data.modelId) ?? emptyModel);
+
+	// abortManager = new AbortManager();
+	generating = $state(false);
+
+	constructor(data: ConversationFromDb) {
+		this.data = data;
+	}
+
+	async update(data: ConversationFromDb) {
+		const cloned = snapshot(data);
+
+		if (this.data.id === undefined) {
+			this.data.id = await db.conversations.add(cloned);
+		} else {
+			db.conversations.update(this.data.id, cloned);
+		}
+
+		this.data = cloned;
+	}
+
+	async updateMessage(args: { index: number; message: ConversationMessage }) {
+		this.update({
+			...this.data,
+			messages: [
+				...this.data.messages.slice(0, args.index),
+				snapshot(args.message),
+				...this.data.messages.slice(args.index + 1),
+			],
+		});
+	}
+}
+
 class Conversations {
-	#conversations: Record<Project["id"], ConversationFromDb[]> = $state({});
+	#conversations: Record<Project["id"], ConversationFromDb[]> = $state.raw({});
 
 	async create(args: { projectId: Project["id"]; modelId?: Model["id"] }) {
 		const conv = snapshot({
@@ -56,6 +93,7 @@ class Conversations {
 
 	for(projectId: Project["id"]): CoolConversation[] {
 		// Async load from db
+		console.log("reloading");
 		db.conversations
 			.where("projectId")
 			.equals(projectId)
@@ -63,7 +101,7 @@ class Conversations {
 			.then(c => {
 				// Dequal to avoid infinite loops
 				if (dequal(c, this.#conversations[projectId])) return;
-				this.#conversations[projectId] = c;
+				this.#conversations = { ...this.#conversations, [projectId]: c };
 			});
 
 		let res = this.#conversations[projectId];
@@ -72,12 +110,7 @@ class Conversations {
 		}
 
 		return res.map(c => {
-			return {
-				...c,
-				get model() {
-					return models.all.find(m => m.id === c.modelId) ?? emptyModel;
-				},
-			};
+			return new CoolConversation(c);
 		});
 	}
 
@@ -101,7 +134,7 @@ class Conversations {
 		await db.conversations.delete(id);
 
 		const prev: ConversationFromDb[] = this.#conversations[projectId] ?? [];
-		this.#conversations[projectId] = prev.filter(c => c.id != id);
+		this.#conversations = { ...this.#conversations, [projectId]: prev.filter(c => c.id != id) };
 	}
 }
 
