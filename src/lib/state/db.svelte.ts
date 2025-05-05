@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Conversation, Project } from "$lib/types.js";
+import type { Conversation, ConversationMessage, Project } from "$lib/types.js";
 import { keys } from "$lib/utils/object.svelte.js";
 import Dexie, { type Transaction } from "dexie";
 import {
@@ -9,6 +9,7 @@ import {
 	type SchemaDefinition,
 	type TypedDexieTable,
 } from "./dexie-schema-builder.js";
+import type { GenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
 
 type Version = {
 	schemas: {
@@ -57,18 +58,48 @@ const versions = {
 			console.log("Upgrade to version 2 complete.");
 		},
 	},
+	3: {
+		schemas: {
+			checkpoints: {
+				id: d.primaryKey().autoIncrement(),
+				timestamp: d.string(),
+				favorite: d.boolean().optional(),
+				// We don't use IDs here because the conversations should be static
+				conversations: d.array<Conversation>().indexed(false),
+				projectId: d.string(),
+			},
+			conversations: {
+				id: d.primaryKey().autoIncrement(),
+				config: d.object<GenerationConfig>().indexed(false),
+				messages: d.array<ConversationMessage>().indexed(false),
+				systemMessage: d.object<ConversationMessage>().indexed(false),
+				streaming: d.boolean().optional().indexed(false),
+				provider: d.string().optional().indexed(false),
+				projectId: d.string(),
+				modelId: d.string(),
+			},
+			projects: {
+				id: d.strPrimaryKey(),
+				name: d.string(),
+			},
+		},
+	},
 } satisfies Record<number, Version>;
 
 // Update this when adding versions to reflect the latest structure
-const LATEST_VERSION_NUMBER = 2;
+const LATEST_VERSION_NUMBER = 3;
 type LatestSchema = (typeof versions)[typeof LATEST_VERSION_NUMBER]["schemas"];
 
 // Infer types based on the LATEST version's schema
 export type Checkpoint = InferSchema<LatestSchema["checkpoints"]>;
+export type ProjectFromDb = InferSchema<LatestSchema["projects"]>;
+export type ConversationFromDb = InferSchema<LatestSchema["conversations"]>;
 
 export class Database extends Dexie {
 	// Declare tables based on the LATEST schema
 	checkpoints!: TypedDexieTable<LatestSchema["checkpoints"]>;
+	conversations!: TypedDexieTable<LatestSchema["conversations"]>;
+	projects!: TypedDexieTable<LatestSchema["projects"]>;
 
 	constructor() {
 		super("hf-playground"); // Database name

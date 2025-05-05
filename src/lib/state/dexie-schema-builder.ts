@@ -88,21 +88,32 @@ export const d = {
 		};
 		return definition;
 	},
+
+	strPrimaryKey: (): PrimaryKeyDefinition<string, false> => {
+		// Construct the PK definition directly
+		const definition: PrimaryKeyDefinition<string, false> = {
+			_type: "", // Default type for PK is number
+			_optional: false as const,
+			_indexed: true as const,
+			_isPrimaryKey: true as const,
+			_autoIncrement: false as const,
+			autoIncrement(): PrimaryKeyDefinition<string, true> {
+				// Return a new object with autoIncrement set to true
+				return {
+					...this, // Spread the current properties
+					_autoIncrement: true as const,
+				};
+			},
+		};
+
+		return definition;
+	},
 };
 
 // --- Type Inference ---
 
 // Helper type to extract the TS type from any field definition
 type InferFieldType<F extends AnyFieldDefinition> = F["_type"];
-
-// Helper type to apply optionality based on flags
-type ApplyOptional<F extends AnyFieldDefinition, T> = F extends {
-	_optional: true;
-}
-	? T | undefined
-	: F extends { _isPrimaryKey: true; _autoIncrement: true }
-		? T | undefined // Auto-incremented PKs are optional on input
-		: T;
 
 // Helper to determine if a field definition represents an optional field
 type IsFieldOptional<F extends AnyFieldDefinition> = F extends { _optional: true }
