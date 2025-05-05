@@ -1,5 +1,5 @@
 import { defaultGenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
-import { PipelineTag, type ConversationMessage, type Model, type Project } from "$lib/types.js";
+import { PipelineTag, type ConversationMessage, type CustomModel, type Model, type Project } from "$lib/types.js";
 import { snapshot } from "$lib/utils/object.svelte";
 import { dequal } from "dequal";
 import { db, type ConversationFromDb } from "./db.svelte";
@@ -36,6 +36,10 @@ function getDefaultConversation(projectId: string): ConversationFromDb {
 	};
 }
 
+export type CoolConversation = ConversationFromDb & {
+	readonly model: Model | CustomModel;
+};
+
 class Conversations {
 	#conversations: Record<Project["id"], ConversationFromDb[]> = $state({});
 
@@ -50,7 +54,7 @@ class Conversations {
 		this.#conversations[args.projectId] = [...prev, { ...conv, id }];
 	}
 
-	for(projectId: Project["id"]) {
+	for(projectId: Project["id"]): CoolConversation[] {
 		// Async load from db
 		db.conversations
 			.where("projectId")
@@ -62,14 +66,33 @@ class Conversations {
 				this.#conversations[projectId] = c;
 			});
 
-		return this.#conversations[projectId] ?? [getDefaultConversation(projectId)];
+		let res = this.#conversations[projectId];
+		if (res?.length === 0 || !res) {
+			res = [getDefaultConversation(projectId)];
+		}
+
+		return res.map(c => {
+			return {
+				...c,
+				get model() {
+					return models.all.find(m => m.id === c.modelId) ?? emptyModel;
+				},
+			};
+		});
 	}
 
-	async update(data: ConversationFromDb) {
-		if (!data.id) return;
-		await db.conversations.update(data.id, data);
+	async update({ id, ...data }: ConversationFromDb) {
+		const convIndex = this.#conversations[data.projectId]?.findIndex(c => c.id === id) ?? -1;
+		if (convIndex === -1) return;
+
+		if (id === undefined) {
+			id = await db.conversations.add(snapshot(data));
+		} else {
+			db.conversations.update(id, snapshot(data));
+		}
+
 		const prev: ConversationFromDb[] = this.#conversations[data.projectId] ?? [];
-		this.#conversations[data.projectId] = [...prev, { ...data }];
+		this.#conversations[data.projectId] = [...prev.slice(0, convIndex), { ...data, id }, ...prev.slice(convIndex + 1)];
 	}
 
 	async delete({ id, projectId }: ConversationFromDb) {

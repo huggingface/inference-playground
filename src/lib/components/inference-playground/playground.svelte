@@ -31,6 +31,8 @@
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
 	import IconShare from "~icons/carbon/share";
+	import { conversations } from "$lib/state/conversations.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 
 	const multiple = $derived(session.project.conversations.length > 1);
 
@@ -156,7 +158,7 @@
 		<div
 			class="flex flex-1 divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:pt-3 dark:divide-gray-800"
 		>
-			{#each session.project.conversations as conversation, conversationIdx (conversation)}
+			{#each conversations.for(projects.activeId) as conversation, conversationIdx (conversation)}
 				<div class="flex h-full flex-col overflow-hidden max-sm:min-w-full">
 					{#if compareActive}
 						<PlaygroundConversationHeader
@@ -165,17 +167,12 @@
 							on:close={() => removeCompareModal(conversationIdx)}
 						/>
 					{/if}
-					<PlaygroundConversation
-						{loading}
-						bind:conversation={
-							() => session.project.conversations[conversationIdx]!,
-							v => (session.project.conversations[conversationIdx] = v)
-						}
-						{viewCode}
-						on:closeCode={() => (viewCode = false)}
-					/>
+					<PlaygroundConversation {loading} {conversation} {viewCode} on:closeCode={() => (viewCode = false)} />
+
 				</div>
+
 			{/each}
+
 		</div>
 
 		<!-- Bottom bar -->
