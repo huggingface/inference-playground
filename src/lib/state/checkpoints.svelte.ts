@@ -48,13 +48,24 @@ class Checkpoints {
 		if (!project) return;
 
 		projects.activeId = cloned.projectId;
-		conversations.deleteAllFrom(cloned.projectId);
-		cloned.conversations.forEach(c => {
+
+		// conversations.deleteAllFrom(cloned.projectId);
+		const prev = conversations.for(cloned.projectId);
+		cloned.conversations.forEach((c, i) => {
+			const p = prev[i];
+			if (p) return p.update(c);
 			conversations.create({
 				...c,
 				projectId: cloned.projectId,
 			});
 		});
+
+		if (cloned.conversations.length < prev.length) {
+			prev.forEach((p, i) => {
+				if (i < cloned.conversations.length) return;
+				conversations.delete(p.data);
+			});
+		}
 	}
 
 	async toggleFavorite({ id, projectId }: Checkpoint) {

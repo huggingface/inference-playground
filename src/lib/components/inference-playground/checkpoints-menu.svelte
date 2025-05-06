@@ -71,11 +71,11 @@
 			>
 				{#snippet children(tooltip)}
 					<div
-						class="mb-2 flex w-full items-center rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+						class="mb-2 flex w-full items-center rounded-md px-3 hover:bg-gray-100 dark:hover:bg-gray-700"
 						{...tooltip.trigger}
 					>
 						<button
-							class="flex flex-1 flex-col text-left text-sm transition-colors"
+							class="flex flex-1 flex-col py-2 text-left text-sm transition-colors"
 							onclick={e => {
 								e.stopPropagation();
 								checkpoints.restore(checkpoint);

@@ -182,7 +182,7 @@
 							type="button"
 							onclick={e => {
 								e.stopPropagation();
-								message.images = message.images?.filter(i => i !== img);
+								conversation.updateMessage({ index, message: { images: message.images?.filter(i => i !== img) } });
 							}}
 							class="invisible absolute -top-1 -right-1 z-20 grid size-5 place-items-center rounded-full bg-gray-800 text-xs text-white group-hover/img:visible hover:bg-gray-700"
 						>
