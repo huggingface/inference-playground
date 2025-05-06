@@ -16,13 +16,12 @@
 		conversation: CoolConversation;
 		message: ConversationMessage;
 		index: number;
-		loading?: boolean;
 		autofocus?: boolean;
 		onDelete?: () => void;
 		onRegen?: () => void;
 	};
 
-	const { index, conversation, message, loading, autofocus, onDelete, onRegen }: Props = $props();
+	const { index, conversation, message, autofocus, onDelete, onRegen }: Props = $props();
 	const isLast = $derived(index === conversation.data.messages.length - 1);
 
 	let element = $state<HTMLTextAreaElement>();
@@ -67,7 +66,7 @@
 <div
 	class="group/message group relative flex flex-col items-start gap-x-4 gap-y-2 border-b px-3.5 pt-4 pb-6 hover:bg-gray-100/70
 	 @2xl:px-6 dark:border-gray-800 dark:hover:bg-gray-800/30"
-	class:pointer-events-none={loading}
+	class:pointer-events-none={conversation.generating}
 	{...fileUpload.dropzone}
 	onclick={undefined}
 >
@@ -89,13 +88,12 @@
 			<textarea
 				bind:this={element}
 				use:autofocusAction={autofocus}
-				bind:value={
-					() => message?.content,
-					content => {
-						if (!message) return;
-						conversation.updateMessage({ index, message: { ...message, content } });
-					}
-				}
+				value={message?.content}
+				onchange={e => {
+					const content = e.target.value;
+					if (!message) return;
+					conversation.updateMessage({ index, message: { ...message, content } });
+				}}
 				placeholder="Enter {message?.role} message"
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"

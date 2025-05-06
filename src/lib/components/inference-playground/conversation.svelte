@@ -9,12 +9,11 @@
 
 	interface Props {
 		conversation: CoolConversation;
-		loading: boolean;
 		viewCode: boolean;
 		onCloseCode: () => void;
 	}
 
-	const { conversation, loading, viewCode, onCloseCode }: Props = $props();
+	const { conversation, viewCode, onCloseCode }: Props = $props();
 	let messageContainer: HTMLDivElement | null = $state(null);
 	const scrollState = new ScrollState({
 		element: () => messageContainer,
@@ -75,9 +74,8 @@
 
 <div
 	class="@container flex flex-col overflow-x-hidden overflow-y-auto"
-	class:animate-pulse={loading && !conversation.data.streaming}
+	class:animate-pulse={conversation.generating && !conversation.data.streaming}
 	bind:this={messageContainer}
-	id="test-this"
 >
 	{#if !viewCode}
 		{#each conversation.data.messages as message, index}
@@ -86,7 +84,6 @@
 				{index}
 				{conversation}
 				autofocus={index === conversation.data.messages.length - 1}
-				{loading}
 				onDelete={() => deleteMessage(index)}
 				onRegen={() => regenMessage(index)}
 			/>
@@ -95,7 +92,7 @@
 		<button
 			class="flex px-3.5 py-6 hover:bg-gray-50 md:px-6 dark:hover:bg-gray-800/50"
 			onclick={addMessage}
-			disabled={loading}
+			disabled={conversation.generating}
 		>
 			<div class="flex items-center gap-2 p-0! text-sm font-semibold">
 				<div class="text-lg">

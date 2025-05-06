@@ -131,7 +131,7 @@
 							on:close={() => conversations.delete(conversation.data)}
 						/>
 					{/if}
-					<PlaygroundConversation {loading} {conversation} {viewCode} onCloseCode={() => (viewCode = false)} />
+					<PlaygroundConversation {conversation} {viewCode} onCloseCode={() => (viewCode = false)} />
 				</div>
 			{/each}
 		</div>
