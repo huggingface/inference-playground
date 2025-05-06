@@ -1,8 +1,8 @@
 import type { ValueOf } from "$lib/types.js";
 
 // typed Object.keys
-export function keys<T extends object>(o: T): (keyof T)[] {
-	return Object.keys(o) as (keyof T)[];
+export function keys<T extends object>(o: T) {
+	return Object.keys(o) as Array<`${keyof T & (string | number | boolean | null | undefined)}`>;
 }
 
 // typed Object.entries
@@ -31,6 +31,11 @@ export function pick<T extends Record<string, unknown>, K extends keyof T>(obj: 
 		result[key] = obj[key] as ValueOf<Pick<T, K>>;
 	}
 	return result;
+}
+
+// $state.snapshot but types are preserved
+export function snapshot<T>(s: T): T {
+	return $state.snapshot(s) as T;
 }
 
 /**

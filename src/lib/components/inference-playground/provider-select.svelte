@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { run } from "svelte/legacy";
 
-	import type { ConversationWithHFModel } from "$lib/types.js";
-
+	import type { CoolConversation } from "$lib/state/conversations.svelte";
+	import type { Model } from "$lib/types.js";
 	import { randomPick } from "$lib/utils/array.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
@@ -10,16 +10,16 @@
 	import IconProvider from "../icon-provider.svelte";
 
 	interface Props {
-		conversation: ConversationWithHFModel;
+		conversation: CoolConversation & { model: Model };
 		class?: string | undefined;
 	}
 
-	let { conversation = $bindable(), class: classes = undefined }: Props = $props();
+	const { conversation, class: classes = undefined }: Props = $props();
 
 	function reset(providers: typeof conversation.model.inferenceProviderMapping) {
-		const validProvider = providers.find(p => p.provider === conversation.provider);
+		const validProvider = providers.find(p => p.provider === conversation.data.provider);
 		if (validProvider) return;
-		conversation.provider = randomPick(providers)?.provider;
+		conversation.update({ provider: randomPick(providers)?.provider });
 	}
 
 	let providers = $derived(conversation.model.inferenceProviderMapping);
@@ -28,9 +28,9 @@
 	});
 
 	const select = new Select<string, false>({
-		value: () => conversation.provider,
+		value: () => conversation.data.provider,
 		onValueChange(v) {
-			conversation.provider = v;
+			conversation.update({ provider: v });
 		},
 	});
 
@@ -84,8 +84,8 @@
 		)}
 	>
 		<div class="flex items-center gap-1 text-sm">
-			<IconProvider provider={conversation.provider} />
-			{formatName(conversation.provider ?? "") ?? "loading"}
+			<IconProvider provider={conversation.data.provider} />
+			{formatName(conversation.data.provider ?? "") ?? "loading"}
 		</div>
 		<div
 			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"

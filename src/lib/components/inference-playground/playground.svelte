@@ -1,12 +1,8 @@
 <script lang="ts">
 	import { observe, observed, ObservedElements } from "$lib/actions/observe.svelte.js";
-	import { models } from "$lib/state/models.svelte.js";
-	import { session } from "$lib/state/session.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isConversationWithHFModel, type ConversationMessage, type Model, type Project } from "$lib/types.js";
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
 	import { Popover } from "melt/components";
-	import typia from "typia";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
 	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
@@ -18,8 +14,10 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import { isSystemPromptSupported } from "./utils.js";
+	import { isSystemPromptSupported } from "./utils.svelte.js";
 
+	import { conversations } from "$lib/state/conversations.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 	import { iterate } from "$lib/utils/array.js";
 	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
 	import IconChatRight from "~icons/carbon/align-box-bottom-right";
@@ -31,42 +29,28 @@
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
 	import IconShare from "~icons/carbon/share";
+	import { isHFModel } from "$lib/types.js";
 
-	const multiple = $derived(session.project.conversations.length > 1);
-
-	const startMessageUser: ConversationMessage = { role: "user", content: "" };
+	const multiple = $derived(conversations.active.length > 1);
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
-	const loading = $derived(session.generating);
+	const loading = $derived(conversations.generating);
 
 	let selectCompareModelOpen = $state(false);
 
-	const systemPromptSupported = $derived(
-		session.project.conversations.some(conversation => isSystemPromptSupported(conversation.model))
-	);
-	const compareActive = $derived(session.project.conversations.length === 2);
-
-	function reset() {
-		const c = session.project.conversations.map(conversation => {
-			return {
-				...conversation,
-				systemMessage: { role: "system", content: "" },
-				messages: [{ ...startMessageUser }],
-			};
-		});
-		if (typia.is<Project["conversations"]>(c)) session.project.conversations = c;
-	}
+	const systemPromptSupported = $derived(conversations.active.some(c => isSystemPromptSupported(c.model)));
+	const compareActive = $derived(conversations.active.length === 2);
 
 	function onKeydown(event: KeyboardEvent) {
 		if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-			session.run();
+			conversations.genNextMessages();
 		}
 		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "l") {
-			session.run("left");
+			conversations.genNextMessages("left");
 		}
 		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "r") {
-			session.run("right");
+			conversations.genNextMessages("right");
 		}
 	}
 
@@ -82,23 +66,6 @@
 		} else {
 			alert("Please provide a valid HF token.");
 		}
-	}
-
-	function addCompareModel(modelId: Model["id"]) {
-		const model = models.all.find(m => m.id === modelId);
-		if (!model || session.project.conversations.length === 2) {
-			return;
-		}
-		const newConversation = { ...JSON.parse(JSON.stringify(session.project.conversations[0])), model };
-		session.project.conversations = [...session.project.conversations, newConversation];
-		session.generationStats = [session.generationStats[0], { latency: 0, generatedTokensCount: 0 }];
-	}
-
-	function removeCompareModal(conversationIdx: number) {
-		session.project.conversations.splice(conversationIdx, 1)[0];
-		session.$ = session.$;
-		session.generationStats.splice(conversationIdx, 1)[0];
-		session.generationStats = session.generationStats;
 	}
 </script>
 
@@ -138,12 +105,11 @@
 				placeholder={systemPromptSupported
 					? "Enter a custom prompt"
 					: "System prompt is not supported with the chosen model."}
-				value={systemPromptSupported ? session.project.conversations[0]?.systemMessage.content : ""}
+				value={systemPromptSupported ? conversations.active[0]?.data.systemMessage.content : ""}
 				oninput={e => {
-					for (const conversation of session.project.conversations) {
-						conversation.systemMessage.content = e.currentTarget.value;
+					for (const c of conversations.active) {
+						c.update({ ...c.data, systemMessage: { ...c.data.systemMessage, content: e.currentTarget.value } });
 					}
-					session.$ = session.$;
 				}}
 				class="absolute inset-x-0 bottom-0 h-full resize-none bg-transparent px-3 pt-10 text-sm outline-hidden"
 			></textarea>
@@ -156,24 +122,16 @@
 		<div
 			class="flex flex-1 divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:pt-3 dark:divide-gray-800"
 		>
-			{#each session.project.conversations as conversation, conversationIdx (conversation)}
+			{#each conversations.active as conversation, conversationIdx (conversation)}
 				<div class="flex h-full flex-col overflow-hidden max-sm:min-w-full">
 					{#if compareActive}
 						<PlaygroundConversationHeader
 							{conversationIdx}
-							bind:conversation={session.project.conversations[conversationIdx]!}
-							on:close={() => removeCompareModal(conversationIdx)}
+							{conversation}
+							on:close={() => conversations.delete(conversation.data)}
 						/>
 					{/if}
-					<PlaygroundConversation
-						{loading}
-						bind:conversation={
-							() => session.project.conversations[conversationIdx]!,
-							v => (session.project.conversations[conversationIdx] = v)
-						}
-						{viewCode}
-						on:closeCode={() => (viewCode = false)}
-					/>
+					<PlaygroundConversation {conversation} {viewCode} onCloseCode={() => (viewCode = false)} />
 				</div>
 			{/each}
 		</div>
@@ -197,7 +155,7 @@
 				{/if}
 				<Tooltip>
 					{#snippet trigger(tooltip)}
-						<button type="button" onclick={reset} class="btn size-[39px]" {...tooltip.trigger}>
+						<button type="button" onclick={conversations.reset} class="btn size-[39px]" {...tooltip.trigger}>
 							<IconDelete />
 						</button>
 					{/snippet}
@@ -207,13 +165,13 @@
 			<div
 				class="pointer-events-none absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 			>
-				{#each iterate(session.generationStats) as [{ latency, generatedTokensCount }, isLast]}
+				{#each iterate(conversations.generationStats) as [{ latency, tokens }, isLast]}
 					{@const baLeft = observed["bottom-actions"].rect.left}
 					{@const tceRight = observed["token-count-end"].offset.right}
 					<span
 						style:translate={isLast ? (baLeft - 12 < tceRight ? baLeft - tceRight - 12 + "px" : "") : undefined}
 						use:observe={{ name: isLast ? ObservedElements.TokenCountEnd : ObservedElements.TokenCountStart }}
-						>{generatedTokensCount} tokens · Latency {latency}ms</span
+						>{tokens} tokens · Latency {latency}ms</span
 					>
 				{/each}
 			</div>
@@ -231,7 +189,7 @@
 					<button
 						onclick={() => {
 							viewCode = false;
-							session.runOrStop();
+							conversations.genOrStop();
 						}}
 						type="button"
 						class={[
@@ -244,7 +202,7 @@
 						{#if loading}
 							<div class="flex flex-none items-center gap-[3px]">
 								<span class="mr-2">
-									{#if session.project.conversations[0]?.streaming || session.project.conversations[1]?.streaming}
+									{#if conversations.active.some(c => c.data.streaming)}
 										Stop
 									{:else}
 										Cancel
@@ -296,7 +254,7 @@
 										class="group py-1 text-sm"
 										onclick={() => {
 											viewCode = false;
-											session.runOrStop("left");
+											conversations.genOrStop("left");
 											popover.open = false;
 										}}
 									>
@@ -315,7 +273,7 @@
 										class="group py-1 text-sm"
 										onclick={() => {
 											viewCode = false;
-											session.runOrStop("right");
+											conversations.genOrStop("right");
 											popover.open = false;
 										}}
 									>
@@ -352,7 +310,7 @@
 					class="flex flex-1 flex-col gap-6 overflow-y-hidden rounded-xl border border-gray-200/80 bg-white bg-linear-to-b from-white via-white p-3 shadow-xs dark:border-white/5 dark:bg-gray-900 dark:from-gray-800/40 dark:via-gray-800/40"
 				>
 					<div class="flex flex-col gap-2">
-						<ModelSelector bind:conversation={session.project.conversations[0]!} />
+						<ModelSelector conversation={conversations.active[0]!} />
 						<div class="flex items-center gap-2 self-end px-2 text-xs whitespace-nowrap">
 							<button
 								class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -361,10 +319,10 @@
 								<IconCompare />
 								Compare
 							</button>
-							{#if isConversationWithHFModel(session.project.conversations[0])}
+							{#if isHFModel(conversations.active[0]?.model)}
 								<a
-									href="https://huggingface.co/{session.project.conversations[0]?.model.id}?inference_provider={session
-										.project.conversations[0]?.provider}"
+									href="https://huggingface.co/{conversations.active[0]?.model.id}?inference_provider={conversations
+										.active[0].data.provider}"
 									target="_blank"
 									class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 								>
@@ -375,11 +333,11 @@
 						</div>
 					</div>
 
-					<GenerationConfig bind:conversation={session.project.conversations[0]!} />
+					<GenerationConfig conversation={conversations.active[0]!} />
 
 					<div class="mt-auto flex items-center justify-end gap-4 whitespace-nowrap">
 						<button
-							onclick={() => showShareModal(session.project)}
+							onclick={() => projects.current && showShareModal(projects.current)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
 						>
 							<IconShare class="text-xs" />
@@ -458,8 +416,13 @@
 
 {#if selectCompareModelOpen}
 	<ModelSelectorModal
-		conversation={session.project.conversations[0]!}
-		onModelSelect={addCompareModel}
+		conversation={conversations.active[0]!}
+		onModelSelect={m => {
+			conversations.create({
+				projectId: projects.activeId,
+				modelId: m,
+			});
+		}}
 		onClose={() => (selectCompareModelOpen = false)}
 	/>
 {/if}

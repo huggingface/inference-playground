@@ -24,9 +24,6 @@ export type ConversationWithHFModel = Conversation & {
 	model: Model;
 };
 
-export const isConversationWithHFModel = typia.createIs<ConversationWithHFModel>();
-export const isConversationWithCustomModel = typia.createIs<ConversationWithCustomModel>();
-
 export const isHFModel = typia.createIs<Model>();
 export const isCustomModel = typia.createIs<CustomModel>();
 
@@ -207,3 +204,8 @@ export const pipelineTagLabel: Record<PipelineTag, string> = {
 export type MaybeGetter<T> = T | (() => T);
 
 export type ValueOf<T> = T[keyof T];
+
+export interface GenerationStatistics {
+	latency: number;
+	tokens: number;
+}

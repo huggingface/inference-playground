@@ -1,79 +1,108 @@
 import type { Project } from "$lib/types.js";
-import { PersistedState } from "runed";
-import { session } from "./session.svelte";
-
-const ls_key = "checkpoints";
-
-type Checkpoint = {
-	id: string;
-	timestamp: string;
-	projectState: Project;
-	favorite?: boolean;
-};
+import { dequal } from "dequal";
+import { db, type Checkpoint } from "./db.svelte";
+import { snapshot } from "$lib/utils/object.svelte";
+import { projects } from "./projects.svelte";
+import { conversations } from "./conversations.svelte";
 
 class Checkpoints {
-	#checkpoints = new PersistedState<Record<Project["id"], Checkpoint[]>>(
-		ls_key,
-		{},
-		{
-			serializer: {
-				serialize: JSON.stringify,
-				deserialize: v => {
-					return JSON.parse(v);
-				},
-			},
-		}
-	);
+	#checkpoints: Record<Project["id"], Checkpoint[]> = $state({});
 
 	for(projectId: Project["id"]) {
+		// Async load from db
+		db.checkpoints
+			.where("projectId")
+			.equals(projectId)
+			.toArray()
+			.then(c => {
+				// Dequal to avoid infinite loops
+				if (dequal(c, this.#checkpoints[projectId])) return;
+				this.#checkpoints[projectId] = c;
+			});
+
 		return (
-			this.#checkpoints.current[projectId]?.toSorted((a, b) => {
+			this.#checkpoints[projectId]?.toSorted((a, b) => {
 				return b.timestamp.localeCompare(a.timestamp);
 			}) ?? []
 		);
 	}
 
-	commit(projectId: Project["id"]) {
-		const project = session.$.projects.find(p => p.id == projectId);
-		if (!project) return;
-		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
-		this.#checkpoints.current[projectId] = [
-			...prev,
-			{ projectState: project, timestamp: new Date().toLocaleString(), id: crypto.randomUUID() },
-		];
-	}
-
-	restore(projectId: Project["id"], checkpoint: Checkpoint) {
-		const project = session.$.projects.find(p => p.id == projectId);
+	async commit(projectId: Project["id"]) {
+		const project = projects.all.find(p => p.id == projectId);
 		if (!project) return;
 
-		session.$.activeProjectId = projectId;
-		session.project = checkpoint.projectState;
+		const newCheckpoint = snapshot({
+			conversations: conversations.for(project.id).map(c => c.data),
+			timestamp: new Date().toLocaleString(),
+			projectId: project.id,
+		} satisfies Checkpoint);
+
+		const id = await db.checkpoints.add(newCheckpoint);
+		const prev: Checkpoint[] = this.#checkpoints[projectId] ?? [];
+		this.#checkpoints[projectId] = [...prev, { ...newCheckpoint, id }];
 	}
 
-	toggleFavorite(projectId: Project["id"], checkpoint: Checkpoint) {
-		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
-		this.#checkpoints.current[projectId] = prev.map(c => {
-			if (c.id == checkpoint.id) {
-				return { ...c, favorite: !c.favorite };
-			}
-			return c;
+	restore(checkpoint: Checkpoint) {
+		const cloned = snapshot(checkpoint);
+		const project = projects.all.find(p => p.id == cloned.projectId);
+		if (!project) return;
+
+		projects.activeId = cloned.projectId;
+
+		// conversations.deleteAllFrom(cloned.projectId);
+		const prev = conversations.for(cloned.projectId);
+		cloned.conversations.forEach((c, i) => {
+			const p = prev[i];
+			if (p) return p.update(c);
+			conversations.create({
+				...c,
+				projectId: cloned.projectId,
+			});
+		});
+
+		if (cloned.conversations.length < prev.length) {
+			prev.forEach((p, i) => {
+				if (i < cloned.conversations.length) return;
+				conversations.delete(p.data);
+			});
+		}
+	}
+
+	async toggleFavorite({ id, projectId }: Checkpoint) {
+		if (!id) return;
+
+		const p = await db.checkpoints.where("id").equals(id).first();
+		if (!p) return;
+
+		await db.checkpoints.update(id, { favorite: !p.favorite });
+		const prev: Checkpoint[] = snapshot(this.#checkpoints[projectId] ?? []);
+
+		this.#checkpoints[projectId] = prev.map(c => {
+			if (c.id !== id) return c;
+			return { ...c, favorite: !c.favorite };
 		});
 	}
 
-	delete(projectId: Project["id"], checkpoint: Checkpoint) {
-		const prev: Checkpoint[] = this.#checkpoints.current[projectId] ?? [];
-		this.#checkpoints.current[projectId] = prev.filter(c => c.id != checkpoint.id);
+	async delete({ id, projectId }: Checkpoint) {
+		if (!id) return;
+
+		await db.checkpoints.delete(id);
+
+		const prev: Checkpoint[] = this.#checkpoints[projectId] ?? [];
+		this.#checkpoints[projectId] = prev.filter(c => c.id != id);
 	}
 
-	clear(projectId: Project["id"]) {
-		this.#checkpoints.current[projectId] = [];
+	async clear(projectId: Project["id"]) {
+		await db.checkpoints.where("projectId").equals(projectId).delete();
+		this.#checkpoints[projectId] = [];
 	}
 
-	migrate(from: Project["id"], to: Project["id"]) {
-		const fromArr = this.#checkpoints.current[from] ?? [];
-		this.#checkpoints.current[to] = [...fromArr];
-		this.#checkpoints.current[from] = [];
+	async migrate(from: Project["id"], to: Project["id"]) {
+		await db.checkpoints.where("projectId").equals(from).modify({ projectId: to });
+
+		const fromArr = this.#checkpoints[from] ?? [];
+		this.#checkpoints[to] = [...fromArr.map(c => ({ ...c, projectId: to }))];
+		this.#checkpoints[from] = [];
 	}
 }
 

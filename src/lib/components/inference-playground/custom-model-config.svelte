@@ -29,13 +29,13 @@
 	import { fade, scale } from "svelte/transition";
 	import IconCross from "~icons/carbon/close";
 	import typia from "typia";
-	import { handleNonStreamingResponse } from "./utils.js";
+	import { handleNonStreamingResponse } from "./utils.svelte.js";
 	import { watch } from "runed";
 	import Tooltip from "../tooltip.svelte";
 	import { createFieldValidation } from "$lib/utils/form.svelte.js";
 	import { isValidURL } from "$lib/utils/url.js";
 	import { Select } from "melt/components";
-	import { keys } from "$lib/utils/object.js";
+	import { keys } from "$lib/utils/object.svelte.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));

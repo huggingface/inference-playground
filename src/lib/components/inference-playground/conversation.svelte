@@ -1,22 +1,19 @@
 <script lang="ts">
-	import { type Conversation } from "$lib/types.js";
-
 	import { ScrollState } from "$lib/spells/scroll-state.svelte";
+	import { type CoolConversation } from "$lib/state/conversations.svelte";
 	import { watch } from "runed";
 	import { tick } from "svelte";
 	import IconPlus from "~icons/carbon/add";
 	import CodeSnippets from "./code-snippets.svelte";
 	import Message from "./message.svelte";
-	import { iterate } from "$lib/utils/array.js";
-	import { session } from "$lib/state/session.svelte";
 
 	interface Props {
-		conversation: Conversation;
-		loading: boolean;
+		conversation: CoolConversation;
 		viewCode: boolean;
+		onCloseCode: () => void;
 	}
 
-	let { conversation = $bindable(), loading, viewCode }: Props = $props();
+	const { conversation, viewCode, onCloseCode }: Props = $props();
 	let messageContainer: HTMLDivElement | null = $state(null);
 	const scrollState = new ScrollState({
 		element: () => messageContainer,
@@ -25,7 +22,7 @@
 	const atBottom = $derived(scrollState.arrived.bottom);
 
 	watch(
-		() => conversation.messages.at(-1)?.content,
+		() => conversation.data.messages.at(-1)?.content,
 		() => {
 			const shouldScroll = atBottom && !scrollState.isScrolling;
 			if (!shouldScroll) return;
@@ -40,58 +37,62 @@
 	);
 
 	function addMessage() {
-		const msgs = conversation.messages.slice();
-		conversation.messages = [
-			...msgs,
-			{
-				role: msgs.at(-1)?.role === "user" ? "assistant" : "user",
-				content: "",
-			},
-		];
-		conversation = conversation;
+		const msgs = conversation.data.messages.slice();
+		conversation.update({
+			...conversation.data,
+			messages: [
+				...msgs,
+				{
+					role: msgs.at(-1)?.role === "user" ? "assistant" : "user",
+					content: "",
+				},
+			],
+		});
 	}
 
 	function deleteMessage(idx: number) {
-		conversation.messages = conversation.messages.slice(0, idx);
+		conversation.update({
+			...conversation.data,
+			messages: conversation.data.messages.slice(0, idx),
+		});
 	}
 
 	function regenMessage(idx: number) {
-		const msg = conversation.messages[idx];
+		// TODO: migrate to new logic
+		const msg = conversation.data.messages[idx];
 		if (!msg) return;
 		if (msg.role === "user") {
-			conversation.messages = conversation.messages.slice(0, idx + 1);
+			conversation.deleteMessages(idx + 1);
 		} else {
-			conversation.messages = conversation.messages.slice(0, idx);
+			conversation.deleteMessages(idx);
 		}
 
-		session.stopGenerating();
-		session.run(conversation);
+		conversation.stopGenerating();
+		conversation.genNextMessage();
 	}
 </script>
 
 <div
 	class="@container flex flex-col overflow-x-hidden overflow-y-auto"
-	class:animate-pulse={loading && !conversation.streaming}
+	class:animate-pulse={conversation.generating && !conversation.data.streaming}
 	bind:this={messageContainer}
-	id="test-this"
 >
 	{#if !viewCode}
-		{#each iterate(conversation.messages) as [_msg, { isLast }], idx}
+		{#each conversation.data.messages as message, index}
 			<Message
-				bind:message={conversation.messages[idx]!}
+				{message}
+				{index}
 				{conversation}
-				autofocus={idx === conversation.messages.length - 1}
-				{loading}
-				onDelete={() => deleteMessage(idx)}
-				onRegen={() => regenMessage(idx)}
-				{isLast}
+				autofocus={index === conversation.data.messages.length - 1}
+				onDelete={() => deleteMessage(index)}
+				onRegen={() => regenMessage(index)}
 			/>
 		{/each}
 
 		<button
 			class="flex px-3.5 py-6 hover:bg-gray-50 md:px-6 dark:hover:bg-gray-800/50"
 			onclick={addMessage}
-			disabled={loading}
+			disabled={conversation.generating}
 		>
 			<div class="flex items-center gap-2 p-0! text-sm font-semibold">
 				<div class="text-lg">
@@ -101,6 +102,6 @@
 			</div>
 		</button>
 	{:else}
-		<CodeSnippets {conversation} on:closeCode />
+		<CodeSnippets {conversation} {onCloseCode} />
 	{/if}
 </div>

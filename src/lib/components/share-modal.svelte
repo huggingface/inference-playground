@@ -1,7 +1,7 @@
 <script lang="ts" module>
-	let project = $state<Project>();
+	let project = $state<ProjectFromDb>();
 
-	export function showShareModal(p: Project) {
+	export function showShareModal(p: ProjectFromDb) {
 		project = p;
 	}
 
@@ -12,7 +12,6 @@
 
 <script lang="ts">
 	import { clickOutside } from "$lib/actions/click-outside.js";
-	import { session } from "$lib/state/session.svelte";
 	import type { Project } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { decodeString, encodeObject } from "$lib/utils/encode.js";
@@ -23,6 +22,8 @@
 	import IconSave from "~icons/carbon/save";
 	import LocalToasts from "./local-toasts.svelte";
 	import { addToast as addToastGlobally } from "./toaster.svelte.js";
+	import type { ProjectFromDb } from "$lib/state/db.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -117,7 +118,10 @@
 										addToast({ data: { content: "String isn't valid", variant: "danger" } });
 										return;
 									}
-									session.addProject({ ...decoded, name: `Saved - ${decoded.name}`, id: crypto.randomUUID() });
+									projects.create(`Saved - ${decoded.name}`);
+									// TODO: add other stuff too!
+
+									// session.addProject({ ...decoded, name: `Saved - ${decoded.name}`, id: crypto.randomUUID() });
 									addToastGlobally({
 										variant: "success",
 										title: "Saved project",

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { autofocus } from "$lib/actions/autofocus.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
-	import { session } from "$lib/state/session.svelte.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
 	import type { EventHandler } from "svelte/elements";
@@ -15,6 +14,7 @@
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
 	import CheckpointsMenu from "./checkpoints-menu.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 
 	interface Props {
 		class?: string;
@@ -22,12 +22,12 @@
 
 	let { class: classNames = "" }: Props = $props();
 
-	const isDefault = $derived(session.$.activeProjectId === "default");
+	const isDefault = $derived(projects.activeId === "default");
 
 	const select = new Select({
-		value: () => session.$.activeProjectId,
+		value: () => projects.activeId,
 		onValueChange(v) {
-			if (v) session.$.activeProjectId = v;
+			if (v) projects.activeId = v;
 		},
 		sameWidth: true,
 	});
@@ -45,7 +45,7 @@
 	};
 
 	let sdState = $state(defaultSdState);
-	const projectPlaceholder = $derived(`Project #${session.$.projects.length}`);
+	const projectPlaceholder = $derived(`Project #${projects.all.length}`);
 
 	function openSaveDialog() {
 		sdState = { ...defaultSdState, open: true };
@@ -53,7 +53,7 @@
 
 	const saveDialog = async function (e) {
 		e.preventDefault();
-		session.saveProject({
+		projects.saveProject({
 			...sdState,
 			name: sdState.name || projectPlaceholder,
 		});
@@ -71,7 +71,7 @@
 		)}
 	>
 		<div class="flex items-center gap-1 text-sm">
-			{session.project.name}
+			{projects.current?.name}
 		</div>
 		<div
 			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
@@ -94,11 +94,7 @@
 		{:else}
 			<Tooltip>
 				{#snippet trigger(tooltip)}
-					<button
-						class="btn size-[32px] p-0"
-						{...tooltip.trigger}
-						onclick={() => (session.$.activeProjectId = "default")}
-					>
+					<button class="btn size-[32px] p-0" {...tooltip.trigger} onclick={() => (projects.activeId = "default")}>
 						<IconCross />
 					</button>
 				{/snippet}
@@ -109,7 +105,7 @@
 </div>
 
 <div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-	{#each session.$.projects as { name, id } (id)}
+	{#each projects.all as { name, id } (id)}
 		{@const option = select.getOption(id)}
 		{@const hasCheckpoints = checkpoints.for(id).length > 0}
 		<div {...option} class="group block w-full p-1 text-sm dark:text-white">
@@ -133,7 +129,7 @@
 							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
 							onclick={async e => {
 								e.stopPropagation();
-								session.updateProject(id, { name: (await prompt("Edit project name", name)) || name });
+								projects.update({ id, name: (await prompt("Edit project name", name)) || name });
 							}}
 						>
 							<IconEdit />
@@ -142,7 +138,7 @@
 							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
 							onclick={e => {
 								e.stopPropagation();
-								session.deleteProject(id);
+								projects.delete(id);
 							}}
 						>
 							<IconDelete />

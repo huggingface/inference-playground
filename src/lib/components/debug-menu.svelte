@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { session } from "$lib/state/session.svelte.js";
+	import { models } from "$lib/state/models.svelte";
 	import { token } from "$lib/state/token.svelte.js";
 	import { compareStr } from "$lib/utils/compare.js";
 	import { Popover } from "melt/builders";
+	import { openCustomModelConfig } from "./inference-playground/custom-model-config.svelte";
 	import { prompt } from "./prompts.svelte";
 	import { showQuotaModal } from "./quota-modal.svelte";
 	import type { ToastData } from "./toaster.svelte.js";
 	import { addToast } from "./toaster.svelte.js";
-	import { models } from "$lib/state/models.svelte";
-	import { last } from "$lib/utils/array.js";
-	import { openCustomModelConfig } from "./inference-playground/custom-model-config.svelte";
 
 	let innerWidth = $state<number>();
 	let innerHeight = $state<number>();
@@ -27,20 +25,7 @@
 	};
 
 	const actions: Action[] = [
-		{
-			label: "Set long text",
-			cb: () => {
-				const conv = session.project.conversations[0]!;
-				last(conv.messages)!.content = "This is a lot of text. ".repeat(10000);
-			},
-		},
 		{ label: "Toggle Theme", cb: toggleTheme },
-		{
-			label: "Log session to console",
-			cb: () => {
-				console.log(session.$);
-			},
-		},
 		{
 			label: "Log models to console",
 			cb: () => {

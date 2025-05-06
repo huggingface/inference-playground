@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { isConversationWithHFModel, type Conversation, type Model } from "$lib/types.js";
+	import { isHFModel, type Model } from "$lib/types.js";
 
 	import { createEventDispatcher } from "svelte";
 
+	import type { CoolConversation } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
 	import IconCog from "~icons/carbon/settings";
 	import Avatar from "../avatar.svelte";
@@ -11,7 +12,7 @@
 	import ProviderSelect from "./provider-select.svelte";
 
 	interface Props {
-		conversation: Conversation;
+		conversation: CoolConversation;
 		conversationIdx: number;
 	}
 
@@ -26,8 +27,7 @@
 		if (!model) {
 			return;
 		}
-		conversation.model = model;
-		conversation.provider = undefined;
+		conversation.update({ modelId: model.id, provider: undefined });
 	}
 
 	let nameSpace = $derived(conversation.model.id.split("/")[0] ?? "");
@@ -58,20 +58,21 @@
 	>
 		<IconCog />
 		<GenerationConfig
-			bind:conversation
+			{conversation}
 			classNames="absolute top-7 min-w-[250px] z-10 right-3 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hidden group-focus:flex hover:flex"
 		/>
 	</button>
 </div>
 
-{#if isConversationWithHFModel(conversation)}
+{#if isHFModel(conversation.model)}
 	<div
 		class="{conversationIdx === 0
 			? 'mr-4 max-sm:ml-4'
 			: 'mx-4'}  mt-2 h-11 text-sm leading-none whitespace-nowrap max-sm:mt-4"
 	>
+		<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 		<ProviderSelect
-			bind:conversation
+			conversation={conversation as any}
 			class="rounded-lg border border-gray-200/80 bg-white dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
 		/>
 	</div>

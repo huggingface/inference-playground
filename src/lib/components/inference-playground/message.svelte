@@ -2,47 +2,52 @@
 	import { autofocus as autofocusAction } from "$lib/actions/autofocus.js";
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
-	import { PipelineTag, type Conversation, type ConversationMessage } from "$lib/types.js";
-	import { fileToDataURL } from "$lib/utils/file.js";
+	import { type CoolConversation } from "$lib/state/conversations.svelte.js";
+	import type { ConversationMessage } from "$lib/types.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
 	import IconImage from "~icons/carbon/image-reference";
 	import IconMaximize from "~icons/carbon/maximize";
 	import IconCustom from "../icon-custom.svelte";
 	import ImgPreview from "./img-preview.svelte";
+	import { fileToDataURL } from "$lib/utils/file.js";
 
 	type Props = {
-		conversation: Conversation;
+		conversation: CoolConversation;
 		message: ConversationMessage;
-		loading?: boolean;
+		index: number;
 		autofocus?: boolean;
 		onDelete?: () => void;
 		onRegen?: () => void;
-		isLast?: boolean;
 	};
 
-	let { message = $bindable(), conversation, loading, autofocus, onDelete, onRegen, isLast }: Props = $props();
+	const { index, conversation, message, autofocus, onDelete, onRegen }: Props = $props();
+	const isLast = $derived(index === conversation.data.messages.length - 1);
 
 	let element = $state<HTMLTextAreaElement>();
 	new TextareaAutosize({
 		element: () => element,
-		input: () => message.content ?? "",
+		input: () => message?.content ?? "",
 	});
 
 	const canUploadImgs = $derived(
-		message.role === "user" &&
-			"pipeline_tag" in conversation.model &&
-			conversation.model.pipeline_tag === PipelineTag.ImageTextToText
+		true
+		// message.role === "user" &&
+		// 	"pipeline_tag" in conversation.model &&
+		// 	conversation.model.pipeline_tag === PipelineTag.ImageTextToText
 	);
 	const fileUpload = new FileUpload({
 		accept: "image/*",
 		async onAccept(file) {
-			if (!message.images) message.images = [];
+			if (!message?.images) {
+				conversation.updateMessage({ index, message: { images: [] } });
+			}
 
 			const dataUrl = await fileToDataURL(file);
-			if (message.images.includes(dataUrl)) return;
+			if (message.images?.includes(dataUrl)) return;
 
-			message.images.push(await fileToDataURL(file));
+			const prev = message.images ?? [];
+			conversation.updateMessage({ index, message: { images: [...prev, await fileToDataURL(file)] } });
 			// We're dealing with files ourselves, so we don't want fileUpload to have any internal state,
 			// to avoid conflicts
 			fileUpload.clear();
@@ -53,7 +58,7 @@
 	let previewImg = $state<string>();
 
 	const regenLabel = $derived.by(() => {
-		if (message.role === "assistant") return "Regenerate";
+		if (message?.role === "assistant") return "Regenerate";
 		return isLast ? "Generate from here" : "Regenerate from here";
 	});
 </script>
@@ -61,7 +66,7 @@
 <div
 	class="group/message group relative flex flex-col items-start gap-x-4 gap-y-2 border-b px-3.5 pt-4 pb-6 hover:bg-gray-100/70
 	 @2xl:px-6 dark:border-gray-800 dark:hover:bg-gray-800/30"
-	class:pointer-events-none={loading}
+	class:pointer-events-none={conversation.generating}
 	{...fileUpload.dropzone}
 	onclick={undefined}
 >
@@ -77,14 +82,20 @@
 		{/if}
 
 		<div class="pt-3 text-sm font-semibold uppercase @2xl:basis-[130px]">
-			{message.role}
+			{message?.role}
 		</div>
 		<div class="flex w-full gap-4">
 			<textarea
 				bind:this={element}
 				use:autofocusAction={autofocus}
-				bind:value={message.content}
-				placeholder="Enter {message.role} message"
+				value={message?.content}
+				onchange={e => {
+					const el = e.target as HTMLTextAreaElement;
+					const content = el?.value;
+					if (!message || !content) return;
+					conversation.updateMessage({ index, message: { ...message, content } });
+				}}
+				placeholder="Enter {message?.role} message"
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"
 				data-message
@@ -152,7 +163,7 @@
 		</div>
 	</div>
 
-	{#if message.images?.length}
+	{#if message?.images?.length}
 		<div class="mt-2">
 			<div class="flex items-center gap-2">
 				{#each message.images as img (img)}
@@ -170,7 +181,7 @@
 							type="button"
 							onclick={e => {
 								e.stopPropagation();
-								message.images = message.images?.filter(i => i !== img);
+								conversation.updateMessage({ index, message: { images: message.images?.filter(i => i !== img) } });
 							}}
 							class="invisible absolute -top-1 -right-1 z-20 grid size-5 place-items-center rounded-full bg-gray-800 text-xs text-white group-hover/img:visible hover:bg-gray-700"
 						>
