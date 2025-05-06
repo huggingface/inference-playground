@@ -333,7 +333,7 @@
 						</div>
 					</div>
 
-					<GenerationConfig bind:conversation={conversations.active[0]!} />
+					<GenerationConfig conversation={conversations.active[0]!} />
 
 					<div class="mt-auto flex items-center justify-end gap-4 whitespace-nowrap">
 						<button

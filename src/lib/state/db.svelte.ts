@@ -27,6 +27,7 @@ const v3ConvSchema = {
 	provider: d.string().optional().indexed(false),
 	projectId: d.string(),
 	modelId: d.string(),
+	createdAt: d.string().indexed(false),
 } as const satisfies SchemaDefinition;
 
 const versions = {
@@ -105,7 +106,7 @@ export class Database extends Dexie {
 	projects!: TypedDexieTable<LatestSchema["projects"]>;
 
 	constructor() {
-		super("hf-playground"); // Database name
+		super("hf-inf-playground"); // Database name
 
 		keys(versions).forEach(vStr => {
 			const v = Number(vStr);

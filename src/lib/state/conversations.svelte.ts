@@ -51,7 +51,8 @@ function getDefaultConversation(projectId: string): ConversationFromDb {
 		messages: [{ ...startMessageUser }],
 		systemMessage,
 		streaming: true,
-		id: -1,
+		id: undefined,
+		createdAt: new Date().toLocaleString(),
 	};
 }
 
@@ -76,6 +77,8 @@ export class CoolConversation {
 	}
 
 	async update(data: Partial<ConversationFromDb>) {
+		console.log("id", this.data.id);
+		if (this.data.id === -1) return;
 		const cloned = snapshot({ ...this.data, ...data });
 
 		if (this.data.id === undefined) {
@@ -183,7 +186,10 @@ class Conversations {
 
 		const id = await db.conversations.add(conv);
 		const prev = this.#conversations[args.projectId] ?? [];
-		this.#conversations[args.projectId] = [...prev, new CoolConversation({ ...conv, id })];
+		this.#conversations = {
+			...this.#conversations,
+			[args.projectId]: [...prev, new CoolConversation({ ...conv, id })],
+		};
 	}
 
 	for(projectId: Project["id"]): CoolConversation[] {
@@ -194,17 +200,20 @@ class Conversations {
 				.equals(projectId)
 				.toArray()
 				.then(c => {
+					if (!c.length) c.push(getDefaultConversation(projectId));
 					this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new CoolConversation(c)) };
 				});
 		}
 
 		let res = this.#conversations[projectId];
 		if (res?.length === 0 || !res) {
-			const dc = getDefaultConversation(projectId);
+			const dc = { ...getDefaultConversation(projectId), id: -1 };
 			res = [new CoolConversation(dc)];
 		}
 
-		return res.slice(0, 2);
+		return res.slice(0, 2).toSorted((a, b) => {
+			return a.data.createdAt.localeCompare(b.data.createdAt);
+		});
 	}
 
 	async delete({ id, projectId }: ConversationFromDb) {
