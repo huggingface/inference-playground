@@ -15,7 +15,6 @@ import {
 	type Project,
 } from "$lib/types.js";
 import { snapshot } from "$lib/utils/object.svelte";
-import { dequal } from "dequal";
 import { db, type ConversationFromDb } from "./db.svelte";
 import { models } from "./models.svelte";
 import { projects } from "./projects.svelte";
@@ -76,10 +75,11 @@ export class CoolConversation {
 	}
 
 	async update(data: Partial<ConversationFromDb>) {
-		const cloned = snapshot({ ...this.data, data });
+		const cloned = snapshot({ ...this.data, ...data });
 
 		if (this.data.id === undefined) {
-			this.#data = { ...this.#data, id: await db.conversations.add(cloned) };
+			return;
+			// this.#data = { ...this.#data, id: await db.conversations.add(cloned) };
 		} else {
 			db.conversations.update(this.data.id, cloned);
 		}
@@ -112,6 +112,7 @@ export class CoolConversation {
 	}
 
 	async genNextMessage() {
+		this.generating = true;
 		const startTime = performance.now();
 
 		const conv: Conversation = {
@@ -147,6 +148,7 @@ export class CoolConversation {
 
 		const endTime = performance.now();
 		this.generationStats.latency = Math.round(endTime - startTime);
+		this.generating = false;
 	}
 
 	stopGenerating = () => {
@@ -156,12 +158,16 @@ export class CoolConversation {
 }
 
 class Conversations {
-	#conversations: Record<Project["id"], ConversationFromDb[]> = $state.raw({});
+	#conversations: Record<Project["id"], CoolConversation[]> = $state.raw({});
 	generating = $derived(this.active.some(c => c.generating));
 	generationStats = $derived(this.active.map(c => c.generationStats));
 
+	loaded = $state(false);
+
+	#active = $derived(this.for(projects.activeId));
+
 	get active() {
-		return this.for(projects.activeId);
+		return this.#active;
 	}
 
 	async create(args: { projectId: Project["id"]; modelId?: Model["id"] } & Partial<ConversationFromDb>) {
@@ -172,45 +178,29 @@ class Conversations {
 		if (args.modelId) conv.modelId = args.modelId;
 
 		const id = await db.conversations.add(conv);
-		const prev: ConversationFromDb[] = this.#conversations[args.projectId] ?? [];
-		this.#conversations[args.projectId] = [...prev, { ...conv, id }];
+		const prev = this.#conversations[args.projectId] ?? [];
+		this.#conversations[args.projectId] = [...prev, new CoolConversation({ ...conv, id })];
 	}
 
 	for(projectId: Project["id"]): CoolConversation[] {
 		// Async load from db
-		console.log("reloading");
-		db.conversations
-			.where("projectId")
-			.equals(projectId)
-			.toArray()
-			.then(c => {
-				// Dequal to avoid infinite loops
-				if (dequal(c, this.#conversations[projectId])) return;
-				this.#conversations = { ...this.#conversations, [projectId]: c };
-			});
+		if (this.#conversations[projectId] === undefined) {
+			db.conversations
+				.where("projectId")
+				.equals(projectId)
+				.toArray()
+				.then(c => {
+					this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new CoolConversation(c)) };
+				});
+		}
 
 		let res = this.#conversations[projectId];
 		if (res?.length === 0 || !res) {
-			res = [getDefaultConversation(projectId)];
+			const dc = getDefaultConversation(projectId);
+			res = [new CoolConversation(dc)];
 		}
 
-		return res.map(c => {
-			return new CoolConversation(c);
-		});
-	}
-
-	async update({ id, ...data }: ConversationFromDb) {
-		const convIndex = this.#conversations[data.projectId]?.findIndex(c => c.id === id) ?? -1;
-		if (convIndex === -1) return;
-
-		if (id === undefined) {
-			id = await db.conversations.add(snapshot(data));
-		} else {
-			db.conversations.update(id, snapshot(data));
-		}
-
-		const prev: ConversationFromDb[] = this.#conversations[data.projectId] ?? [];
-		this.#conversations[data.projectId] = [...prev.slice(0, convIndex), { ...data, id }, ...prev.slice(convIndex + 1)];
+		return res.slice(0, 2);
 	}
 
 	async delete({ id, projectId }: ConversationFromDb) {
@@ -218,8 +208,8 @@ class Conversations {
 
 		await db.conversations.delete(id);
 
-		const prev: ConversationFromDb[] = this.#conversations[projectId] ?? [];
-		this.#conversations = { ...this.#conversations, [projectId]: prev.filter(c => c.id != id) };
+		const prev = this.#conversations[projectId] ?? [];
+		this.#conversations = { ...this.#conversations, [projectId]: prev.filter(c => c.data.id != id) };
 	}
 
 	async deleteAllFrom(projectId: string) {
@@ -232,10 +222,9 @@ class Conversations {
 	}
 
 	async migrate(from: Project["id"], to: Project["id"]) {
-		await db.conversations.where("projectId").equals(from).modify({ projectId: to });
-
 		const fromArr = this.#conversations[from] ?? [];
-		this.#conversations[to] = [...fromArr.map(c => ({ ...c, projectId: to }))];
+		await Promise.allSettled(fromArr.map(c => c.update({ projectId: to })));
+		this.#conversations[to] = [...fromArr];
 		this.#conversations[from] = [];
 	}
 

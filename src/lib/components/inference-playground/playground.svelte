@@ -122,7 +122,7 @@
 		<div
 			class="flex flex-1 divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:pt-3 dark:divide-gray-800"
 		>
-			{#each conversations.for(projects.activeId) as conversation, conversationIdx (conversation)}
+			{#each conversations.active as conversation, conversationIdx (conversation)}
 				<div class="flex h-full flex-col overflow-hidden max-sm:min-w-full">
 					{#if compareActive}
 						<PlaygroundConversationHeader
