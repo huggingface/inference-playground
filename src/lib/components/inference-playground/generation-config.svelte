@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { type Conversation } from "$lib/types.js";
+	import type { CoolConversation } from "$lib/state/conversations.svelte.js";
+	import { isNumber } from "$lib/utils/is.js";
 	import { watch } from "runed";
+	import IconX from "~icons/carbon/close";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import { maxAllowedTokens } from "./utils.js";
-	import { isNumber } from "$lib/utils/is.js";
-	import IconX from "~icons/carbon/close";
 
 	interface Props {
-		conversation: Conversation;
+		conversation: CoolConversation;
 		classNames?: string;
 	}
 

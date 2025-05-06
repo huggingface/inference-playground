@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { isConversationWithHFModel, type Conversation, type Model } from "$lib/types.js";
+	import { isConversationWithHFModel, type Model } from "$lib/types.js";
 
 	import { createEventDispatcher } from "svelte";
 
+	import type { CoolConversation } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
 	import IconCog from "~icons/carbon/settings";
 	import Avatar from "../avatar.svelte";
@@ -11,7 +12,7 @@
 	import ProviderSelect from "./provider-select.svelte";
 
 	interface Props {
-		conversation: Conversation;
+		conversation: CoolConversation;
 		conversationIdx: number;
 	}
 
@@ -26,8 +27,7 @@
 		if (!model) {
 			return;
 		}
-		conversation.model = model;
-		conversation.provider = undefined;
+		conversation.update({ modelId: model.id, provider: undefined });
 	}
 
 	let nameSpace = $derived(conversation.model.id.split("/")[0] ?? "");

@@ -1,4 +1,5 @@
 import ctxLengthData from "$lib/data/context_length.json";
+import type { CoolConversation } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import {
 	isCustomModel,
@@ -51,9 +52,11 @@ type OpenAICompletionMetadata = {
 
 type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
 
-export function maxAllowedTokens(conversation: Conversation) {
+export function maxAllowedTokens(conversation: CoolConversation) {
 	const ctxLength = (() => {
-		const { provider, model } = conversation;
+		const model = conversation.model;
+		const { provider } = conversation.data;
+
 		if (!provider || !isHFModel(model)) return;
 
 		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;

@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { ScrollState } from "$lib/spells/scroll-state.svelte";
-	import { conversations, type CoolConversation } from "$lib/state/conversations.svelte";
-	import { iterate } from "$lib/utils/array.js";
+	import { type CoolConversation } from "$lib/state/conversations.svelte";
 	import { watch } from "runed";
 	import { tick } from "svelte";
 	import IconPlus from "~icons/carbon/add";
+	import CodeSnippets from "./code-snippets.svelte";
 	import Message from "./message.svelte";
 
 	interface Props {
 		conversation: CoolConversation;
 		loading: boolean;
 		viewCode: boolean;
+		onCloseCode: () => void;
 	}
 
-	const { conversation, loading, viewCode }: Props = $props();
+	const { conversation, loading, viewCode, onCloseCode }: Props = $props();
 	let messageContainer: HTMLDivElement | null = $state(null);
 	const scrollState = new ScrollState({
 		element: () => messageContainer,
@@ -59,16 +60,16 @@
 
 	function regenMessage(idx: number) {
 		// TODO: migrate to new logic
-		const msg = conversation.messages[idx];
+		const msg = conversation.data.messages[idx];
 		if (!msg) return;
 		if (msg.role === "user") {
-			conversation.messages = conversation.messages.slice(0, idx + 1);
+			conversation.deleteMessage(idx + 1);
 		} else {
-			conversation.messages = conversation.messages.slice(0, idx);
+			conversation.deleteMessage(idx);
 		}
 
-		// session.stopGenerating();
-		// session.run(conversation);
+		conversation.stopGenerating();
+		conversation.genNextMessage();
 	}
 </script>
 
@@ -104,8 +105,6 @@
 			</div>
 		</button>
 	{:else}
-		<!--
-			<CodeSnippets {conversation} on:closeCode />
-		-->
+		<CodeSnippets {conversation} {onCloseCode} />
 	{/if}
 </div>

@@ -1,17 +1,18 @@
 <script lang="ts">
+	import type { CoolConversation } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
-	import { isConversationWithHFModel, isCustomModel, type Conversation, type Model } from "$lib/types.js";
+	import { isCustomModel, isHFModel, type Model } from "$lib/types.js";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import Avatar from "../avatar.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ProviderSelect from "./provider-select.svelte";
-	import { defaultSystemMessage } from "./utils.js";
+	import { defaultSystemMessage } from "./utils.svelte.js";
 
 	interface Props {
-		conversation: Conversation;
+		conversation: CoolConversation;
 	}
 
-	let { conversation = $bindable() }: Props = $props();
+	const { conversation }: Props = $props();
 
 	let showModelPickerModal = $state(false);
 
@@ -21,9 +22,11 @@
 		if (!model) {
 			return;
 		}
-		conversation.model = model;
-		conversation.systemMessage = { role: "system", content: defaultSystemMessage?.[modelId] ?? "" };
-		conversation.provider = undefined;
+		conversation.update({
+			modelId: model.id,
+			systemMessage: { role: "system", content: defaultSystemMessage?.[modelId] ?? "" },
+			provider: undefined,
+		});
 	}
 
 	const model = $derived(conversation.model);
@@ -61,6 +64,7 @@
 	<ModelSelectorModal {conversation} onModelSelect={changeModel} onClose={() => (showModelPickerModal = false)} />
 {/if}
 
-{#if isConversationWithHFModel(conversation)}
-	<ProviderSelect bind:conversation />
+{#if isHFModel(conversation.model)}
+	<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
+	<ProviderSelect conversation={conversation as any} />
 {/if}

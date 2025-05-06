@@ -16,7 +16,10 @@ import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
 import { models } from "./models.svelte";
 import { checkpoints } from "./checkpoints.svelte";
-import { handleNonStreamingResponse, handleStreamingResponse } from "$lib/components/inference-playground/utils.js";
+import {
+	handleNonStreamingResponse,
+	handleStreamingResponse,
+} from "$lib/components/inference-playground/utils.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { token } from "./token.svelte";

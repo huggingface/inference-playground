@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { emptyModel } from "$lib/state/session.svelte.js";
+	import { emptyModel } from "$lib/state/_willremove_session.svelte";
+	import type { CoolConversation } from "$lib/state/conversations.svelte";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isConversationWithCustomModel, isCustomModel, PipelineTag, type Conversation } from "$lib/types.js";
+	import { isConversationWithCustomModel, isCustomModel, PipelineTag } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { entries, fromEntries, keys } from "$lib/utils/object.svelte.js";
 	import type { InferenceProvider } from "@huggingface/inference";
@@ -9,23 +10,25 @@
 	import http from "highlight.js/lib/languages/http";
 	import javascript from "highlight.js/lib/languages/javascript";
 	import python from "highlight.js/lib/languages/python";
-	import { createEventDispatcher } from "svelte";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconCopy from "~icons/carbon/copy";
 	import LocalToasts from "../local-toasts.svelte";
-	import { getInferenceSnippet, type GetInferenceSnippetReturn, type InferenceSnippetLanguage } from "./utils.js";
+	import {
+		getInferenceSnippet,
+		type GetInferenceSnippetReturn,
+		type InferenceSnippetLanguage,
+	} from "./utils.svelte.js";
 
 	hljs.registerLanguage("javascript", javascript);
 	hljs.registerLanguage("python", python);
 	hljs.registerLanguage("http", http);
 
 	interface Props {
-		conversation: Conversation;
+		conversation: CoolConversation;
+		onCloseCode: () => void;
 	}
 
-	let { conversation }: Props = $props();
-
-	const dispatch = createEventDispatcher<{ closeCode: void }>();
+	const { conversation, onCloseCode }: Props = $props();
 
 	const labelsByLanguage = {
 		javascript: "JavaScript",
@@ -39,11 +42,12 @@
 
 	type GetSnippetArgs = {
 		tokenStr: string;
-		conversation: Conversation;
+		conversation: CoolConversation;
 		lang: InferenceSnippetLanguage;
 	};
 	function getSnippet({ tokenStr, conversation, lang }: GetSnippetArgs) {
 		const model = conversation.model;
+		const data = conversation.data;
 		if (isCustomModel(model)) {
 			const snippets = getInferenceSnippet(
 				{
@@ -57,11 +61,11 @@
 				lang,
 				tokenStr,
 				{
-					messages: conversation.messages,
-					streaming: conversation.streaming,
-					max_tokens: conversation.config.max_tokens,
-					temperature: conversation.config.temperature,
-					top_p: conversation.config.top_p,
+					messages: data.messages,
+					streaming: data.streaming,
+					max_tokens: data.config.max_tokens,
+					temperature: data.config.temperature,
+					top_p: data.config.top_p,
 				}
 			);
 			return snippets
@@ -76,12 +80,12 @@
 				});
 		}
 
-		return getInferenceSnippet(model, conversation.provider as InferenceProvider, lang, tokenStr, {
-			messages: conversation.messages,
-			streaming: conversation.streaming,
-			max_tokens: conversation.config.max_tokens,
-			temperature: conversation.config.temperature,
-			top_p: conversation.config.top_p,
+		return getInferenceSnippet(model, data.provider as InferenceProvider, lang, tokenStr, {
+			messages: data.messages,
+			streaming: data.streaming,
+			max_tokens: data.config.max_tokens,
+			temperature: data.config.temperature,
+			top_p: data.config.top_p,
 		});
 	}
 
@@ -168,9 +172,7 @@
 			{/each}
 			<li class="ml-auto self-center max-sm:hidden">
 				<button
-					onclick={() => {
-						dispatch("closeCode");
-					}}
+					onclick={onCloseCode}
 					class="flex size-7 items-center justify-center rounded-lg px-3 py-2.5 text-xs font-medium text-gray-900 focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 				>
 					✕
@@ -233,7 +235,7 @@
 	{/if}
 
 	<div class="flex items-center justify-between px-2 pt-6 pb-4">
-		{#if conversation.streaming}
+		{#if conversation.data.streaming}
 			<h2 class="font-semibold">Streaming API</h2>
 		{:else}
 			<h2 class="font-semibold">Non-Streaming API</h2>
