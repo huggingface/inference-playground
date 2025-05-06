@@ -51,6 +51,7 @@ function getDefaultConversation(projectId: string): ConversationFromDb {
 		messages: [{ ...startMessageUser }],
 		systemMessage,
 		streaming: true,
+		id: -1,
 	};
 }
 
@@ -78,8 +79,7 @@ export class CoolConversation {
 		const cloned = snapshot({ ...this.data, ...data });
 
 		if (this.data.id === undefined) {
-			return;
-			// this.#data = { ...this.#data, id: await db.conversations.add(cloned) };
+			this.#data = { ...this.#data, id: await db.conversations.add(cloned) };
 		} else {
 			db.conversations.update(this.data.id, cloned);
 		}
@@ -121,29 +121,33 @@ export class CoolConversation {
 			streaming: this.data.streaming ?? true,
 		};
 
-		if (conv.streaming) {
-			let addedMessage = false;
-			const streamingMessage = $state({ role: "assistant", content: "" });
+		try {
+			if (conv.streaming) {
+				let addedMessage = false;
+				const streamingMessage = $state({ role: "assistant", content: "" });
 
-			await handleStreamingResponse(
-				conv,
-				content => {
-					if (!streamingMessage) return;
-					streamingMessage.content = content;
+				await handleStreamingResponse(
+					conv,
+					content => {
+						if (!streamingMessage) return;
+						streamingMessage.content = content;
 
-					if (!addedMessage) {
-						this.addMessage(streamingMessage);
-						addedMessage = true;
-					} else {
-						this.updateMessage({ index: this.data.messages.length - 1, message: streamingMessage });
-					}
-				},
-				this.abortManager.createController()
-			);
-		} else {
-			const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conv);
-			this.addMessage(newMessage);
-			this.generationStats.tokens += newTokensCount;
+						if (!addedMessage) {
+							this.addMessage(streamingMessage);
+							addedMessage = true;
+						} else {
+							this.updateMessage({ index: this.data.messages.length - 1, message: streamingMessage });
+						}
+					},
+					this.abortManager.createController()
+				);
+			} else {
+				const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conv);
+				this.addMessage(newMessage);
+				this.generationStats.tokens += newTokensCount;
+			}
+		} catch {
+			// no-op
 		}
 
 		const endTime = performance.now();

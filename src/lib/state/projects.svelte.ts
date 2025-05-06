@@ -3,30 +3,33 @@ import { dequal } from "dequal";
 import { db, type ProjectFromDb } from "./db.svelte";
 import { checkpoints } from "./checkpoints.svelte";
 import { conversations } from "./conversations.svelte";
+import { PersistedState } from "runed";
 
 const LOCAL_STORAGE_KEY = "hf_inf_pg_active_pid";
 
 class Projects {
-	#projects: Record<Project["id"], ProjectFromDb> = $state({});
-	activeId = $state("default");
+	#projects: Record<Project["id"], ProjectFromDb> = $state({ default: { name: "Default", id: "default" } });
+	#activeId = new PersistedState(LOCAL_STORAGE_KEY, "default");
+
+	get activeId() {
+		return this.#activeId.current;
+	}
+
+	set activeId(id: string) {
+		this.#activeId.current = id;
+	}
 
 	constructor() {
-		const aIdFromStorage = localStorage.getItem(LOCAL_STORAGE_KEY) ?? "default";
 		db.projects
 			.where("id")
-			.equals(aIdFromStorage)
+			.equals(this.activeId)
 			.first()
 			.then(p => {
 				if (p) {
-					this.activeId = aIdFromStorage;
 					return;
 				}
 
 				this.activeId = "default";
-				this.#projects[this.activeId] = {
-					name: "Default",
-					id: "default",
-				};
 			})
 			.finally(() => {
 				db.projects.toArray().then(res => {
