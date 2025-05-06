@@ -11,7 +11,7 @@
 		classNames?: string;
 	}
 
-	let { conversation = $bindable(), classNames = "" }: Props = $props();
+	const { conversation, classNames = "" }: Props = $props();
 
 	const maxTokens = $derived(maxAllowedTokens(conversation));
 
@@ -28,6 +28,17 @@
 			});
 		}
 	);
+
+	type Config = (typeof conversation)["data"]["config"];
+	function updateConfigKey<K extends keyof Config>(k: K, v: Config[K]) {
+		conversation.update({
+			...conversation.data,
+			config: {
+				...conversation.data.config,
+				[k]: v,
+			},
+		});
+	}
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -49,13 +60,13 @@
 							{min}
 							{max}
 							{step}
-							bind:value={conversation.data.config[key]}
+							bind:value={() => conversation.data.config[key], v => updateConfigKey(key, v)}
 						/>
 					{/if}
 					{#if isMaxTokens && isNumber(conversation.data.config[key])}
-						<button class="btn-mini" onclick={() => (conversation.data.config[key] = undefined)}> <IconX /> </button>
+						<button class="btn-mini" onclick={() => updateConfigKey(key, undefined)}> <IconX /> </button>
 					{:else if isMaxTokens}
-						<button class="btn-mini" onclick={() => (conversation.data.config[key] = maxTokens / 2)}> set </button>
+						<button class="btn-mini" onclick={() => updateConfigKey(key, maxTokens / 2)}> set </button>
 					{/if}
 				</div>
 			</div>
@@ -66,7 +77,7 @@
 					{min}
 					{max}
 					{step}
-					bind:value={conversation.data.config[key]}
+					bind:value={() => conversation.data.config[key], v => updateConfigKey(key, v)}
 					class="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-black dark:bg-gray-700 dark:accent-blue-500"
 				/>
 			{/if}
