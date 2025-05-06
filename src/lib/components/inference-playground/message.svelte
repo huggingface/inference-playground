@@ -10,6 +10,7 @@
 	import IconMaximize from "~icons/carbon/maximize";
 	import IconCustom from "../icon-custom.svelte";
 	import ImgPreview from "./img-preview.svelte";
+	import { fileToDataURL } from "$lib/utils/file.js";
 
 	type Props = {
 		conversation: CoolConversation;
@@ -39,12 +40,15 @@
 	const fileUpload = new FileUpload({
 		accept: "image/*",
 		async onAccept(file) {
-			// if (!message?.images) message.images = [];
-			//
-			// const dataUrl = await fileToDataURL(file);
-			// if (message.images.includes(dataUrl)) return;
-			//
-			// message.images.push(await fileToDataURL(file));
+			if (!message?.images) {
+				conversation.updateMessage({ index, message: { images: [] } });
+			}
+
+			const dataUrl = await fileToDataURL(file);
+			if (message.images?.includes(dataUrl)) return;
+
+			const prev = message.images ?? [];
+			conversation.updateMessage({ index, message: { images: [...prev, await fileToDataURL(file)] } });
 			// We're dealing with files ourselves, so we don't want fileUpload to have any internal state,
 			// to avoid conflicts
 			fileUpload.clear();

@@ -97,12 +97,15 @@ export class CoolConversation {
 		});
 	}
 
-	async updateMessage(args: { index: number; message: ConversationMessage }) {
+	async updateMessage(args: { index: number; message: Partial<ConversationMessage> }) {
+		const prev = this.data.messages[args.index];
+		if (!prev) return;
+
 		this.update({
 			...this.data,
 			messages: [
 				...this.data.messages.slice(0, args.index),
-				snapshot(args.message),
+				snapshot({ ...prev, ...args.message }),
 				...this.data.messages.slice(args.index + 1),
 			],
 		});
