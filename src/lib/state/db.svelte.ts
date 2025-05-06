@@ -18,6 +18,17 @@ type Version = {
 	upgrade?: (trans: Transaction) => void | Promise<void>;
 };
 
+const v3ConvSchema = {
+	id: d.primaryKey().autoIncrement(),
+	config: d.object<GenerationConfig>().indexed(false),
+	messages: d.array<ConversationMessage>().indexed(false),
+	systemMessage: d.object<ConversationMessage>().indexed(false),
+	streaming: d.boolean().optional().indexed(false),
+	provider: d.string().optional().indexed(false),
+	projectId: d.string(),
+	modelId: d.string(),
+} as const satisfies SchemaDefinition;
+
 const versions = {
 	1: {
 		schemas: {
@@ -65,19 +76,10 @@ const versions = {
 				timestamp: d.string(),
 				favorite: d.boolean().optional(),
 				// We don't use IDs here because the conversations should be static
-				conversations: d.array<Conversation>().indexed(false),
+				conversations: d.array<InferSchema<typeof v3ConvSchema>>().indexed(false),
 				projectId: d.string(),
 			},
-			conversations: {
-				id: d.primaryKey().autoIncrement(),
-				config: d.object<GenerationConfig>().indexed(false),
-				messages: d.array<ConversationMessage>().indexed(false),
-				systemMessage: d.object<ConversationMessage>().indexed(false),
-				streaming: d.boolean().optional().indexed(false),
-				provider: d.string().optional().indexed(false),
-				projectId: d.string(),
-				modelId: d.string(),
-			},
+			conversations: v3ConvSchema,
 			projects: {
 				id: d.strPrimaryKey(),
 				name: d.string(),
@@ -93,6 +95,7 @@ type LatestSchema = (typeof versions)[typeof LATEST_VERSION_NUMBER]["schemas"];
 // Infer types based on the LATEST version's schema
 export type Checkpoint = InferSchema<LatestSchema["checkpoints"]>;
 export type ProjectFromDb = InferSchema<LatestSchema["projects"]>;
+
 export type ConversationFromDb = InferSchema<LatestSchema["conversations"]>;
 
 export class Database extends Dexie {

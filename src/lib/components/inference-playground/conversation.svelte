@@ -63,9 +63,9 @@
 		const msg = conversation.data.messages[idx];
 		if (!msg) return;
 		if (msg.role === "user") {
-			conversation.deleteMessage(idx + 1);
+			conversation.deleteMessages(idx + 1);
 		} else {
-			conversation.deleteMessage(idx);
+			conversation.deleteMessages(idx);
 		}
 
 		conversation.stopGenerating();

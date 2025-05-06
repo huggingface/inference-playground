@@ -4,7 +4,7 @@
 	import { watch } from "runed";
 	import IconX from "~icons/carbon/close";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
-	import { maxAllowedTokens } from "./utils.js";
+	import { maxAllowedTokens } from "./utils.svelte.js";
 
 	interface Props {
 		conversation: CoolConversation;
@@ -18,9 +18,14 @@
 	watch(
 		() => maxTokens,
 		() => {
-			const curr = conversation.config.max_tokens;
+			const curr = conversation.data.config.max_tokens;
 			if (!curr || curr <= maxTokens) return;
-			conversation.config.max_tokens = maxTokens;
+			conversation.update({
+				config: {
+					...conversation.data.config,
+					max_tokens: maxTokens,
+				},
+			});
 		}
 	);
 </script>
@@ -37,31 +42,31 @@
 					{label}
 				</label>
 				<div class="flex items-center gap-2">
-					{#if !isMaxTokens || isNumber(conversation.config[key])}
+					{#if !isMaxTokens || isNumber(conversation.data.config[key])}
 						<input
 							type="number"
 							class="w-20 rounded-sm border bg-transparent px-1 py-0.5 text-right text-sm dark:border-gray-700"
 							{min}
 							{max}
 							{step}
-							bind:value={conversation.config[key]}
+							bind:value={conversation.data.config[key]}
 						/>
 					{/if}
-					{#if isMaxTokens && isNumber(conversation.config[key])}
-						<button class="btn-mini" onclick={() => (conversation.config[key] = undefined)}> <IconX /> </button>
+					{#if isMaxTokens && isNumber(conversation.data.config[key])}
+						<button class="btn-mini" onclick={() => (conversation.data.config[key] = undefined)}> <IconX /> </button>
 					{:else if isMaxTokens}
-						<button class="btn-mini" onclick={() => (conversation.config[key] = maxTokens / 2)}> set </button>
+						<button class="btn-mini" onclick={() => (conversation.data.config[key] = maxTokens / 2)}> set </button>
 					{/if}
 				</div>
 			</div>
-			{#if !isMaxTokens || isNumber(conversation.config[key])}
+			{#if !isMaxTokens || isNumber(conversation.data.config[key])}
 				<input
 					id={key}
 					type="range"
 					{min}
 					{max}
 					{step}
-					bind:value={conversation.config[key]}
+					bind:value={conversation.data.config[key]}
 					class="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-black dark:bg-gray-700 dark:accent-blue-500"
 				/>
 			{/if}
@@ -70,7 +75,7 @@
 
 	<div class="mt-2">
 		<label class="flex cursor-pointer items-center justify-between">
-			<input type="checkbox" bind:checked={conversation.streaming} class="peer sr-only" />
+			<input type="checkbox" bind:checked={conversation.data.streaming} class="peer sr-only" />
 			<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Streaming</span>
 			<div
 				class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"

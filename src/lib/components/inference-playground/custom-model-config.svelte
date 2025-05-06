@@ -29,7 +29,7 @@
 	import { fade, scale } from "svelte/transition";
 	import IconCross from "~icons/carbon/close";
 	import typia from "typia";
-	import { handleNonStreamingResponse } from "./utils.js";
+	import { handleNonStreamingResponse } from "./utils.svelte.js";
 	import { watch } from "runed";
 	import Tooltip from "../tooltip.svelte";
 	import { createFieldValidation } from "$lib/utils/form.svelte.js";

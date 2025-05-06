@@ -1,8 +1,9 @@
 import type { Project } from "$lib/types.js";
 import { dequal } from "dequal";
 import { db, type Checkpoint } from "./db.svelte";
-import { session } from "./session.svelte";
 import { snapshot } from "$lib/utils/object.svelte";
+import { projects } from "./projects.svelte";
+import { conversations } from "./conversations.svelte";
 
 class Checkpoints {
 	#checkpoints: Record<Project["id"], Checkpoint[]> = $state({});
@@ -27,11 +28,11 @@ class Checkpoints {
 	}
 
 	async commit(projectId: Project["id"]) {
-		const project = session.$.projects.find(p => p.id == projectId);
+		const project = projects.all.find(p => p.id == projectId);
 		if (!project) return;
 
 		const newCheckpoint = snapshot({
-			conversations: project.conversations,
+			conversations: conversations.for(project.id).map(c => c.data),
 			timestamp: new Date().toLocaleString(),
 			projectId: project.id,
 		} satisfies Checkpoint);
@@ -42,12 +43,18 @@ class Checkpoints {
 	}
 
 	restore(checkpoint: Checkpoint) {
-		const { projectId, conversations } = snapshot(checkpoint);
-		const project = session.$.projects.find(p => p.id == projectId);
+		const cloned = snapshot(checkpoint);
+		const project = projects.all.find(p => p.id == cloned.projectId);
 		if (!project) return;
 
-		session.$.activeProjectId = projectId;
-		session.project.conversations = conversations as Project["conversations"];
+		projects.activeId = cloned.projectId;
+		conversations.deleteAllFrom(cloned.projectId);
+		cloned.conversations.forEach(c => {
+			conversations.create({
+				...c,
+				projectId: cloned.projectId,
+			});
+		});
 	}
 
 	async toggleFavorite({ id, projectId }: Checkpoint) {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { clickOutside } from "$lib/actions/click-outside.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
-	import { session } from "$lib/state/session.svelte.js";
+	import { projects } from "$lib/state/projects.svelte";
 	import { iterate } from "$lib/utils/array.js";
 	import { Popover } from "melt/builders";
 	import { Tooltip } from "melt/components";
@@ -23,7 +23,7 @@
 	});
 	let dialog = $state<HTMLDialogElement>();
 
-	const projCheckpoints = $derived(checkpoints.for(session.project.id));
+	const projCheckpoints = $derived(checkpoints.for(projects.activeId));
 </script>
 
 <button class="btn relative size-[32px] p-0" {...popover.trigger}>
@@ -48,7 +48,7 @@
 			<h3 class="text-sm font-medium dark:text-white">Checkpoints</h3>
 			<button
 				class="rounded-lg bg-blue-600 px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700"
-				onclick={() => checkpoints.commit(session.project.id)}
+				onclick={() => checkpoints.commit(projects.activeId)}
 			>
 				Create new
 			</button>

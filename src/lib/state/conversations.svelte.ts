@@ -3,7 +3,7 @@ import {
 	handleNonStreamingResponse,
 	handleStreamingResponse,
 } from "$lib/components/inference-playground/utils.svelte.js";
-import { addToast } from "$lib/components/toaster.svelte";
+import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
 import {
 	PipelineTag,
@@ -164,9 +164,10 @@ class Conversations {
 		return this.for(projects.activeId);
 	}
 
-	async create(args: { projectId: Project["id"]; modelId?: Model["id"] }) {
+	async create(args: { projectId: Project["id"]; modelId?: Model["id"] } & Partial<ConversationFromDb>) {
 		const conv = snapshot({
 			...getDefaultConversation(args.projectId),
+			...args,
 		});
 		if (args.modelId) conv.modelId = args.modelId;
 
@@ -221,9 +222,21 @@ class Conversations {
 		this.#conversations = { ...this.#conversations, [projectId]: prev.filter(c => c.id != id) };
 	}
 
+	async deleteAllFrom(projectId: string) {
+		this.for(projectId).forEach(c => this.delete(c.data));
+	}
+
 	async reset() {
 		this.active.forEach(c => this.delete(c.data));
 		this.create(getDefaultConversation(projects.activeId));
+	}
+
+	async migrate(from: Project["id"], to: Project["id"]) {
+		await db.conversations.where("projectId").equals(from).modify({ projectId: to });
+
+		const fromArr = this.#conversations[from] ?? [];
+		this.#conversations[to] = [...fromArr.map(c => ({ ...c, projectId: to }))];
+		this.#conversations[from] = [];
 	}
 
 	async genNextMessages(conv: "left" | "right" | "both" | CoolConversation = "both") {

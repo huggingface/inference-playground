@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isConversationWithHFModel, type Model } from "$lib/types.js";
+	import { isHFModel, type Model } from "$lib/types.js";
 
 	import { createEventDispatcher } from "svelte";
 
@@ -64,14 +64,15 @@
 	</button>
 </div>
 
-{#if isConversationWithHFModel(conversation)}
+{#if isHFModel(conversation.model)}
 	<div
 		class="{conversationIdx === 0
 			? 'mr-4 max-sm:ml-4'
 			: 'mx-4'}  mt-2 h-11 text-sm leading-none whitespace-nowrap max-sm:mt-4"
 	>
+		<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 		<ProviderSelect
-			bind:conversation
+			conversation={conversation as any}
 			class="rounded-lg border border-gray-200/80 bg-white dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
 		/>
 	</div>

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { observe, observed, ObservedElements } from "$lib/actions/observe.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isConversationWithHFModel } from "$lib/types.js";
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
 	import { Popover } from "melt/components";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
@@ -30,6 +29,7 @@
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
 	import IconShare from "~icons/carbon/share";
+	import { isHFModel } from "$lib/types.js";
 
 	const multiple = $derived(conversations.active.length > 1);
 
@@ -319,10 +319,10 @@
 								<IconCompare />
 								Compare
 							</button>
-							{#if isConversationWithHFModel(conversations.active[0])}
+							{#if isHFModel(conversations.active[0]?.model)}
 								<a
-									href="https://huggingface.co/{conversations.active[0]?.model.id}?inference_provider={session.project
-										.conversations[0]?.provider}"
+									href="https://huggingface.co/{conversations.active[0]?.model.id}?inference_provider={conversations
+										.active[0].data.provider}"
 									target="_blank"
 									class="flex items-center gap-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 								>
@@ -337,7 +337,7 @@
 
 					<div class="mt-auto flex items-center justify-end gap-4 whitespace-nowrap">
 						<button
-							onclick={() => showShareModal(session.project)}
+							onclick={() => projects.current && showShareModal(projects.current)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
 						>
 							<IconShare class="text-xs" />
@@ -417,7 +417,12 @@
 {#if selectCompareModelOpen}
 	<ModelSelectorModal
 		conversation={conversations.active[0]!}
-		onModelSelect={addCompareModel}
+		onModelSelect={m => {
+			conversations.create({
+				projectId: projects.activeId,
+				modelId: m,
+			});
+		}}
 		onClose={() => (selectCompareModelOpen = false)}
 	/>
 {/if}

@@ -1,6 +1,8 @@
 import type { Project } from "$lib/types.js";
 import { dequal } from "dequal";
 import { db, type ProjectFromDb } from "./db.svelte";
+import { checkpoints } from "./checkpoints.svelte";
+import { conversations } from "./conversations.svelte";
 
 const LOCAL_STORAGE_KEY = "hf_inf_pg_active_pid";
 
@@ -25,27 +27,42 @@ class Projects {
 					name: "Default",
 					id: "default",
 				};
+			})
+			.finally(() => {
+				db.projects.toArray().then(res => {
+					res.forEach(p => {
+						if (dequal(this.#projects[p.id], p)) return;
+						this.#projects[p.id] = p;
+					});
+				});
 			});
 	}
 
-	async create(name: string) {
+	async create(name: string): Promise<string> {
 		const id = crypto.randomUUID();
 		await db.projects.add({ name, id });
 		this.#projects[id] = { name, id };
+		return id;
 	}
+
+	saveProject = async (args: { name: string; moveCheckpoints?: boolean }) => {
+		const defaultProject = this.all.find(p => p.id === "default");
+		if (!defaultProject) return;
+
+		const id = await this.create(args.name);
+
+		if (args.moveCheckpoints) {
+			checkpoints.migrate(defaultProject.id, id);
+		}
+
+		conversations.migrate(defaultProject.id, id);
+	};
 
 	get current() {
 		return this.#projects[this.activeId];
 	}
 
 	get all() {
-		db.projects.toArray().then(res => {
-			res.forEach(p => {
-				if (dequal(this.#projects[p.id], p)) return;
-				this.#projects[p.id] = p;
-			});
-		});
-
 		return Object.values(this.#projects);
 	}
 

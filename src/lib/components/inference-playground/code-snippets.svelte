@@ -2,7 +2,7 @@
 	import { emptyModel } from "$lib/state/_willremove_session.svelte";
 	import type { CoolConversation } from "$lib/state/conversations.svelte";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isConversationWithCustomModel, isCustomModel, PipelineTag } from "$lib/types.js";
+	import { isCustomModel, PipelineTag } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { entries, fromEntries, keys } from "$lib/utils/object.svelte.js";
 	import type { InferenceProvider } from "@huggingface/inference";
@@ -110,7 +110,7 @@
 	}
 
 	const tokenStr = $derived.by(() => {
-		if (isConversationWithCustomModel(conversation)) {
+		if (isCustomModel(conversation.model)) {
 			const t = conversation.model.accessToken;
 
 			return t && showToken ? t : "YOUR_ACCESS_TOKEN";
