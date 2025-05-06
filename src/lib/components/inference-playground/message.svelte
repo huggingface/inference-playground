@@ -90,8 +90,9 @@
 				use:autofocusAction={autofocus}
 				value={message?.content}
 				onchange={e => {
-					const content = e.target.value;
-					if (!message) return;
+					const el = e.target as HTMLTextAreaElement;
+					const content = el?.value;
+					if (!message || !content) return;
 					conversation.updateMessage({ index, message: { ...message, content } });
 				}}
 				placeholder="Enter {message?.role} message"
