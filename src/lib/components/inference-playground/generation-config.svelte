@@ -5,6 +5,8 @@
 	import IconX from "~icons/carbon/close";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import { maxAllowedTokens } from "./utils.svelte.js";
+	import Dialog from "../dialog.svelte";
+	import { onchange } from "$lib/utils/template.js";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -39,6 +41,8 @@
 			},
 		});
 	}
+
+	let editingStructuredOutput = $state(false);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -84,13 +88,47 @@
 		</div>
 	{/each}
 
-	<div class="mt-2">
-		<label class="flex cursor-pointer items-center justify-between">
-			<input type="checkbox" bind:checked={conversation.data.streaming} class="peer sr-only" />
-			<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Streaming</span>
+	<label class="mt-2 flex cursor-pointer items-center justify-between">
+		<input
+			type="checkbox"
+			bind:checked={() => conversation.data.streaming, v => conversation.update({ streaming: v })}
+			class="peer sr-only"
+		/>
+		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Streaming</span>
+		<div
+			class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
+		></div>
+	</label>
+
+	<label class="mt-2 flex cursor-pointer items-center justify-between" for="structured-output">
+		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Structured Output</span>
+		<div class="flex items-center gap-2">
+			<input
+				type="checkbox"
+				bind:checked={
+					() => conversation.data.structuredOutput?.enabled,
+					v => conversation.update({ structuredOutput: { ...conversation.data.structuredOutput, enabled: v ?? false } })
+				}
+				class="peer sr-only"
+				id="structured-output"
+			/>
+			<button class="btn-mini" type="button" onclick={() => (editingStructuredOutput = true)}> edit </button>
 			<div
 				class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
 			></div>
-		</label>
-	</div>
+		</div>
+	</label>
 </div>
+
+<Dialog title="Edit Structured Output" open={editingStructuredOutput} onClose={() => (editingStructuredOutput = false)}>
+	<!-- inside dialogs its a-ok -->
+	<!-- svelte-ignore a11y_autofocus  -->
+	<textarea
+		autofocus
+		value={conversation.data.structuredOutput?.schema ?? ""}
+		{...onchange(v => {
+			conversation.update({ structuredOutput: { ...conversation.data.structuredOutput, schema: v } });
+		})}
+		class="h-120 w-full rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
+	></textarea>
+</Dialog>

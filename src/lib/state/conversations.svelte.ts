@@ -10,7 +10,6 @@ import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
 import {
 	PipelineTag,
-	type Conversation,
 	type ConversationMessage,
 	type GenerationStatistics,
 	type Model,
@@ -152,20 +151,14 @@ export class ConversationClass {
 		this.generating = true;
 		const startTime = performance.now();
 
-		const conv: Conversation = {
-			model: this.model,
-			...this.data,
-			streaming: this.data.streaming ?? true,
-		};
-
 		try {
-			if (conv.streaming) {
+			if (this.data.streaming) {
 				let addedMessage = false;
 				const streamingMessage = { role: "assistant", content: "" };
 				const index = this.data.messages.length;
 
 				await handleStreamingResponse(
-					conv,
+					this,
 					content => {
 						if (!streamingMessage) return;
 						streamingMessage.content = content;
@@ -180,7 +173,7 @@ export class ConversationClass {
 					this.abortManager.createController()
 				);
 			} else {
-				const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conv);
+				const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(this);
 				this.addMessage(newMessage);
 				this.generationStats.tokens += newTokensCount;
 			}

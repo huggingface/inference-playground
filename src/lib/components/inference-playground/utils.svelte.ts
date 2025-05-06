@@ -9,6 +9,7 @@ import {
 	type CustomModel,
 	type Model,
 } from "$lib/types.js";
+import { safeParse } from "$lib/utils/json.js";
 import { tryGet } from "$lib/utils/object.svelte.js";
 import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
@@ -72,12 +73,13 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 	return ctxLength;
 }
 
-function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal): CompletionMetadata {
-	const { model, systemMessage } = conversation;
+function getCompletionMetadata(conversation: CoolConversation, signal?: AbortSignal): CompletionMetadata {
+	const { systemMessage } = conversation.data;
+	const model = conversation.model;
 
 	const messages = [
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
-		...conversation.messages,
+		...conversation.data.messages,
 	];
 
 	// Handle OpenAI-compatible models
@@ -91,34 +93,57 @@ function getCompletionMetadata(conversation: Conversation, signal?: AbortSignal)
 			},
 		});
 
+		const args = {
+			messages: messages.map(parseMessage) as OpenAI.ChatCompletionMessageParam[],
+			...conversation.data.config,
+			model: model.id,
+		};
+
+		if (conversation.data.structuredOutput?.enabled) {
+			const json = safeParse(conversation.data.structuredOutput.schema ?? "");
+			if (json) {
+				args.response_format = {
+					type: "json_schema",
+					json_schema: json,
+				};
+			}
+		}
+
 		return {
 			type: "openai",
 			client: openai,
-			args: {
-				messages: messages.map(parseMessage) as OpenAI.ChatCompletionMessageParam[],
-				...conversation.config,
-				model: model.id,
-			},
+			args,
 		};
 	}
 
-	// Handle HuggingFace models
+	const args = {
+		model: model.id,
+		messages: messages.map(parseMessage),
+		provider: conversation.data.provider,
+		...conversation.data.config,
+		// max_tokens: maxAllowedTokens(conversation) - currTokens,
+	};
 
+	if (conversation.data.structuredOutput?.enabled) {
+		const json = safeParse(conversation.data.structuredOutput.schema ?? "");
+		if (json) {
+			args.response_format = {
+				type: "json_schema",
+				json_schema: json,
+			};
+		}
+	}
+
+	// Handle HuggingFace models
 	return {
 		type: "huggingface",
 		client: new HfInference(token.value),
-		args: {
-			model: model.id,
-			messages: messages.map(parseMessage),
-			provider: conversation.provider,
-			...conversation.config,
-			// max_tokens: maxAllowedTokens(conversation) - currTokens,
-		},
+		args,
 	};
 }
 
 export async function handleStreamingResponse(
-	conversation: Conversation,
+	conversation: CoolConversation,
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
@@ -151,7 +176,7 @@ export async function handleStreamingResponse(
 }
 
 export async function handleNonStreamingResponse(
-	conversation: Conversation
+	conversation: CoolConversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
 	const metadata = getCompletionMetadata(conversation);
 
