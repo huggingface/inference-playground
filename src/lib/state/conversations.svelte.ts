@@ -7,7 +7,6 @@ import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
 import {
 	PipelineTag,
-	type Conversation,
 	type ConversationMessage,
 	type CustomModel,
 	type GenerationStatistics,
@@ -77,7 +76,6 @@ export class CoolConversation {
 	}
 
 	async update(data: Partial<ConversationFromDb>) {
-		console.log("id", this.data.id);
 		if (this.data.id === -1) return;
 		const cloned = snapshot({ ...this.data, ...data });
 
@@ -121,19 +119,13 @@ export class CoolConversation {
 		this.generating = true;
 		const startTime = performance.now();
 
-		const conv: Conversation = {
-			model: this.model,
-			...this.data,
-			streaming: this.data.streaming ?? true,
-		};
-
 		try {
-			if (conv.streaming) {
+			if (this.data.streaming) {
 				let addedMessage = false;
 				const streamingMessage = $state({ role: "assistant", content: "" });
 
 				await handleStreamingResponse(
-					conv,
+					this,
 					content => {
 						if (!streamingMessage) return;
 						streamingMessage.content = content;
@@ -148,7 +140,7 @@ export class CoolConversation {
 					this.abortManager.createController()
 				);
 			} else {
-				const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(conv);
+				const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(this);
 				this.addMessage(newMessage);
 				this.generationStats.tokens += newTokensCount;
 			}
@@ -169,12 +161,15 @@ export class CoolConversation {
 
 class Conversations {
 	#conversations: Record<Project["id"], CoolConversation[]> = $state.raw({});
-	generating = $derived(this.active.some(c => c.generating));
 	generationStats = $derived(this.active.map(c => c.generationStats));
 
 	loaded = $state(false);
 
 	#active = $derived(this.for(projects.activeId));
+
+	get generating() {
+		return this.active.some(c => c.generating);
+	}
 
 	get active() {
 		return this.#active;

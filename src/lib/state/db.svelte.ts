@@ -28,6 +28,13 @@ const v3ConvSchema = {
 	projectId: d.string(),
 	modelId: d.string(),
 	createdAt: d.string().indexed(false),
+	structuredOutput: d
+		.object<{
+			enabled?: boolean;
+			schema?: string;
+		}>()
+		.optional()
+		.indexed(false),
 } as const satisfies SchemaDefinition;
 
 const versions = {
