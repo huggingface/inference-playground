@@ -125,7 +125,7 @@
 			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 						{...tooltip.trigger}
 					>
-						<IconCustom icon="regen" />
+						<IconCustom icon={message.role === "user" ? "regen" : "refresh"} />
 					</button>
 				{/snippet}
 				{regenLabel}
