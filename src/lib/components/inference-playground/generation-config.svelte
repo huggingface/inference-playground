@@ -33,7 +33,7 @@
 
 		<div>
 			<div class="flex items-center justify-between">
-				<label for={key} class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+				<label for={key} class="mb-0.5 block text-sm font-medium text-gray-900 dark:text-white">
 					{label}
 				</label>
 				<div class="flex items-center gap-2">

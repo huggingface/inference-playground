@@ -81,7 +81,7 @@
 	{...fileUpload.dropzone}
 	onclick={undefined}
 >
-	<div class=" flex w-full flex-col items-start gap-x-4 gap-y-2 @2xl:flex-row">
+	<div class=" flex w-full flex-col items-start gap-x-4 gap-y-2 @2xl:flex-row max-md:text-sm">
 		{#if fileUpload.isDragging}
 			<div
 				class="absolute inset-2 z-10 flex flex-col items-center justify-center rounded-xl bg-gray-800/50 backdrop-blur-md"
@@ -108,7 +108,7 @@
 
 			<!-- Sticky wrapper for action buttons -->
 			<div class="sticky top-4 z-10 self-start">
-				<div class="flex flex-col md:flex-row items-start gap-2 md:gap-4">
+				<div class="flex flex-col md:flex-row items-start gap-1 md:gap-4">
 					{#if canUploadImgs}
 						<Tooltip openDelay={250}>
 							{#snippet trigger(tooltip)}
