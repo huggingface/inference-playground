@@ -92,7 +92,7 @@
 			</div>
 		{/if}
 
-		<div class="sticky top-4 z-10 bg-inherit pt-3 text-sm font-semibold uppercase @2xl:basis-[130px] @2xl:self-start">
+		<div class="md:sticky top-4 z-10 bg-inherit pt-3 text-sm font-semibold uppercase @2xl:basis-[130px] @2xl:self-start">
 			{message.role}
 		</div>
 		<div class="flex w-full gap-4">
