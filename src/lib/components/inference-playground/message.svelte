@@ -108,88 +108,93 @@
 				data-message
 			></textarea>
 
-			{#if canUploadImgs}
-				<Tooltip openDelay={250}>
-					{#snippet trigger(tooltip)}
-						<button
-							tabindex="0"
-							type="button"
-							class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium
-			text-gray-900
-			hover:bg-gray-100 hover:text-blue-700 focus:z-10
-			focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600
-			dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
-							{...tooltip.trigger}
-							{...fileUpload.trigger}
-						>
-							<IconImage />
-						</button>
-						<input {...fileUpload.input} />
-					{/snippet}
-					Add image
-				</Tooltip>
-			{/if}
+			<!-- Sticky wrapper for action buttons -->
+			<div class="sticky top-4 z-10 self-start">
+				<div class="flex items-start gap-4">
+					{#if canUploadImgs}
+						<Tooltip openDelay={250}>
+							{#snippet trigger(tooltip)}
+								<button
+									tabindex="0"
+									type="button"
+									class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium
+					text-gray-900
+					hover:bg-gray-100 hover:text-blue-700 focus:z-10
+					focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600
+					dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+									{...tooltip.trigger}
+									{...fileUpload.trigger}
+								>
+									<IconImage />
+								</button>
+								<input {...fileUpload.input} />
+							{/snippet}
+							Add image
+						</Tooltip>
+					{/if}
 
-			<Tooltip>
-				{#snippet trigger(tooltip)}
-					<button
-						tabindex="0"
-						onclick={handleCopy}
-						type="button"
-						class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-			hover:bg-gray-100
-			hover:text-blue-700 focus:z-10 focus:ring-4
-			focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
-			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
-						{...tooltip.trigger}
-					>
-						{#if showCheckmark}
-							<IconCheckmark class="text-green-500" />
-						{:else}
-							<IconCopy />
-						{/if}
-					</button>
-				{/snippet}
-				Copy
-			</Tooltip>
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								tabindex="0"
+								onclick={handleCopy}
+								type="button"
+								class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+					hover:bg-gray-100
+					hover:text-blue-700 focus:z-10 focus:ring-4
+					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+								{...tooltip.trigger}
+							>
+								{#if showCheckmark}
+									<IconCheckmark class="text-green-500" />
+								{:else}
+									<IconCopy />
+								{/if}
+							</button>
+						{/snippet}
+						Copy
+					</Tooltip>
 
-			<Tooltip>
-				{#snippet trigger(tooltip)}
-					<button
-						tabindex="0"
-						onclick={onRegen}
-						type="button"
-						class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-			hover:bg-gray-100
-			hover:text-blue-700 focus:z-10 focus:ring-4
-			focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
-			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
-						{...tooltip.trigger}
-					>
-						<IconCustom icon={message.role === "user" ? "regen" : "refresh"} />
-					</button>
-				{/snippet}
-				{regenLabel}
-			</Tooltip>
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								tabindex="0"
+								onclick={onRegen}
+								type="button"
+								class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+					hover:bg-gray-100
+					hover:text-blue-700 focus:z-10 focus:ring-4
+					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+								{...tooltip.trigger}
+							>
+								<IconCustom icon={message.role === "user" ? "regen" : "refresh"} />
+							</button>
+						{/snippet}
+						{regenLabel}
+					</Tooltip>
 
-			<Tooltip>
-				{#snippet trigger(tooltip)}
-					<button
-						tabindex="0"
-						onclick={onDelete}
-						type="button"
-						class="mt-1.5 size-8 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-			hover:bg-gray-100
-			hover:text-blue-700 focus:z-10 focus:ring-4
-			focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
-			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
-						{...tooltip.trigger}
-					>
-						✕
-					</button>
-				{/snippet}
-				Delete
-			</Tooltip>
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								tabindex="0"
+								onclick={onDelete}
+								type="button"
+								class="mt-1.5 size-8 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+					hover:bg-gray-100
+					hover:text-blue-700 focus:z-10 focus:ring-4
+					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+								{...tooltip.trigger}
+							>
+								✕
+							</button>
+						{/snippet}
+						Delete
+					</Tooltip>
+				</div>
+			</div>
 		</div>
 	</div>
 
