@@ -97,9 +97,9 @@
 							tabindex="0"
 							type="button"
 							class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium
-			text-gray-900 group-focus-within/message:visible group-hover/message:visible
+			text-gray-900
 			hover:bg-gray-100 hover:text-blue-700 focus:z-10
-			focus:ring-4 focus:ring-gray-100 focus:outline-hidden sm:invisible dark:border-gray-600
+			focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600
 			dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 							{...tooltip.trigger}
 							{...fileUpload.trigger}
@@ -119,9 +119,9 @@
 						onclick={onRegen}
 						type="button"
 						class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-			group-focus-within/message:visible group-hover/message:visible hover:bg-gray-100
+			hover:bg-gray-100
 			hover:text-blue-700 focus:z-10 focus:ring-4
-			focus:ring-gray-100 focus:outline-hidden sm:invisible dark:border-gray-600 dark:bg-gray-800
+			focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
 			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 						{...tooltip.trigger}
 					>
@@ -138,9 +138,9 @@
 						onclick={onDelete}
 						type="button"
 						class="mt-1.5 size-8 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-			group-focus-within/message:visible group-hover/message:visible hover:bg-gray-100
+			hover:bg-gray-100
 			hover:text-blue-700 focus:z-10 focus:ring-4
-			focus:ring-gray-100 focus:outline-hidden sm:invisible dark:border-gray-600 dark:bg-gray-800
+			focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
 			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 						{...tooltip.trigger}
 					>
