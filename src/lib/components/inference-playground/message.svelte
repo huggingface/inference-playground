@@ -108,14 +108,14 @@
 
 			<!-- Sticky wrapper for action buttons -->
 			<div class="sticky top-4 z-10 self-start">
-				<div class="flex items-start gap-4">
+				<div class="flex flex-col md:flex-row items-start gap-2 md:gap-4">
 					{#if canUploadImgs}
 						<Tooltip openDelay={250}>
 							{#snippet trigger(tooltip)}
 								<button
 									tabindex="0"
 									type="button"
-									class="mt-1.5 -mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium
+									class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium
 					text-gray-900
 					hover:bg-gray-100 hover:text-blue-700 focus:z-10
 					focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600
@@ -137,7 +137,7 @@
 								tabindex="0"
 								onclick={handleCopy}
 								type="button"
-								class="mt-1.5 -mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+								class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
 					hover:bg-gray-100
 					hover:text-blue-700 focus:z-10 focus:ring-4
 					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
@@ -160,7 +160,7 @@
 								tabindex="0"
 								onclick={onRegen}
 								type="button"
-								class="mt-1.5 -mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+								class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
 					hover:bg-gray-100
 					hover:text-blue-700 focus:z-10 focus:ring-4
 					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
@@ -179,7 +179,7 @@
 								tabindex="0"
 								onclick={onDelete}
 								type="button"
-								class="mt-1.5 size-7 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+								class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
 					hover:bg-gray-100
 					hover:text-blue-700 focus:z-10 focus:ring-4
 					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
