@@ -7,6 +7,7 @@
 	import { fileToDataURL } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
+	import IconCheckmark from "~icons/carbon/checkmark";
 	import IconCopy from "~icons/carbon/copy";
 	import IconImage from "~icons/carbon/image-reference";
 	import IconMaximize from "~icons/carbon/maximize";
@@ -53,6 +54,8 @@
 	});
 
 	let previewImg = $state<string>();
+	let showCheckmark = $state(false);
+	let checkmarkTimer: ReturnType<typeof setTimeout> | undefined = $state(undefined);
 
 	const regenLabel = $derived.by(() => {
 		if (message.role === "assistant") return "Regenerate";
@@ -63,6 +66,13 @@
 		await copyToClipboard(message.content ?? "");
 		// Optional: Add toast notification for feedback here
 		// For example: addToast({ title: "Copied!", description: "Message content copied to clipboard.", variant: "success" });
+		showCheckmark = true;
+		if (checkmarkTimer) {
+			clearTimeout(checkmarkTimer);
+		}
+		checkmarkTimer = setTimeout(() => {
+			showCheckmark = false;
+		}, 2000);
 	}
 </script>
 
@@ -133,7 +143,11 @@
 			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 						{...tooltip.trigger}
 					>
-						<IconCopy />
+						{#if showCheckmark}
+							<IconCheckmark class="text-green-500" />
+						{:else}
+							<IconCopy />
+						{/if}
 					</button>
 				{/snippet}
 				Copy
