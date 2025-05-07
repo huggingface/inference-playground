@@ -3,9 +3,11 @@
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { PipelineTag, type Conversation, type ConversationMessage } from "$lib/types.js";
+	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { fileToDataURL } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
+	import IconCopy from "~icons/carbon/copy";
 	import IconImage from "~icons/carbon/image-reference";
 	import IconMaximize from "~icons/carbon/maximize";
 	import IconCustom from "../icon-custom.svelte";
@@ -56,6 +58,12 @@
 		if (message.role === "assistant") return "Regenerate";
 		return isLast ? "Generate from here" : "Regenerate from here";
 	});
+
+	async function handleCopy() {
+		await copyToClipboard(message.content ?? "");
+		// Optional: Add toast notification for feedback here
+		// For example: addToast({ title: "Copied!", description: "Message content copied to clipboard.", variant: "success" });
+	}
 </script>
 
 <div
@@ -111,6 +119,25 @@
 					Add image
 				</Tooltip>
 			{/if}
+
+			<Tooltip>
+				{#snippet trigger(tooltip)}
+					<button
+						tabindex="0"
+						onclick={handleCopy}
+						type="button"
+						class="mt-1.5 -mr-2 grid size-8 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+			hover:bg-gray-100
+			hover:text-blue-700 focus:z-10 focus:ring-4
+			focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+			dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+						{...tooltip.trigger}
+					>
+						<IconCopy />
+					</button>
+				{/snippet}
+				Copy
+			</Tooltip>
 
 			<Tooltip>
 				{#snippet trigger(tooltip)}
