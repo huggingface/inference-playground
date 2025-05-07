@@ -75,8 +75,8 @@
 </script>
 
 <div
-	class="group/message group relative flex flex-col items-start gap-x-4 gap-y-2 border-b px-3.5 pt-4 pb-6 hover:bg-gray-100/70
-	 @2xl:px-6 dark:border-gray-800 dark:hover:bg-gray-800/30"
+	class="group/message group relative flex flex-col items-start gap-x-4 gap-y-2 border-b bg-white px-3.5 pt-4 pb-6 hover:bg-gray-100/70
+	 @2xl:px-6 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800/30"
 	class:pointer-events-none={loading}
 	{...fileUpload.dropzone}
 	onclick={undefined}
@@ -92,7 +92,7 @@
 			</div>
 		{/if}
 
-		<div class="pt-3 text-sm font-semibold uppercase @2xl:basis-[130px]">
+		<div class="sticky top-4 z-10 bg-inherit pt-3 text-sm font-semibold uppercase @2xl:basis-[130px] @2xl:self-start">
 			{message.role}
 		</div>
 		<div class="flex w-full gap-4">
