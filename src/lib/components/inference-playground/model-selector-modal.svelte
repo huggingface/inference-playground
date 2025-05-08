@@ -70,7 +70,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div class="fixed inset-0 z-10 h-dvh bg-black/85 pt-32" bind:this={backdropEl} onclick={handleBackdropClick}>
+<div class="fixed inset-0 z-50 h-dvh bg-black/85 pt-32" bind:this={backdropEl} onclick={handleBackdropClick}>
 	<div
 		class="abs-x-center md:abs-y-center absolute top-12 flex w-[calc(100%-2rem)] max-w-[600px] flex-col overflow-hidden rounded-lg border bg-white text-gray-900 shadow-md dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
 	>

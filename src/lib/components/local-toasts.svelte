@@ -14,7 +14,7 @@
 	const id = $props.id();
 
 	export const trigger = {
-		id,
+		"data-local-toast-trigger": id,
 	} as const;
 
 	type ToastData = {
@@ -30,7 +30,7 @@
 	export const addToast = toaster.addToast;
 
 	function float(node: HTMLElement) {
-		const triggerEl = document.getElementById(trigger.id);
+		const triggerEl = document.querySelector(`[data-local-toast-trigger=${id}]`);
 		if (!triggerEl) return;
 
 		const compute = () =>

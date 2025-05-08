@@ -13,6 +13,7 @@
 	import IconMaximize from "~icons/carbon/maximize";
 	import IconCustom from "../icon-custom.svelte";
 	import ImgPreview from "./img-preview.svelte";
+	import LocalToasts from "../local-toasts.svelte";
 
 	type Props = {
 		conversation: Conversation;
@@ -54,24 +55,11 @@
 	});
 
 	let previewImg = $state<string>();
-	let showCheckmark = $state(false);
-	let checkmarkTimer: ReturnType<typeof setTimeout> | undefined = $state(undefined);
 
 	const regenLabel = $derived.by(() => {
 		if (message.role === "assistant") return "Regenerate";
 		return isLast ? "Generate from here" : "Regenerate from here";
 	});
-
-	async function handleCopy() {
-		await copyToClipboard(message.content ?? "");
-		showCheckmark = true;
-		if (checkmarkTimer) {
-			clearTimeout(checkmarkTimer);
-		}
-		checkmarkTimer = setTimeout(() => {
-			showCheckmark = false;
-		}, 2000);
-	}
 </script>
 
 <div
@@ -81,7 +69,7 @@
 	{...fileUpload.dropzone}
 	onclick={undefined}
 >
-	<div class=" flex w-full flex-col items-start gap-x-4 gap-y-2 @2xl:flex-row max-md:text-sm">
+	<div class="flex w-full flex-col items-start gap-x-4 gap-y-2 max-md:text-sm @2xl:flex-row">
 		{#if fileUpload.isDragging}
 			<div
 				class="absolute inset-2 z-10 flex flex-col items-center justify-center rounded-xl bg-gray-800/50 backdrop-blur-md"
@@ -107,18 +95,18 @@
 			></textarea>
 
 			<!-- Sticky wrapper for action buttons -->
-			<div class="sticky top-4 z-10 self-start">
-				<div class="flex flex-col md:flex-row items-start gap-1 md:gap-4">
+			<div class="sticky top-8 z-10 self-start">
+				<div class="flex flex-col items-start gap-1 @2xl:flex-row @2xl:gap-4">
 					{#if canUploadImgs}
 						<Tooltip openDelay={250}>
 							{#snippet trigger(tooltip)}
 								<button
 									tabindex="0"
 									type="button"
-									class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium
-					text-gray-900
-					hover:bg-gray-100 hover:text-blue-700 focus:z-10
-					focus:ring-4 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600
+									class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+					hover:bg-gray-100
+					hover:text-blue-700 focus:z-10 focus:ring-4
+					focus:ring-gray-100 focus:outline-hidden md:-mr-2 dark:border-gray-600
 					dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 									{...tooltip.trigger}
 									{...fileUpload.trigger}
@@ -133,23 +121,27 @@
 
 					<Tooltip>
 						{#snippet trigger(tooltip)}
-							<button
-								tabindex="0"
-								onclick={handleCopy}
-								type="button"
-								class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-					hover:bg-gray-100
-					hover:text-blue-700 focus:z-10 focus:ring-4
-					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+							<LocalToasts>
+								{#snippet children({ trigger, addToast })}
+									<button
+										tabindex="0"
+										onclick={() => {
+											copyToClipboard(message.content ?? "");
+											addToast({ data: { content: "✓", variant: "info" } });
+										}}
+										type="button"
+										class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+					hover:text-blue-700
+					focus:z-10 focus:ring-4 focus:ring-gray-100
+					focus:outline-hidden md:-mr-2 dark:border-gray-600 dark:bg-gray-800
 					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
-								{...tooltip.trigger}
-							>
-								{#if showCheckmark}
-									<IconCheckmark class="text-green-500" />
-								{:else}
-									<IconCopy />
-								{/if}
-							</button>
+										{...tooltip.trigger}
+										{...trigger}
+									>
+										<IconCopy />
+									</button>
+								{/snippet}
+							</LocalToasts>
 						{/snippet}
 						Copy
 					</Tooltip>
@@ -160,10 +152,10 @@
 								tabindex="0"
 								onclick={onRegen}
 								type="button"
-								class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-					hover:bg-gray-100
-					hover:text-blue-700 focus:z-10 focus:ring-4
-					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+								class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+					hover:text-blue-700
+					focus:z-10 focus:ring-4 focus:ring-gray-100
+					focus:outline-hidden md:-mr-2 dark:border-gray-600 dark:bg-gray-800
 					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 								{...tooltip.trigger}
 							>
@@ -179,10 +171,10 @@
 								tabindex="0"
 								onclick={onDelete}
 								type="button"
-								class="mt-1.5 md:-mr-2 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
-					hover:bg-gray-100
-					hover:text-blue-700 focus:z-10 focus:ring-4
-					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+								class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+					hover:text-blue-700
+					focus:z-10 focus:ring-4 focus:ring-gray-100
+					focus:outline-hidden md:-mr-2 dark:border-gray-600 dark:bg-gray-800
 					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 								{...tooltip.trigger}
 							>
