@@ -7,7 +7,6 @@
 	import { fileToDataURL } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
-	import IconCheckmark from "~icons/carbon/checkmark";
 	import IconCopy from "~icons/carbon/copy";
 	import IconImage from "~icons/carbon/image-reference";
 	import IconMaximize from "~icons/carbon/maximize";
@@ -28,10 +27,11 @@
 	let { message = $bindable(), conversation, loading, autofocus, onDelete, onRegen, isLast }: Props = $props();
 
 	let element = $state<HTMLTextAreaElement>();
-	new TextareaAutosize({
+	const autosized = new TextareaAutosize({
 		element: () => element,
 		input: () => message.content ?? "",
 	});
+	const shouldStick = $derived(autosized.textareaHeight > 92);
 
 	const canUploadImgs = $derived(
 		message.role === "user" &&
@@ -80,7 +80,12 @@
 			</div>
 		{/if}
 
-		<div class="md:sticky top-4 z-10 bg-inherit pt-3 text-sm font-semibold uppercase @2xl:basis-[130px] @2xl:self-start">
+		<div
+			class={[
+				"top-8 z-10 bg-inherit pt-3 text-sm font-semibold uppercase @2xl:basis-[130px] @2xl:self-start",
+				shouldStick && "@min-2xl:sticky",
+			]}
+		>
 			{message.role}
 		</div>
 		<div class="flex w-full gap-4">
@@ -95,7 +100,7 @@
 			></textarea>
 
 			<!-- Sticky wrapper for action buttons -->
-			<div class="sticky top-8 z-10 self-start">
+			<div class={["top-8 z-10 self-start", shouldStick && "sticky"]}>
 				<div class="flex flex-col items-start gap-1 @2xl:flex-row @2xl:gap-4">
 					{#if canUploadImgs}
 						<Tooltip openDelay={250}>
