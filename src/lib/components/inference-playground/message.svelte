@@ -101,17 +101,17 @@
 
 			<!-- Sticky wrapper for action buttons -->
 			<div class={["top-8 z-10 self-start", shouldStick && "sticky"]}>
-				<div class="flex flex-col items-start gap-1 @2xl:flex-row @2xl:gap-4">
-					{#if canUploadImgs}
+				<div class="flex flex-col items-start @2xl:flex-row flex-none @2xl:[&>button:first-of-type]:rounded-l-md @2xl:[&>button:last-of-type]:rounded-r-md @2xl:[&>button]:-mx-px @max-2xl:[&>button]:-my-px @max-2xl:[&>button:last-of-type]:rounded-b-md @max-2xl:[&>button:first-of-type]:rounded-t-md ">
+					{#if canUploadImgs} 
 						<Tooltip openDelay={250}>
 							{#snippet trigger(tooltip)}
 								<button
 									tabindex="0"
 									type="button"
-									class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900
+									class="grid size-7 place-items-center border border-gray-200 bg-white text-xs font-medium text-gray-900
 					hover:bg-gray-100
 					hover:text-blue-700 focus:z-10 focus:ring-4
-					focus:ring-gray-100 focus:outline-hidden md:-mr-2 dark:border-gray-600
+					focus:ring-gray-100 focus:outline-hidden dark:border-gray-600
 					dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 									{...tooltip.trigger}
 									{...fileUpload.trigger}
@@ -135,10 +135,10 @@
 											addToast({ data: { content: "✓", variant: "info" } });
 										}}
 										type="button"
-										class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+										class="grid size-7 place-items-center border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
 					hover:text-blue-700
 					focus:z-10 focus:ring-4 focus:ring-gray-100
-					focus:outline-hidden md:-mr-2 dark:border-gray-600 dark:bg-gray-800
+					focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
 					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 										{...tooltip.trigger}
 										{...trigger}
@@ -157,10 +157,10 @@
 								tabindex="0"
 								onclick={onRegen}
 								type="button"
-								class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+								class="grid size-7 place-items-center border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
 					hover:text-blue-700
 					focus:z-10 focus:ring-4 focus:ring-gray-100
-					focus:outline-hidden md:-mr-2 dark:border-gray-600 dark:bg-gray-800
+					focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
 					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 								{...tooltip.trigger}
 							>
@@ -176,10 +176,10 @@
 								tabindex="0"
 								onclick={onDelete}
 								type="button"
-								class="mt-1.5 grid size-7 place-items-center rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+								class="grid size-7 place-items-center border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
 					hover:text-blue-700
 					focus:z-10 focus:ring-4 focus:ring-gray-100
-					focus:outline-hidden md:-mr-2 dark:border-gray-600 dark:bg-gray-800
+					focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
 					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 								{...tooltip.trigger}
 							>
@@ -205,7 +205,7 @@
 						>
 							<IconMaximize />
 						</button>
-						<img src={img} alt="uploaded" class="size-12 rounded-lg object-cover" />
+						<img src={img} alt="uploaded" class="size-12 object-cover" />
 						<button
 							aria-label="remove"
 							type="button"
