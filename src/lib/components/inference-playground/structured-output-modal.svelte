@@ -3,7 +3,7 @@
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte";
 	import type { ConversationClass } from "$lib/state/conversations.svelte.js";
 	import { safeParse } from "$lib/utils/json.js";
-	import { keys, omit } from "$lib/utils/object.svelte";
+	import { keys } from "$lib/utils/object.svelte";
 	import { onchange, oninput } from "$lib/utils/template.js";
 	import { RadioGroup } from "melt/builders";
 	import { codeToHtml } from "shiki";
@@ -25,51 +25,63 @@
 		value: modes[0],
 	});
 
-	/*
-	-- Example schema --
-
-	{
-		"name": "capital_lookup",
-			"description": "Returns the capital city for a given country",
-			"schema": {
-				"type": "object",
-				"properties": {
-					"country":  { "type": "string", "description": "Country name echoed back" },
-					"capital":  { "type": "string", "description": "Capital city of the country" }
-				},
-				"required": ["country", "capital"],
-				"additionalProperties": false
-			},
-			"strict": true
-	}
-
-	*/
-
 	type Schema = {
 		name?: string;
 		description?: string;
-		type: "object";
-		properties?: { [key: string]: { type: string; description?: string } };
-		required?: string[];
-		additionalProperties?: boolean;
+		schema?: {
+			type?: string;
+			properties?: { [key: string]: { type: string; description?: string } };
+			required?: string[];
+			additionalProperties?: boolean;
+		};
 		strict?: boolean;
 	};
 
 	export function parseJsonSchema(): Schema {
 		const parsed = safeParse(conversation.data.structuredOutput?.schema ?? "");
-		return typia.is<Schema>(parsed) ? parsed : { type: "object" };
+		const baseSchema = {
+			schema: {
+				type: "object",
+				properties: {},
+				required: [],
+				additionalProperties: true,
+			},
+			strict: false,
+		} satisfies Schema;
+
+		if (typia.is<Schema>(parsed)) {
+			return {
+				...baseSchema,
+				...parsed,
+				schema: {
+					...baseSchema.schema,
+					...parsed.schema,
+					properties: {
+						...baseSchema.schema.properties,
+						...parsed.schema?.properties,
+					},
+					required: Array.from(new Set([...(baseSchema.schema.required || []), ...(parsed.schema?.required || [])])),
+				},
+			};
+		}
+
+		return baseSchema;
 	}
 
 	const schemaObj = new Synced<Schema>({
 		value: parseJsonSchema,
 		onChange(v) {
-			const required = Array.from(new Set(v.required)).filter(name => keys(v.properties ?? {}).includes(name));
+			const required = Array.from(new Set(v.schema?.required)).filter(name =>
+				keys(v.schema?.properties ?? {}).includes(name)
+			);
 			const validated: Schema = {
 				name: v.name,
 				description: v.description,
-				type: v.type,
-				...omit(v, "name", "description", "type"),
-				required,
+				schema: {
+					...v.schema,
+					required,
+				},
+				strict: v.strict,
 			};
 			conversation.update({
 				structuredOutput: { ...conversation.data.structuredOutput, schema: JSON.stringify(validated, null, 2) },
@@ -79,6 +91,15 @@
 
 	function updateSchema(obj: Partial<Schema>) {
 		schemaObj.current = { ...schemaObj.current, ...obj };
+	}
+
+	function updateSchemaNested(nestedObj: Partial<Schema["schema"]>) {
+		updateSchema({
+			schema: {
+				...schemaObj.current.schema,
+				...nestedObj,
+			},
+		});
 	}
 
 	let textarea = $state<HTMLTextAreaElement>();
@@ -135,9 +156,9 @@
 			<!-- Properties Section -->
 			<div class="border-t border-gray-700 pt-4">
 				<h3 class="text-lg leading-6 font-medium text-gray-100">Properties</h3>
-				{#if schemaObj.current.properties}
+				{#if schemaObj.current.schema?.properties}
 					<div class="mt-3 space-y-3">
-						{#each Object.entries(schemaObj.current.properties) as [propertyName, propertyDefinition] (propertyName)}
+						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition] (propertyName)}
 							<div class="relative space-y-2 rounded-md border border-gray-700 p-3">
 								<div>
 									<label for="{propertyName}-name" class="block text-xs font-medium text-gray-400"> Name </label>
@@ -147,11 +168,11 @@
 										class="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
 										value={propertyName}
 										{...onchange(value => {
-											const updatedProperties = { ...schemaObj.current.properties };
-											if (!updatedProperties[propertyName]) return;
+											const updatedProperties = { ...schemaObj.current.schema?.properties };
+											if (!updatedProperties || !updatedProperties[propertyName]) return;
 											updatedProperties[value] = updatedProperties[propertyName];
 											delete updatedProperties[propertyName];
-											updateSchema({ properties: updatedProperties });
+											updateSchemaNested({ properties: updatedProperties });
 										})}
 									/>
 								</div>
@@ -160,9 +181,10 @@
 									type="button"
 									class="absolute top-2 right-2 text-red-400 hover:text-red-500"
 									onclick={() => {
-										const updatedProperties = { ...schemaObj.current.properties };
+										const updatedProperties = { ...schemaObj.current.schema?.properties };
+										if (!updatedProperties || !updatedProperties[propertyName]) return;
 										delete updatedProperties[propertyName];
-										updateSchema({ properties: updatedProperties });
+										updateSchemaNested({ properties: updatedProperties });
 									}}
 									aria-label="delete"
 								>
@@ -177,10 +199,10 @@
 										bind:value={
 											() => propertyDefinition.type,
 											value => {
-												const updatedProperties = { ...schemaObj.current.properties };
-												if (updatedProperties[propertyName]) {
+												const updatedProperties = { ...schemaObj.current.schema?.properties };
+												if (updatedProperties && updatedProperties[propertyName]) {
 													updatedProperties[propertyName].type = value;
-													updateSchema({ properties: updatedProperties });
+													updateSchemaNested({ properties: updatedProperties });
 												}
 											}
 										}
@@ -205,10 +227,10 @@
 										class="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
 										value={propertyDefinition.description}
 										{...onchange(value => {
-											const updatedProperties = { ...schemaObj.current.properties };
-											if (!updatedProperties[propertyName]) return;
+											const updatedProperties = { ...schemaObj.current.schema?.properties };
+											if (!updatedProperties || !updatedProperties[propertyName]) return;
 											updatedProperties[propertyName].description = value;
-											updateSchema({ properties: updatedProperties });
+											updateSchemaNested({ properties: updatedProperties });
 										})}
 									/>
 								</div>
@@ -225,13 +247,12 @@
 					type="button"
 					class="btn-sm mt-4 flex w-full items-center justify-center rounded-md"
 					onclick={() => {
-						const newPropertyName = `newProperty${Object.keys(schemaObj.current.properties || {}).length + 1}`;
-						updateSchema({
-							properties: {
-								...(schemaObj.current.properties || {}),
-								[newPropertyName]: { type: "string", description: "" },
-							},
-						});
+						const newPropertyName = `newProperty${Object.keys(schemaObj.current.schema?.properties || {}).length + 1}`;
+						const updatedProperties = {
+							...(schemaObj.current.schema?.properties || {}),
+							[newPropertyName]: { type: "string", description: "" },
+						};
+						updateSchemaNested({ properties: updatedProperties });
 					}}
 				>
 					Add Property
@@ -243,8 +264,8 @@
 				<h3 class="text-lg leading-6 font-medium text-gray-100">Required Properties</h3>
 				<p class="text-sm text-gray-500">Select which properties are required.</p>
 				<div class="mt-3 space-y-2">
-					{#if schemaObj.current.properties}
-						{#each Object.keys(schemaObj.current.properties) as propertyName}
+					{#if schemaObj.current.schema?.properties}
+						{#each Object.keys(schemaObj.current.schema.properties) as propertyName}
 							<div class="relative flex items-start">
 								<div class="flex h-5 items-center">
 									<input
@@ -253,9 +274,9 @@
 										name="required-{propertyName}"
 										type="checkbox"
 										class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500"
-										checked={schemaObj.current.required?.includes(propertyName)}
+										checked={schemaObj.current.schema?.required?.includes(propertyName)}
 										onchange={e => {
-											let updatedRequired = [...(schemaObj.current.required || [])];
+											let updatedRequired = [...(schemaObj.current.schema?.required || [])];
 											if (e.currentTarget.checked) {
 												if (!updatedRequired.includes(propertyName)) {
 													updatedRequired.push(propertyName);
@@ -263,7 +284,7 @@
 											} else {
 												updatedRequired = updatedRequired.filter(name => name !== propertyName);
 											}
-											updateSchema({ required: updatedRequired });
+											updateSchemaNested({ required: updatedRequired });
 										}}
 									/>
 								</div>
@@ -289,10 +310,10 @@
 								name="additionalProperties"
 								type="checkbox"
 								class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500"
-								checked={schemaObj.current.additionalProperties !== undefined
-									? schemaObj.current.additionalProperties
+								checked={schemaObj.current.schema?.additionalProperties !== undefined
+									? schemaObj.current.schema.additionalProperties
 									: true}
-								onchange={e => updateSchema({ additionalProperties: e.currentTarget.checked })}
+								onchange={e => updateSchemaNested({ additionalProperties: e.currentTarget.checked })}
 							/>
 						</div>
 						<div class="ml-3 text-sm">
