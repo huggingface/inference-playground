@@ -1,4 +1,4 @@
-import { Remult, remult } from "remult";
+import { JsonDataProvider, JsonEntityIndexedDbStorage, Remult, remult } from "remult";
 import { createSubscriber } from "svelte/reactivity";
 
 // To be done once in the application.
@@ -29,3 +29,5 @@ export function initRemultSvelteReactivity() {
 		};
 	}
 }
+
+export const idb = new JsonDataProvider(new JsonEntityIndexedDbStorage());

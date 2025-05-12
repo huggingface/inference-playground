@@ -3,6 +3,7 @@
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 	import { iterate } from "$lib/utils/array.js";
+	import { formatDate, formatDateTime } from "$lib/utils/date.js";
 	import { Popover } from "melt/builders";
 	import { Tooltip } from "melt/components";
 	import { fly } from "svelte/transition";
@@ -81,7 +82,7 @@
 								checkpoints.restore(checkpoint);
 							}}
 						>
-							<span class="font-medium text-gray-400">{checkpoint.timestamp}</span>
+							<span class="font-medium text-gray-400">{formatDateTime(checkpoint.timestamp)}</span>
 
 							<p class="mt-0.5 flex items-center gap-2 text-sm">
 								{#if multiple}

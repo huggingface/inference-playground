@@ -1,17 +1,13 @@
+import { idb } from "$lib/remult.js";
 import type { Project } from "$lib/types.js";
 import { snapshot } from "$lib/utils/object.svelte";
 import { dequal } from "dequal";
-import { Entity, Fields, JsonDataProvider, repo } from "remult";
+import { Entity, Fields, repo } from "remult";
 import { conversations } from "./conversations.svelte";
 import { type ConversationFromDb } from "./db.svelte";
 import { projects } from "./projects.svelte";
-import { JsonEntityIndexedDbStorage } from "remult";
 
-const idb = new JsonDataProvider(new JsonEntityIndexedDbStorage());
-
-@Entity("checkpoint", {
-	allowApiCrud: true,
-})
+@Entity("checkpoint")
 export class Checkpoint {
 	@Fields.cuid()
 	id!: string;
@@ -20,7 +16,7 @@ export class Checkpoint {
 	favorite: boolean = false;
 
 	@Fields.createdAt()
-	timestamp?: Date;
+	timestamp!: Date;
 
 	@Fields.json()
 	conversations: ConversationFromDb[] = [];
@@ -29,12 +25,14 @@ export class Checkpoint {
 	projectId!: string;
 }
 
+const checkpointsRepo = repo(Checkpoint, idb);
+
 class Checkpoints {
 	#checkpoints: Record<Project["id"], Checkpoint[]> = $state({});
 
 	for(projectId: Project["id"]) {
 		// Async load from db
-		repo(Checkpoint, idb)
+		checkpointsRepo
 			.find({
 				where: {
 					projectId,
@@ -59,7 +57,7 @@ class Checkpoints {
 		const project = projects.all.find(p => p.id == projectId);
 		if (!project) return;
 
-		const newCheckpoint = await repo(Checkpoint, idb).save(
+		const newCheckpoint = await checkpointsRepo.save(
 			snapshot({
 				conversations: conversations.for(project.id).map(c => c.data),
 				timestamp: new Date(),
@@ -100,10 +98,10 @@ class Checkpoints {
 	async toggleFavorite({ id, projectId }: Checkpoint) {
 		if (!id) return;
 
-		const p = await repo(Checkpoint, idb).findFirst({ id });
+		const p = await checkpointsRepo.findFirst({ id });
 		if (!p) return;
 
-		await repo(Checkpoint, idb).update(id, { favorite: !p.favorite });
+		await checkpointsRepo.update(id, { favorite: !p.favorite });
 		const prev: Checkpoint[] = snapshot(this.#checkpoints[projectId] ?? []);
 
 		this.#checkpoints[projectId] = prev.map(c => {
@@ -115,19 +113,19 @@ class Checkpoints {
 	async delete({ id, projectId }: Checkpoint) {
 		if (!id) return;
 
-		await repo(Checkpoint, idb).delete(id);
+		await checkpointsRepo.delete(id);
 
 		const prev: Checkpoint[] = this.#checkpoints[projectId] ?? [];
 		this.#checkpoints[projectId] = prev.filter(c => c.id != id);
 	}
 
 	async clear(projectId: Project["id"]) {
-		await repo(Checkpoint, idb).deleteMany({ where: { projectId } });
+		await checkpointsRepo.deleteMany({ where: { projectId } });
 		this.#checkpoints[projectId] = [];
 	}
 
 	async migrate(from: Project["id"], to: Project["id"]) {
-		await repo(Checkpoint, idb).updateMany({ where: { projectId: from }, set: { projectId: to } });
+		await checkpointsRepo.updateMany({ where: { projectId: from }, set: { projectId: to } });
 
 		const fromArr = this.#checkpoints[from] ?? [];
 		this.#checkpoints[to] = [...fromArr.map(c => ({ ...c, projectId: to }))];

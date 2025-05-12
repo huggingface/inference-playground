@@ -1,14 +1,28 @@
-import type { Project } from "$lib/types.js";
+import { idb } from "$lib/remult.js";
 import { dequal } from "dequal";
-import { db, type ProjectFromDb } from "./db.svelte";
-import { checkpoints } from "./checkpoints.svelte";
+import { Entity, Fields, repo } from "remult";
 import { conversations } from "./conversations.svelte";
+
 import { PersistedState } from "runed";
+import { checkpoints } from "./checkpoints.svelte";
+
+@Entity("project")
+export class Project {
+	@Fields.cuid()
+	id!: string;
+
+	@Fields.string()
+	name!: string;
+}
+
+const projectsRepo = repo(Project, idb);
 
 const LOCAL_STORAGE_KEY = "hf_inf_pg_active_pid";
+const DEFAULT_ID = "default";
+const defaultProj = projectsRepo.create({ id: DEFAULT_ID, name: "Default" });
 
 class Projects {
-	#projects: Record<Project["id"], ProjectFromDb> = $state({ default: { name: "Default", id: "default" } });
+	#projects: Record<Project["id"], Project> = $state({ default: defaultProj });
 	#activeId = new PersistedState(LOCAL_STORAGE_KEY, "default");
 
 	get activeId() {
@@ -20,36 +34,25 @@ class Projects {
 	}
 
 	constructor() {
-		db.projects
-			.where("id")
-			.equals(this.activeId)
-			.first()
-			.then(p => {
-				if (p) {
-					return;
-				}
+		projectsRepo.find().then(res => {
+			if (!res.some(p => p.id === this.activeId)) this.activeId === DEFAULT_ID;
 
-				this.activeId = "default";
-			})
-			.finally(() => {
-				db.projects.toArray().then(res => {
-					res.forEach(p => {
-						if (dequal(this.#projects[p.id], p)) return;
-						this.#projects[p.id] = p;
-					});
-				});
+			res.forEach(p => {
+				if (dequal(this.#projects[p.id], p)) return;
+				this.#projects[p.id] = p;
 			});
+		});
 	}
 
 	async create(name: string): Promise<string> {
-		const id = crypto.randomUUID();
-		await db.projects.add({ name, id });
+		const { id } = await projectsRepo.save({ name });
 		this.#projects[id] = { name, id };
+		this.activeId = id;
 		return id;
 	}
 
 	saveProject = async (args: { name: string; moveCheckpoints?: boolean }) => {
-		const defaultProject = this.all.find(p => p.id === "default");
+		const defaultProject = this.all.find(p => p.id === DEFAULT_ID);
 		if (!defaultProject) return;
 
 		const id = await this.create(args.name);
@@ -69,17 +72,20 @@ class Projects {
 		return Object.values(this.#projects);
 	}
 
-	async update(data: ProjectFromDb) {
+	async update(data: Project) {
 		if (!data.id) return;
-		await db.projects.update(data.id, data);
+		await projectsRepo.update(data.id, data);
 		this.#projects[data.id] = { ...data };
 	}
 
 	async delete(id: string) {
 		if (!id) return;
 
-		await db.projects.delete(id);
+		await projectsRepo.delete(id);
 		delete this.#projects[id];
+		if (this.activeId === id) {
+			this.activeId = DEFAULT_ID;
+		}
 	}
 }
 
