@@ -101,8 +101,10 @@
 
 			<!-- Sticky wrapper for action buttons -->
 			<div class={["top-8 z-10 self-start", shouldStick && "sticky"]}>
-				<div class="flex flex-col items-start @2xl:flex-row flex-none @2xl:[&>button:first-of-type]:rounded-l-md @2xl:[&>button:last-of-type]:rounded-r-md @2xl:[&>button]:-mx-px @max-2xl:[&>button]:-my-px @max-2xl:[&>button:last-of-type]:rounded-b-md @max-2xl:[&>button:first-of-type]:rounded-t-md ">
-					{#if canUploadImgs} 
+				<div
+					class="flex flex-none flex-col items-start @2xl:flex-row @max-2xl:[&>button]:-my-px @2xl:[&>button]:-mx-px @max-2xl:[&>button:first-of-type]:rounded-t-md @2xl:[&>button:first-of-type]:rounded-l-md @max-2xl:[&>button:last-of-type]:rounded-b-md @2xl:[&>button:last-of-type]:rounded-r-md"
+				>
+					{#if canUploadImgs}
 						<Tooltip openDelay={250}>
 							{#snippet trigger(tooltip)}
 								<button
