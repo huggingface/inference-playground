@@ -1,45 +1,19 @@
 import type { Project } from "$lib/types.js";
-import { snapshot } from "$lib/utils/object.svelte";
 import { dequal } from "dequal";
-import { Entity, Fields, JsonDataProvider, repo } from "remult";
-import { conversations } from "./conversations.svelte";
-import { type ConversationFromDb } from "./db.svelte";
+import { db, type Checkpoint } from "./db.svelte";
+import { snapshot } from "$lib/utils/object.svelte";
 import { projects } from "./projects.svelte";
-import { JsonEntityIndexedDbStorage } from "remult";
-
-const idb = new JsonDataProvider(new JsonEntityIndexedDbStorage());
-
-@Entity("checkpoint", {
-	allowApiCrud: true,
-})
-export class Checkpoint {
-	@Fields.cuid()
-	id!: string;
-
-	@Fields.boolean()
-	favorite: boolean = false;
-
-	@Fields.createdAt()
-	timestamp?: Date;
-
-	@Fields.json()
-	conversations: ConversationFromDb[] = [];
-
-	@Fields.string()
-	projectId!: string;
-}
+import { conversations } from "./conversations.svelte";
 
 class Checkpoints {
 	#checkpoints: Record<Project["id"], Checkpoint[]> = $state({});
 
 	for(projectId: Project["id"]) {
 		// Async load from db
-		repo(Checkpoint, idb)
-			.find({
-				where: {
-					projectId,
-				},
-			})
+		db.checkpoints
+			.where("projectId")
+			.equals(projectId)
+			.toArray()
 			.then(c => {
 				// Dequal to avoid infinite loops
 				if (dequal(c, this.#checkpoints[projectId])) return;
@@ -48,9 +22,7 @@ class Checkpoints {
 
 		return (
 			this.#checkpoints[projectId]?.toSorted((a, b) => {
-				const aTime = a.timestamp?.getTime() ?? new Date().getTime();
-				const bTime = b.timestamp?.getTime() ?? new Date().getTime();
-				return bTime - aTime;
+				return b.timestamp.localeCompare(a.timestamp);
 			}) ?? []
 		);
 	}
@@ -59,16 +31,15 @@ class Checkpoints {
 		const project = projects.all.find(p => p.id == projectId);
 		if (!project) return;
 
-		const newCheckpoint = await repo(Checkpoint, idb).save(
-			snapshot({
-				conversations: conversations.for(project.id).map(c => c.data),
-				timestamp: new Date(),
-				projectId: project.id,
-			})
-		);
+		const newCheckpoint = snapshot({
+			conversations: conversations.for(project.id).map(c => c.data),
+			timestamp: new Date().toLocaleString(),
+			projectId: project.id,
+		} satisfies Checkpoint);
 
+		const id = await db.checkpoints.add(newCheckpoint);
 		const prev: Checkpoint[] = this.#checkpoints[projectId] ?? [];
-		this.#checkpoints[projectId] = [...prev, newCheckpoint];
+		this.#checkpoints[projectId] = [...prev, { ...newCheckpoint, id }];
 	}
 
 	restore(checkpoint: Checkpoint) {
@@ -100,10 +71,10 @@ class Checkpoints {
 	async toggleFavorite({ id, projectId }: Checkpoint) {
 		if (!id) return;
 
-		const p = await repo(Checkpoint, idb).findFirst({ id });
+		const p = await db.checkpoints.where("id").equals(id).first();
 		if (!p) return;
 
-		await repo(Checkpoint, idb).update(id, { favorite: !p.favorite });
+		await db.checkpoints.update(id, { favorite: !p.favorite });
 		const prev: Checkpoint[] = snapshot(this.#checkpoints[projectId] ?? []);
 
 		this.#checkpoints[projectId] = prev.map(c => {
@@ -115,19 +86,19 @@ class Checkpoints {
 	async delete({ id, projectId }: Checkpoint) {
 		if (!id) return;
 
-		await repo(Checkpoint, idb).delete(id);
+		await db.checkpoints.delete(id);
 
 		const prev: Checkpoint[] = this.#checkpoints[projectId] ?? [];
 		this.#checkpoints[projectId] = prev.filter(c => c.id != id);
 	}
 
 	async clear(projectId: Project["id"]) {
-		await repo(Checkpoint, idb).deleteMany({ where: { projectId } });
+		await db.checkpoints.where("projectId").equals(projectId).delete();
 		this.#checkpoints[projectId] = [];
 	}
 
 	async migrate(from: Project["id"], to: Project["id"]) {
-		await repo(Checkpoint, idb).updateMany({ where: { projectId: from }, set: { projectId: to } });
+		await db.checkpoints.where("projectId").equals(from).modify({ projectId: to });
 
 		const fromArr = this.#checkpoints[from] ?? [];
 		this.#checkpoints[to] = [...fromArr.map(c => ({ ...c, projectId: to }))];
