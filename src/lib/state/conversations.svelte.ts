@@ -34,6 +34,12 @@ export class ConversationEntity {
 	config: GenerationConfig = {};
 
 	@Fields.json()
+	structuredOutput?: {
+		enabled?: boolean;
+		schema?: string;
+	};
+
+	@Fields.json()
 	messages!: ConversationMessage[];
 
 	@Fields.json()
@@ -54,6 +60,7 @@ export class ConversationEntity {
 	@Fields.createdAt()
 	createdAt!: Date;
 }
+
 export type ConversationEntityMembers = MembersOnly<ConversationEntity>;
 
 const conversationsRepo = repo(ConversationEntity, idb);
