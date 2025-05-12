@@ -1,5 +1,5 @@
 import ctxLengthData from "$lib/data/context_length.json";
-import type { ConversationClass } from "$lib/state/conversations.svelte";
+import { ConversationClass } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import {
 	isCustomModel,
@@ -73,13 +73,17 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 	return ctxLength;
 }
 
-function getCompletionMetadata(conversation: CoolConversation, signal?: AbortSignal): CompletionMetadata {
-	const { systemMessage } = conversation.data;
+function getCompletionMetadata(
+	conversation: ConversationClass | Conversation,
+	signal?: AbortSignal
+): CompletionMetadata {
+	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
+	const { systemMessage } = data;
 
 	const messages = [
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
-		...conversation.data.messages,
+		...data.messages,
 	];
 
 	// Handle OpenAI-compatible models
@@ -95,12 +99,13 @@ function getCompletionMetadata(conversation: CoolConversation, signal?: AbortSig
 
 		const args = {
 			messages: messages.map(parseMessage) as OpenAI.ChatCompletionMessageParam[],
-			...conversation.data.config,
+			...data.config,
 			model: model.id,
-		};
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any;
 
-		if (conversation.data.structuredOutput?.enabled) {
-			const json = safeParse(conversation.data.structuredOutput.schema ?? "");
+		if (data.structuredOutput?.enabled) {
+			const json = safeParse(data.structuredOutput.schema ?? "");
 			if (json) {
 				args.response_format = {
 					type: "json_schema",
@@ -115,17 +120,17 @@ function getCompletionMetadata(conversation: CoolConversation, signal?: AbortSig
 			args,
 		};
 	}
-
 	const args = {
 		model: model.id,
 		messages: messages.map(parseMessage),
-		provider: conversation.data.provider,
-		...conversation.data.config,
+		provider: data.provider,
+		...data.config,
 		// max_tokens: maxAllowedTokens(conversation) - currTokens,
-	};
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	} as any;
 
-	if (conversation.data.structuredOutput?.enabled) {
-		const json = safeParse(conversation.data.structuredOutput.schema ?? "");
+	if (data.structuredOutput?.enabled) {
+		const json = safeParse(data.structuredOutput.schema ?? "");
 		if (json) {
 			args.response_format = {
 				type: "json_schema",
@@ -143,7 +148,7 @@ function getCompletionMetadata(conversation: CoolConversation, signal?: AbortSig
 }
 
 export async function handleStreamingResponse(
-	conversation: CoolConversation,
+	conversation: ConversationClass | Conversation,
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
@@ -176,7 +181,7 @@ export async function handleStreamingResponse(
 }
 
 export async function handleNonStreamingResponse(
-	conversation: CoolConversation
+	conversation: ConversationClass | Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
 	const metadata = getCompletionMetadata(conversation);
 

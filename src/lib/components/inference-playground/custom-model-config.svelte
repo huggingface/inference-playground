@@ -36,6 +36,7 @@
 	import { isValidURL } from "$lib/utils/url.js";
 	import { Select } from "melt/components";
 	import { keys } from "$lib/utils/object.svelte.js";
+	import { ConversationClass } from "$lib/state/conversations.svelte.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));
