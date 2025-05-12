@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { SVGAttributes } from "svelte/elements";
 
-	type Icon = "regen";
+	type Icon = "regen" | "refresh";
 
 	interface Props extends SVGAttributes<SVGElement> {
 		icon: Icon;
@@ -17,4 +17,13 @@
 			fill="currentColor"
 		/>
 	</svg>
+{/if}
+
+{#if icon === "refresh"}
+	<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"
+		><path
+			d="M9.02 3.54A5.73 5.73 0 0 0 5.9 14.05v-2.71h1.04v4.16H2.77v-1.04H4.7A6.76 6.76 0 0 1 9.02 2.5v1.04Zm6.17 0h-1.92A6.76 6.76 0 0 1 8.94 15.5v-1.04a5.73 5.73 0 0 0 3.13-10.51v2.71h-1.04V2.5h4.16v1.04Z"
+			fill="currentColor"
+		/></svg
+	>
 {/if}
