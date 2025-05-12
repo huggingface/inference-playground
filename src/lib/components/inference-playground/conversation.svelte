@@ -57,14 +57,14 @@
 		});
 	}
 
-	function regenMessage(idx: number) {
+	async function regenMessage(idx: number) {
 		// TODO: migrate to new logic
 		const msg = conversation.data.messages[idx];
 		if (!msg) return;
 		if (msg.role === "user") {
-			conversation.deleteMessages(idx + 1);
+			await conversation.deleteMessages(idx + 1);
 		} else {
-			conversation.deleteMessages(idx);
+			await conversation.deleteMessages(idx);
 		}
 
 		conversation.stopGenerating();

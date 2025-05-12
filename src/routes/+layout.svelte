@@ -13,7 +13,7 @@
 
 	let { children }: Props = $props();
 
-	initRemultSvelteReactivity();
+	// initRemultSvelteReactivity();
 </script>
 
 {@render children?.()}

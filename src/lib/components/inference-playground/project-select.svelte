@@ -89,7 +89,7 @@
 						<IconSave />
 					</button>
 				{/snippet}
-				Save as Project
+				Save as project
 			</Tooltip>
 		{:else}
 			<Tooltip>

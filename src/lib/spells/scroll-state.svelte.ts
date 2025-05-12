@@ -281,6 +281,7 @@ export class ScrollState {
 			(this.element as Window)?.document?.documentElement ||
 			(this.element as Document)?.documentElement ||
 			(this.element as Element);
+		if (!scrollContainer) return;
 		this.scrollTo(undefined, scrollContainer.scrollHeight);
 	}
 

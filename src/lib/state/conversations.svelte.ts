@@ -1,4 +1,7 @@
-import { defaultGenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
+import {
+	defaultGenerationConfig,
+	type GenerationConfig,
+} from "$lib/components/inference-playground/generation-config-settings.js";
 import {
 	handleNonStreamingResponse,
 	handleStreamingResponse,
@@ -14,14 +17,48 @@ import {
 	type Model,
 	type Project,
 } from "$lib/types.js";
-import { snapshot } from "$lib/utils/object.svelte";
-import { db, type ConversationFromDb } from "./db.svelte";
+import { omit, snapshot } from "$lib/utils/object.svelte";
 import { models } from "./models.svelte";
 import { projects } from "./projects.svelte";
 import { token } from "./token.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Svelte imports are broken in TS files
 import { showQuotaModal } from "$lib/components/quota-modal.svelte";
+import { idb } from "$lib/remult.js";
+import { Entity, Fields, repo, type MembersOnly } from "remult";
+
+@Entity("conversation")
+export class ConversationEntity {
+	@Fields.autoIncrement()
+	id!: number;
+
+	@Fields.json()
+	config: GenerationConfig = {};
+
+	@Fields.json()
+	messages!: ConversationMessage[];
+
+	@Fields.json()
+	systemMessage: ConversationMessage = { role: "system" };
+
+	@Fields.boolean()
+	streaming = false;
+
+	@Fields.string()
+	provider?: string;
+
+	@Fields.string()
+	projectId!: string;
+
+	@Fields.string()
+	modelId!: string;
+
+	@Fields.createdAt()
+	createdAt!: Date;
+}
+export type ConversationEntityMembers = MembersOnly<ConversationEntity>;
+
+const conversationsRepo = repo(ConversationEntity, idb);
 
 const startMessageUser: ConversationMessage = { role: "user", content: "" };
 const systemMessage: ConversationMessage = {
@@ -43,7 +80,7 @@ export const emptyModel: Model = {
 	},
 };
 
-function getDefaultConversation(projectId: string): ConversationFromDb {
+function getDefaultConversation(projectId: string) {
 	return {
 		projectId,
 		modelId: models.trending[0]?.id ?? models.remote[0]?.id ?? emptyModel.id,
@@ -51,24 +88,23 @@ function getDefaultConversation(projectId: string): ConversationFromDb {
 		messages: [{ ...startMessageUser }],
 		systemMessage,
 		streaming: true,
-		id: undefined,
-		createdAt: new Date().toLocaleString(),
-	};
+		createdAt: new Date(),
+	} satisfies Partial<ConversationEntityMembers>;
 }
 
-export type CoolConversationOld = ConversationFromDb & {
+export type CoolConversationOld = ConversationEntityMembers & {
 	readonly model: Model | CustomModel;
 };
 
 export class CoolConversation {
-	#data = $state.raw() as ConversationFromDb;
+	#data = $state.raw() as ConversationEntityMembers;
 	readonly model = $derived(models.all.find(m => m.id === this.data.modelId) ?? emptyModel);
 
 	abortManager = new AbortManager();
 	generationStats = $state({ latency: 0, tokens: 0 }) as GenerationStatistics;
 	generating = $state(false);
 
-	constructor(data: ConversationFromDb) {
+	constructor(data: ConversationEntityMembers) {
 		this.#data = data;
 	}
 
@@ -76,18 +112,18 @@ export class CoolConversation {
 		return this.#data;
 	}
 
-	async update(data: Partial<ConversationFromDb>) {
-		console.log("id", this.data.id);
+	async update(data: Partial<ConversationEntityMembers>) {
 		if (this.data.id === -1) return;
+		// if (this.data.id === undefined) return;
 		const cloned = snapshot({ ...this.data, ...data });
 
 		if (this.data.id === undefined) {
-			this.#data = { ...this.#data, id: await db.conversations.add(cloned) };
+			const saved = await conversationsRepo.save(omit(cloned, "id"));
+			this.#data = { ...cloned, id: saved.id };
 		} else {
-			db.conversations.update(this.data.id, cloned);
+			await conversationsRepo.update(this.data.id, cloned);
+			this.#data = cloned;
 		}
-
-		this.#data = cloned;
 	}
 
 	async addMessage(message: ConversationMessage) {
@@ -101,7 +137,7 @@ export class CoolConversation {
 		const prev = this.data.messages[args.index];
 		if (!prev) return;
 
-		this.update({
+		await this.update({
 			...this.data,
 			messages: [
 				...this.data.messages.slice(0, args.index),
@@ -112,7 +148,7 @@ export class CoolConversation {
 	}
 
 	async deleteMessages(from: number) {
-		this.update({
+		await this.update({
 			messages: this.data.messages.slice(0, from),
 		});
 	}
@@ -130,7 +166,8 @@ export class CoolConversation {
 		try {
 			if (conv.streaming) {
 				let addedMessage = false;
-				const streamingMessage = $state({ role: "assistant", content: "" });
+				const streamingMessage = { role: "assistant", content: "" };
+				const index = this.data.messages.length;
 
 				await handleStreamingResponse(
 					conv,
@@ -142,7 +179,7 @@ export class CoolConversation {
 							this.addMessage(streamingMessage);
 							addedMessage = true;
 						} else {
-							this.updateMessage({ index: this.data.messages.length - 1, message: streamingMessage });
+							this.updateMessage({ index, message: streamingMessage });
 						}
 					},
 					this.abortManager.createController()
@@ -169,25 +206,28 @@ export class CoolConversation {
 
 class Conversations {
 	#conversations: Record<Project["id"], CoolConversation[]> = $state.raw({});
-	generating = $derived(this.active.some(c => c.generating));
 	generationStats = $derived(this.active.map(c => c.generationStats));
 
 	loaded = $state(false);
 
 	#active = $derived(this.for(projects.activeId));
 
+	get generating() {
+		return this.#active.some(c => c.generating);
+	}
+
 	get active() {
 		return this.#active;
 	}
 
-	async create(args: { projectId: Project["id"]; modelId?: Model["id"] } & Partial<ConversationFromDb>) {
+	async create(args: { projectId: Project["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>) {
 		const conv = snapshot({
 			...getDefaultConversation(args.projectId),
 			...args,
 		});
 		if (args.modelId) conv.modelId = args.modelId;
 
-		const id = await db.conversations.add(conv);
+		const { id } = await conversationsRepo.save(conv);
 		const prev = this.#conversations[args.projectId] ?? [];
 		this.#conversations = {
 			...this.#conversations,
@@ -197,32 +237,32 @@ class Conversations {
 
 	for(projectId: Project["id"]): CoolConversation[] {
 		// Async load from db
-		if (this.#conversations[projectId] === undefined) {
-			db.conversations
-				.where("projectId")
-				.equals(projectId)
-				.toArray()
-				.then(c => {
-					if (!c.length) c.push(getDefaultConversation(projectId));
-					this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new CoolConversation(c)) };
-				});
+		if (!this.#conversations[projectId]?.length) {
+			conversationsRepo.find({ where: { projectId } }).then(c => {
+				if (!c.length) {
+					const dc = conversationsRepo.create(getDefaultConversation(projectId));
+					c.push(dc);
+				}
+				this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new CoolConversation(c)) };
+			});
 		}
 
 		let res = this.#conversations[projectId];
 		if (res?.length === 0 || !res) {
+			// We set id to -1 because it is temporary, there should always be a conversation.
 			const dc = { ...getDefaultConversation(projectId), id: -1 };
 			res = [new CoolConversation(dc)];
 		}
 
 		return res.slice(0, 2).toSorted((a, b) => {
-			return a.data.createdAt.localeCompare(b.data.createdAt);
+			return a.data.createdAt.getTime() - b.data.createdAt.getTime();
 		});
 	}
 
-	async delete({ id, projectId }: ConversationFromDb) {
+	async delete({ id, projectId }: ConversationEntityMembers) {
 		if (!id) return;
 
-		await db.conversations.delete(id);
+		await conversationsRepo.delete(id);
 
 		const prev = this.#conversations[projectId] ?? [];
 		this.#conversations = { ...this.#conversations, [projectId]: prev.filter(c => c.data.id != id) };
@@ -240,8 +280,11 @@ class Conversations {
 	async migrate(from: Project["id"], to: Project["id"]) {
 		const fromArr = this.#conversations[from] ?? [];
 		await Promise.allSettled(fromArr.map(c => c.update({ projectId: to })));
-		this.#conversations[to] = [...fromArr];
-		this.#conversations[from] = [];
+		this.#conversations = {
+			...this.#conversations,
+			[to]: [...fromArr],
+			[from]: [],
+		};
 	}
 
 	async genNextMessages(conv: "left" | "right" | "both" | CoolConversation = "both") {

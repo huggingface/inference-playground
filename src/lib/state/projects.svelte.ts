@@ -47,7 +47,6 @@ class Projects {
 	async create(name: string): Promise<string> {
 		const { id } = await projectsRepo.save({ name });
 		this.#projects[id] = { name, id };
-		this.activeId = id;
 		return id;
 	}
 
@@ -61,7 +60,20 @@ class Projects {
 			checkpoints.migrate(defaultProject.id, id);
 		}
 
-		conversations.migrate(defaultProject.id, id);
+		// conversations.migrate(defaultProject.id, id).then(_ => (this.#activeId.current = id));
+		conversations.migrate(defaultProject.id, id).then(() => {
+			this.activeId = id;
+		});
+
+		return id;
+	};
+
+	setCurrent = async (id: string) => {
+		await checkpoints.migrate(id, this.activeId);
+		conversations.migrate(this.activeId, id).then(() => {
+			this.#activeId.current = id;
+		});
+		this.activeId = id;
 	};
 
 	get current() {

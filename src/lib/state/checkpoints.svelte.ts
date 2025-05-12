@@ -3,8 +3,7 @@ import type { Project } from "$lib/types.js";
 import { snapshot } from "$lib/utils/object.svelte";
 import { dequal } from "dequal";
 import { Entity, Fields, repo } from "remult";
-import { conversations } from "./conversations.svelte";
-import { type ConversationFromDb } from "./db.svelte";
+import { conversations, type ConversationEntityMembers } from "./conversations.svelte";
 import { projects } from "./projects.svelte";
 
 @Entity("checkpoint")
@@ -19,7 +18,7 @@ export class Checkpoint {
 	timestamp!: Date;
 
 	@Fields.json()
-	conversations: ConversationFromDb[] = [];
+	conversations: ConversationEntityMembers[] = [];
 
 	@Fields.string()
 	projectId!: string;
@@ -71,25 +70,33 @@ class Checkpoints {
 
 	restore(checkpoint: Checkpoint) {
 		const cloned = snapshot(checkpoint);
-		const project = projects.all.find(p => p.id == cloned.projectId);
+		const modified = {
+			...cloned,
+			conversations: cloned.conversations.map(c => ({
+				...c,
+				projectId: cloned.projectId,
+			})),
+		};
+
+		const project = projects.all.find(p => p.id == modified.projectId);
 		if (!project) return;
 
-		projects.activeId = cloned.projectId;
+		projects.activeId = modified.projectId;
 
 		// conversations.deleteAllFrom(cloned.projectId);
-		const prev = conversations.for(cloned.projectId);
-		cloned.conversations.forEach((c, i) => {
+		const prev = conversations.for(modified.projectId);
+		modified.conversations.forEach((c, i) => {
 			const p = prev[i];
 			if (p) return p.update(c);
 			conversations.create({
 				...c,
-				projectId: cloned.projectId,
+				projectId: modified.projectId,
 			});
 		});
 
-		if (cloned.conversations.length < prev.length) {
+		if (modified.conversations.length < prev.length) {
 			prev.forEach((p, i) => {
-				if (i < cloned.conversations.length) return;
+				if (i < modified.conversations.length) return;
 				conversations.delete(p.data);
 			});
 		}
@@ -127,8 +134,14 @@ class Checkpoints {
 	async migrate(from: Project["id"], to: Project["id"]) {
 		await checkpointsRepo.updateMany({ where: { projectId: from }, set: { projectId: to } });
 
-		const fromArr = this.#checkpoints[from] ?? [];
-		this.#checkpoints[to] = [...fromArr.map(c => ({ ...c, projectId: to }))];
+		const fromArr = snapshot(this.#checkpoints[from] ?? []);
+		this.#checkpoints[to] = [
+			...fromArr.map(c => ({
+				...c,
+				projectId: to,
+				conversations: c.conversations.map(cn => ({ ...cn, projectId: to })),
+			})),
+		];
 		this.#checkpoints[from] = [];
 	}
 }
