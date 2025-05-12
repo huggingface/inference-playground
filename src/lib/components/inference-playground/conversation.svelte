@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ScrollState } from "$lib/spells/scroll-state.svelte";
-	import { type CoolConversation } from "$lib/state/conversations.svelte";
+	import { type ConversationClass } from "$lib/state/conversations.svelte";
 	import { watch } from "runed";
 	import { tick } from "svelte";
 	import IconPlus from "~icons/carbon/add";
@@ -8,7 +8,7 @@
 	import Message from "./message.svelte";
 
 	interface Props {
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 		viewCode: boolean;
 		onCloseCode: () => void;
 	}

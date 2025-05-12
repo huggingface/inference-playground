@@ -12,7 +12,6 @@ import {
 	PipelineTag,
 	type Conversation,
 	type ConversationMessage,
-	type CustomModel,
 	type GenerationStatistics,
 	type Model,
 	type Project,
@@ -92,11 +91,7 @@ function getDefaultConversation(projectId: string) {
 	} satisfies Partial<ConversationEntityMembers>;
 }
 
-export type CoolConversationOld = ConversationEntityMembers & {
-	readonly model: Model | CustomModel;
-};
-
-export class CoolConversation {
+export class ConversationClass {
 	#data = $state.raw() as ConversationEntityMembers;
 	readonly model = $derived(models.all.find(m => m.id === this.data.modelId) ?? emptyModel);
 
@@ -205,7 +200,7 @@ export class CoolConversation {
 }
 
 class Conversations {
-	#conversations: Record<Project["id"], CoolConversation[]> = $state.raw({});
+	#conversations: Record<Project["id"], ConversationClass[]> = $state.raw({});
 	generationStats = $derived(this.active.map(c => c.generationStats));
 
 	loaded = $state(false);
@@ -231,11 +226,11 @@ class Conversations {
 		const prev = this.#conversations[args.projectId] ?? [];
 		this.#conversations = {
 			...this.#conversations,
-			[args.projectId]: [...prev, new CoolConversation({ ...conv, id })],
+			[args.projectId]: [...prev, new ConversationClass({ ...conv, id })],
 		};
 	}
 
-	for(projectId: Project["id"]): CoolConversation[] {
+	for(projectId: Project["id"]): ConversationClass[] {
 		// Async load from db
 		if (!this.#conversations[projectId]?.length) {
 			conversationsRepo.find({ where: { projectId } }).then(c => {
@@ -243,7 +238,7 @@ class Conversations {
 					const dc = conversationsRepo.create(getDefaultConversation(projectId));
 					c.push(dc);
 				}
-				this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new CoolConversation(c)) };
+				this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new ConversationClass(c)) };
 			});
 		}
 
@@ -251,7 +246,7 @@ class Conversations {
 		if (res?.length === 0 || !res) {
 			// We set id to -1 because it is temporary, there should always be a conversation.
 			const dc = { ...getDefaultConversation(projectId), id: -1 };
-			res = [new CoolConversation(dc)];
+			res = [new ConversationClass(dc)];
 		}
 
 		return res.slice(0, 2).toSorted((a, b) => {
@@ -287,7 +282,7 @@ class Conversations {
 		};
 	}
 
-	async genNextMessages(conv: "left" | "right" | "both" | CoolConversation = "both") {
+	async genNextMessages(conv: "left" | "right" | "both" | ConversationClass = "both") {
 		if (!token.value) {
 			token.showModal = true;
 			return;

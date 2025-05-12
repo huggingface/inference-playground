@@ -1,13 +1,13 @@
 import { idb } from "$lib/remult.js";
 import { dequal } from "dequal";
-import { Entity, Fields, repo } from "remult";
+import { Entity, Fields, repo, type MembersOnly } from "remult";
 import { conversations } from "./conversations.svelte";
 
 import { PersistedState } from "runed";
 import { checkpoints } from "./checkpoints.svelte";
 
 @Entity("project")
-export class Project {
+export class ProjectEntity {
 	@Fields.cuid()
 	id!: string;
 
@@ -15,14 +15,16 @@ export class Project {
 	name!: string;
 }
 
-const projectsRepo = repo(Project, idb);
+export type ProjectEntityMembers = MembersOnly<ProjectEntity>;
+
+const projectsRepo = repo(ProjectEntity, idb);
 
 const LOCAL_STORAGE_KEY = "hf_inf_pg_active_pid";
 const DEFAULT_ID = "default";
 const defaultProj = projectsRepo.create({ id: DEFAULT_ID, name: "Default" });
 
 class Projects {
-	#projects: Record<Project["id"], Project> = $state({ default: defaultProj });
+	#projects: Record<ProjectEntity["id"], ProjectEntity> = $state({ default: defaultProj });
 	#activeId = new PersistedState(LOCAL_STORAGE_KEY, "default");
 
 	get activeId() {
@@ -84,7 +86,7 @@ class Projects {
 		return Object.values(this.#projects);
 	}
 
-	async update(data: Project) {
+	async update(data: ProjectEntity) {
 		if (!data.id) return;
 		await projectsRepo.update(data.id, data);
 		this.#projects[data.id] = { ...data };

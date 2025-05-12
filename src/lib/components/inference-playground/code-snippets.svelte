@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { emptyModel } from "$lib/state/_willremove_session.svelte";
-	import type { CoolConversation } from "$lib/state/conversations.svelte";
+	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { token } from "$lib/state/token.svelte.js";
 	import { isCustomModel, PipelineTag } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
@@ -24,7 +24,7 @@
 	hljs.registerLanguage("http", http);
 
 	interface Props {
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 		onCloseCode: () => void;
 	}
 
@@ -42,7 +42,7 @@
 
 	type GetSnippetArgs = {
 		tokenStr: string;
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 		lang: InferenceSnippetLanguage;
 	};
 	function getSnippet({ tokenStr, conversation, lang }: GetSnippetArgs) {

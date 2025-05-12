@@ -3,7 +3,7 @@
 
 	import { createEventDispatcher } from "svelte";
 
-	import type { CoolConversation } from "$lib/state/conversations.svelte";
+	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
 	import IconCog from "~icons/carbon/settings";
 	import Avatar from "../avatar.svelte";
@@ -12,7 +12,7 @@
 	import ProviderSelect from "./provider-select.svelte";
 
 	interface Props {
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 		conversationIdx: number;
 	}
 

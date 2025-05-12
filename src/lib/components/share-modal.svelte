@@ -1,7 +1,7 @@
 <script lang="ts" module>
-	let project = $state<ProjectFromDb>();
+	let project = $state<ProjectEntityMembers>();
 
-	export function showShareModal(p: ProjectFromDb) {
+	export function showShareModal(p: ProjectEntityMembers) {
 		project = p;
 	}
 
@@ -22,8 +22,7 @@
 	import IconSave from "~icons/carbon/save";
 	import LocalToasts from "./local-toasts.svelte";
 	import { addToast as addToastGlobally } from "./toaster.svelte.js";
-	import type { ProjectFromDb } from "$lib/state/db.svelte";
-	import { projects } from "$lib/state/projects.svelte";
+	import { projects, type ProjectEntityMembers } from "$lib/state/projects.svelte";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 

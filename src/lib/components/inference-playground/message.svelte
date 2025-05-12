@@ -2,7 +2,7 @@
 	import { autofocus as autofocusAction } from "$lib/actions/autofocus.js";
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
-	import { type CoolConversation } from "$lib/state/conversations.svelte.js";
+	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
 	import type { ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { fileToDataURL } from "$lib/utils/file.js";
@@ -16,7 +16,7 @@
 	import ImgPreview from "./img-preview.svelte";
 
 	type Props = {
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 		message: ConversationMessage;
 		index: number;
 		autofocus?: boolean;

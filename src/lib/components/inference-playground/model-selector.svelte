@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CoolConversation } from "$lib/state/conversations.svelte";
+	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
 	import { isCustomModel, isHFModel, type Model } from "$lib/types.js";
 	import IconCaret from "~icons/carbon/chevron-down";
@@ -9,7 +9,7 @@
 	import { defaultSystemMessage } from "./utils.svelte.js";
 
 	interface Props {
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 	}
 
 	const { conversation }: Props = $props();

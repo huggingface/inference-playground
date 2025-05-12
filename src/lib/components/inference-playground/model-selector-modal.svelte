@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { autofocus } from "$lib/actions/autofocus.js";
-	import type { CoolConversation } from "$lib/state/conversations.svelte";
+	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
 	import type { CustomModel, Model } from "$lib/types.js";
 	import { noop } from "$lib/utils/noop.js";
@@ -21,7 +21,7 @@
 	interface Props {
 		onModelSelect?: (model: string) => void;
 		onClose?: () => void;
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 	}
 
 	let { onModelSelect, onClose, conversation }: Props = $props();

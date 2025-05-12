@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { run } from "svelte/legacy";
 
-	import type { CoolConversation } from "$lib/state/conversations.svelte";
+	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import type { Model } from "$lib/types.js";
 	import { randomPick } from "$lib/utils/array.js";
 	import { cn } from "$lib/utils/cn.js";
@@ -10,7 +10,7 @@
 	import IconProvider from "../icon-provider.svelte";
 
 	interface Props {
-		conversation: CoolConversation & { model: Model };
+		conversation: ConversationClass & { model: Model };
 		class?: string | undefined;
 	}
 

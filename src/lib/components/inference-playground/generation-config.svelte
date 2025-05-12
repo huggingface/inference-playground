@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CoolConversation } from "$lib/state/conversations.svelte.js";
+	import type { ConversationClass } from "$lib/state/conversations.svelte.js";
 	import { isNumber } from "$lib/utils/is.js";
 	import { watch } from "runed";
 	import IconX from "~icons/carbon/close";
@@ -7,7 +7,7 @@
 	import { maxAllowedTokens } from "./utils.svelte.js";
 
 	interface Props {
-		conversation: CoolConversation;
+		conversation: ConversationClass;
 		classNames?: string;
 	}
 
