@@ -8,6 +8,7 @@
 	import { Select } from "melt/builders";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import IconProvider from "../icon-provider.svelte";
+	import { models } from "$lib/state/models.svelte";
 
 	interface Props {
 		conversation: ConversationClass & { model: Model };
@@ -19,7 +20,11 @@
 	function reset(providers: typeof conversation.model.inferenceProviderMapping) {
 		const validProvider = providers.find(p => p.provider === conversation.data.provider);
 		if (validProvider) return;
-		conversation.update({ provider: randomPick(providers)?.provider });
+		if (providers) {
+			conversation.update({ provider: randomPick(providers)?.provider });
+		} else {
+			conversation.update({ modelId: randomPick(models.all)?.id });
+		}
 	}
 
 	let providers = $derived(conversation.model.inferenceProviderMapping);

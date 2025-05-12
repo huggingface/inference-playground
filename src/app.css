@@ -93,6 +93,14 @@
 	@apply focus-outline;
 }
 
+/** utility that adds a fade on top and bottom using clip-path or something similar */
+@utility fade-y {
+	--start: 2.5%;
+	--end: calc(100% - var(--start));
+	-webkit-mask-image: linear-gradient(to bottom, transparent, black var(--start), black var(--end), transparent);
+	mask-image: linear-gradient(to bottom, transparent, black var(--start), black var(--end), transparent);
+}
+
 /* Elements & Classes */
 html {
 	font-size: 15px;

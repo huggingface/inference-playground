@@ -4,10 +4,8 @@
 	import { watch } from "runed";
 	import IconX from "~icons/carbon/close";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
+	import StructuredOutputModal from "./structured-output-modal.svelte";
 	import { maxAllowedTokens } from "./utils.svelte.js";
-	import Dialog from "../dialog.svelte";
-	import { onchange, oninput } from "$lib/utils/template.js";
-	import { codeToHtml } from "shiki";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -44,8 +42,6 @@
 	}
 
 	let editingStructuredOutput = $state(true);
-
-	let tempSchema = $derived(conversation.data.structuredOutput?.schema ?? "");
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -123,48 +119,4 @@
 	</label>
 </div>
 
-<Dialog title="Edit Structured Output" open={editingStructuredOutput} onClose={() => (editingStructuredOutput = false)}>
-	<!-- inside dialogs its a-ok -->
-	<!-- svelte-ignore a11y_autofocus  -->
-	<div class="relative rounded-lg">
-		<div class="shiki-container pointer-events-none absolute inset-0" aria-hidden="true">
-			{#await codeToHtml(tempSchema, { lang: "json", theme: "rose-pine" })}
-				<!-- nothing -->
-			{:then rendered}
-				{@html rendered}
-			{/await}
-		</div>
-		<textarea
-			autofocus
-			value={conversation.data.structuredOutput?.schema ?? ""}
-			{...onchange(v => {
-				conversation.update({ structuredOutput: { ...conversation.data.structuredOutput, schema: v } });
-			})}
-			{...oninput(v => (tempSchema = v))}
-			class="relative z-10 h-120 w-full rounded-lg bg-transparent text-transparent caret-white ring-gray-100 outline-none group-hover/message:ring-3 focus:ring-3 @2xl:px-3 dark:ring-gray-600"
-		></textarea>
-	</div>
-
-	{#snippet footer()}
-		<button class="btn ml-auto" onclick={() => (editingStructuredOutput = false)}>Save</button>
-	{/snippet}
-</Dialog>
-
-<style>
-	.shiki-container > :global(pre),
-	textarea {
-		padding-block: 10px;
-		padding-inline: 8px;
-		font-family: var(--font-mono) !important;
-		font-size: 15px;
-	}
-
-	.shiki-container > :global(*) {
-		font-family: var(--font-mono) !important;
-	}
-
-	.shiki-container > :global(pre) {
-		border-radius: 8px;
-		height: 100%;
-	}
-</style>
+<StructuredOutputModal {conversation} bind:open={editingStructuredOutput} />

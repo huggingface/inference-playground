@@ -4,7 +4,6 @@
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
 	import { Popover } from "melt/components";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
-	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
 	import Tooltip from "../tooltip.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
@@ -18,6 +17,7 @@
 
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
+	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
 	import IconChatRight from "~icons/carbon/align-box-bottom-right";
@@ -28,8 +28,6 @@
 	import IconCompare from "~icons/carbon/compare";
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
-	import IconShare from "~icons/carbon/share";
-	import { isHFModel } from "$lib/types.js";
 
 	const multiple = $derived(conversations.active.length > 1);
 
