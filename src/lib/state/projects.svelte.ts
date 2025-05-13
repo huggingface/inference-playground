@@ -96,7 +96,9 @@ class Projects {
 		if (!id) return;
 
 		await projectsRepo.delete(id);
+		await conversations.deleteAllFrom(id);
 		delete this.#projects[id];
+
 		if (this.activeId === id) {
 			this.activeId = DEFAULT_ID;
 		}

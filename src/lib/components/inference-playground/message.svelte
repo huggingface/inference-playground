@@ -5,7 +5,7 @@
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
 	import { PipelineTag, type ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
-	import { fileToDataURL } from "$lib/utils/file.js";
+	import { compressBase64Image, fileToDataURL, getBase64ImageSize } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
 	import IconCopy from "~icons/carbon/copy";
@@ -48,9 +48,12 @@
 
 			const dataUrl = await fileToDataURL(file);
 			if (message.images?.includes(dataUrl)) return;
+			console.log(dataUrl, getBase64ImageSize(dataUrl));
+			const compressed = await compressBase64Image({ base64: dataUrl, maxSizeKB: 200 });
+			console.log(compressed, getBase64ImageSize(compressed));
 
 			const prev = message.images ?? [];
-			conversation.updateMessage({ index, message: { images: [...prev, await fileToDataURL(file)] } });
+			conversation.updateMessage({ index, message: { images: [...prev, compressed] } });
 			// We're dealing with files ourselves, so we don't want fileUpload to have any internal state,
 			// to avoid conflicts
 			fileUpload.clear();

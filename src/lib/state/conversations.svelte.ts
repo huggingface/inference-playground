@@ -24,6 +24,8 @@ import { token } from "./token.svelte";
 import { showQuotaModal } from "$lib/components/quota-modal.svelte";
 import { idb } from "$lib/remult.js";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
+import { sleep } from "$lib/utils/sleep.js";
+import { poll } from "$lib/utils/poll.js";
 
 @Entity("conversation")
 export class ConversationEntity {
@@ -135,7 +137,8 @@ export class ConversationClass {
 	}
 
 	async updateMessage(args: { index: number; message: Partial<ConversationMessage> }) {
-		const prev = this.data.messages[args.index];
+		const prev = await poll(() => this.data.messages[args.index], { interval: 10, maxAttempts: 200 });
+
 		if (!prev) return;
 
 		await this.update({
@@ -169,6 +172,7 @@ export class ConversationClass {
 					content => {
 						if (!streamingMessage) return;
 						streamingMessage.content = content;
+						console.log(content);
 
 						if (!addedMessage) {
 							this.addMessage(streamingMessage);
@@ -243,6 +247,8 @@ class Conversations {
 			...this.#conversations,
 			[args.projectId]: [...prev, new ConversationClass({ ...conv, id })],
 		};
+
+		return id;
 	}
 
 	for(projectId: Project["id"]): ConversationClass[] {
@@ -295,6 +301,15 @@ class Conversations {
 			[to]: [...fromArr],
 			[from]: [],
 		};
+	}
+
+	async duplicate(from: Project["id"], to: Project["id"]) {
+		const fromArr = this.#conversations[from] ?? [];
+		await Promise.allSettled(
+			fromArr.map(async c => {
+				conversations.create({ ...c.data, projectId: to });
+			})
+		);
 	}
 
 	async genNextMessages(conv: "left" | "right" | "both" | ConversationClass = "both") {

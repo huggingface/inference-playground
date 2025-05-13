@@ -418,10 +418,13 @@
 	<ModelSelectorModal
 		conversation={conversations.active[0]!}
 		onModelSelect={m => {
-			conversations.create({
+			const data = {
+				...conversations.active[0]?.data,
 				projectId: projects.activeId,
 				modelId: m,
-			});
+			};
+			delete data.id;
+			conversations.create(data);
 		}}
 		onClose={() => (selectCompareModelOpen = false)}
 	/>

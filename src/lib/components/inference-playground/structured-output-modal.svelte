@@ -131,7 +131,7 @@
 	</div>
 
 	{#if radioGroup.value === "form"}
-		<div class="fade-y -mx-2 mt-2 -mb-4 max-h-200 space-y-4 overflow-auto px-2 py-4">
+		<div class="fade-y -mx-2 mt-2 -mb-4 max-h-200 space-y-4 overflow-auto px-2 py-4 text-left">
 			<!-- Top-level properties -->
 			<div>
 				<label for="schema-name" class="block text-sm font-medium text-gray-300">Name</label>
@@ -139,7 +139,8 @@
 					type="text"
 					id="schema-name"
 					class="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 px-2 py-1 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
-					bind:value={() => schemaObj.current.name, value => updateSchema({ name: value })}
+					value={schemaObj.current.name}
+					{...onchange(value => updateSchema({ name: value }))}
 				/>
 			</div>
 
@@ -149,7 +150,8 @@
 					id="schema-description"
 					rows="3"
 					class="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 px-2 py-1 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
-					bind:value={() => schemaObj.current.description, value => updateSchema({ description: value })}
+					value={schemaObj.current.description}
+					{...onchange(value => updateSchema({ description: value }))}
 				></textarea>
 			</div>
 
@@ -347,7 +349,7 @@
 		<!-- inside dialogs its a-ok -->
 		<!-- svelte-ignore a11y_autofocus  -->
 		<div
-			class="relative mt-2 max-h-120 overflow-x-clip overflow-y-auto rounded-lg bg-gray-800 ring-gray-100 focus-within:ring-3 dark:ring-gray-600"
+			class="relative mt-2 max-h-120 overflow-x-clip overflow-y-auto rounded-lg bg-gray-800 text-left ring-gray-100 focus-within:ring-3 dark:ring-gray-600"
 		>
 			<div class="shiki-container pointer-events-none absolute inset-0" aria-hidden="true">
 				{#await codeToHtml(tempSchema, { lang: "json", theme: "catppuccin-macchiato" })}
