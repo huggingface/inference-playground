@@ -17,7 +17,7 @@
 		],
 		"strictNullChecks": true,
 		"moduleResolution": "bundler",
-    "experimentalDecorators": true
+		"experimentalDecorators": true
 	},
 	"exclude": ["vite.config.ts"]
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
