@@ -24,6 +24,8 @@
 	import { addToast as addToastGlobally } from "./toaster.svelte.js";
 	import { conversations, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 	import { omit } from "$lib/utils/object.svelte";
+	import { watch } from "runed";
+	import { sleep } from "$lib/utils/sleep.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -48,7 +50,16 @@
 			conversations: conversations.for(project.id).map(c => c.data),
 		};
 	});
-	const encoded = $derived(encodeObject(fullProject));
+	let encoded = $state("");
+	watch(
+		() => fullProject,
+		() => {
+			(async function () {
+				await sleep(100);
+				encoded = encodeObject(fullProject);
+			})();
+		}
+	);
 	let pasted = $state("");
 
 	$effect(() => {
