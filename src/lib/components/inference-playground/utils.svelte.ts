@@ -10,7 +10,7 @@ import {
 	type Model,
 } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
-import { tryGet } from "$lib/utils/object.svelte.js";
+import { omit, tryGet } from "$lib/utils/object.svelte.js";
 import { HfInference, type InferenceProvider } from "@huggingface/inference";
 import { snippets } from "./snippets/index.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
@@ -24,7 +24,7 @@ type ChatCompletionInputMessageChunk =
 function parseMessage(message: ConversationMessage): ChatCompletionInputMessage {
 	if (!message.images) return message;
 	return {
-		...message,
+		...omit(message, "images"),
 		content: [
 			{
 				type: "text",

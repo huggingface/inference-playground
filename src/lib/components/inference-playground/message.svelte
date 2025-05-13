@@ -3,7 +3,7 @@
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
-	import type { ConversationMessage } from "$lib/types.js";
+	import { PipelineTag, type ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { fileToDataURL } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
@@ -35,10 +35,9 @@
 	const shouldStick = $derived(autosized.textareaHeight > 92);
 
 	const canUploadImgs = $derived(
-		true
-		// message.role === "user" &&
-		// 	"pipeline_tag" in conversation.model &&
-		// 	conversation.model.pipeline_tag === PipelineTag.ImageTextToText
+		message.role === "user" &&
+			"pipeline_tag" in conversation.model &&
+			conversation.model.pipeline_tag === PipelineTag.ImageTextToText
 	);
 	const fileUpload = new FileUpload({
 		accept: "image/*",

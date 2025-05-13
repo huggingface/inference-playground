@@ -182,7 +182,9 @@ export const GET: RequestHandler = async ({ fetch }) => {
 				.map(model => model as Model);
 		}
 
-		const models: Model[] = [...textGenModels, ...imgText2TextModels];
+		const models: Model[] = [...textGenModels, ...imgText2TextModels].filter(
+			m => m.inferenceProviderMapping.length > 0
+		);
 		models.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
 
 		// Determine cache status based on failures

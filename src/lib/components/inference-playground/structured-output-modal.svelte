@@ -158,7 +158,7 @@
 				<h3 class="text-lg leading-6 font-medium text-gray-100">Properties</h3>
 				{#if schemaObj.current.schema?.properties}
 					<div class="mt-3 space-y-3">
-						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition] (propertyName)}
+						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition], index (index)}
 							<div class="relative space-y-2 rounded-md border border-gray-700 p-3">
 								<div>
 									<label for="{propertyName}-name" class="block text-xs font-medium text-gray-400"> Name </label>

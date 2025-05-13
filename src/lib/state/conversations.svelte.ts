@@ -184,8 +184,23 @@ export class ConversationClass {
 				this.addMessage(newMessage);
 				this.generationStats.tokens += newTokensCount;
 			}
-		} catch {
-			// no-op
+		} catch (error) {
+			if (error instanceof Error) {
+				const msg = error.message;
+				if (msg.toLowerCase().includes("montly") || msg.toLowerCase().includes("pro")) {
+					showQuotaModal();
+				}
+
+				if (error.message.includes("token seems invalid")) {
+					token.reset();
+				}
+
+				if (error.name !== "AbortError") {
+					addToast({ title: "Error", description: error.message, variant: "error" });
+				}
+			} else {
+				addToast({ title: "Error", description: "An unknown error occurred", variant: "error" });
+			}
 		}
 
 		const endTime = performance.now();
