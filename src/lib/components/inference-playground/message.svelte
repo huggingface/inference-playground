@@ -5,7 +5,7 @@
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
 	import { PipelineTag, type ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
-	import { compressBase64Image, fileToDataURL, getBase64ImageSize } from "$lib/utils/file.js";
+	import { compressBase64Image, fileToDataURL } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
 	import IconCopy from "~icons/carbon/copy";
