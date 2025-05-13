@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { emptyModel } from "$lib/state/_willremove_session.svelte";
-	import type { ConversationClass } from "$lib/state/conversations.svelte";
+	import { emptyModel, type ConversationClass } from "$lib/state/conversations.svelte";
 	import { token } from "$lib/state/token.svelte.js";
 	import { isCustomModel, PipelineTag } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";

@@ -8,24 +8,17 @@ import {
 } from "$lib/components/inference-playground/utils.svelte.js";
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
-import {
-	PipelineTag,
-	type ConversationMessage,
-	type GenerationStatistics,
-	type Model,
-	type Project,
-} from "$lib/types.js";
+import { PipelineTag, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
 import { models } from "./models.svelte";
-import { projects } from "./projects.svelte";
+import { ProjectEntity, projects } from "./projects.svelte";
 import { token } from "./token.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Svelte imports are broken in TS files
 import { showQuotaModal } from "$lib/components/quota-modal.svelte";
 import { idb } from "$lib/remult.js";
-import { Entity, Fields, repo, type MembersOnly } from "remult";
-import { sleep } from "$lib/utils/sleep.js";
 import { poll } from "$lib/utils/poll.js";
+import { Entity, Fields, repo, type MembersOnly } from "remult";
 
 @Entity("conversation")
 export class ConversationEntity {
@@ -172,7 +165,6 @@ export class ConversationClass {
 					content => {
 						if (!streamingMessage) return;
 						streamingMessage.content = content;
-						console.log(content);
 
 						if (!addedMessage) {
 							this.addMessage(streamingMessage);
@@ -219,7 +211,7 @@ export class ConversationClass {
 }
 
 class Conversations {
-	#conversations: Record<Project["id"], ConversationClass[]> = $state.raw({});
+	#conversations: Record<ProjectEntity["id"], ConversationClass[]> = $state.raw({});
 	generationStats = $derived(this.active.map(c => c.generationStats));
 
 	loaded = $state(false);
@@ -234,7 +226,7 @@ class Conversations {
 		return this.#active;
 	}
 
-	async create(args: { projectId: Project["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>) {
+	async create(args: { projectId: ProjectEntity["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>) {
 		const conv = snapshot({
 			...getDefaultConversation(args.projectId),
 			...args,
@@ -251,7 +243,7 @@ class Conversations {
 		return id;
 	}
 
-	for(projectId: Project["id"]): ConversationClass[] {
+	for(projectId: ProjectEntity["id"]): ConversationClass[] {
 		// Async load from db
 		if (!this.#conversations[projectId]?.length) {
 			conversationsRepo.find({ where: { projectId } }).then(c => {
@@ -293,7 +285,7 @@ class Conversations {
 		this.create(getDefaultConversation(projects.activeId));
 	}
 
-	async migrate(from: Project["id"], to: Project["id"]) {
+	async migrate(from: ProjectEntity["id"], to: ProjectEntity["id"]) {
 		const fromArr = this.#conversations[from] ?? [];
 		await Promise.allSettled(fromArr.map(c => c.update({ projectId: to })));
 		this.#conversations = {
@@ -303,7 +295,7 @@ class Conversations {
 		};
 	}
 
-	async duplicate(from: Project["id"], to: Project["id"]) {
+	async duplicate(from: ProjectEntity["id"], to: ProjectEntity["id"]) {
 		const fromArr = this.#conversations[from] ?? [];
 		await Promise.allSettled(
 			fromArr.map(async c => {

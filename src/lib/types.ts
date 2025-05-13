@@ -28,22 +28,6 @@ export type ConversationWithHFModel = Conversation & {
 export const isHFModel = typia.createIs<Model>();
 export const isCustomModel = typia.createIs<CustomModel>();
 
-export type Project = {
-	conversations: [Conversation] | [Conversation, Conversation];
-	id: string;
-	name: string;
-};
-
-export type DefaultProject = Project & {
-	id: "default";
-	name: "Default";
-};
-
-export type Session = {
-	projects: [DefaultProject, ...Project[]];
-	activeProjectId: string;
-};
-
 interface TokenizerConfig {
 	chat_template?: string | Array<{ name: string; template: string }>;
 	model_max_length?: number;

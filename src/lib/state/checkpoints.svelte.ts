@@ -1,10 +1,9 @@
 import { idb } from "$lib/remult.js";
-import type { Project } from "$lib/types.js";
 import { snapshot } from "$lib/utils/object.svelte";
 import { dequal } from "dequal";
 import { Entity, Fields, repo } from "remult";
 import { conversations, type ConversationEntityMembers } from "./conversations.svelte";
-import { projects } from "./projects.svelte";
+import { ProjectEntity, projects } from "./projects.svelte";
 
 @Entity("checkpoint")
 export class Checkpoint {
@@ -27,9 +26,9 @@ export class Checkpoint {
 const checkpointsRepo = repo(Checkpoint, idb);
 
 class Checkpoints {
-	#checkpoints: Record<Project["id"], Checkpoint[]> = $state({});
+	#checkpoints: Record<ProjectEntity["id"], Checkpoint[]> = $state({});
 
-	for(projectId: Project["id"]) {
+	for(projectId: ProjectEntity["id"]) {
 		// Async load from db
 		checkpointsRepo
 			.find({
@@ -52,7 +51,7 @@ class Checkpoints {
 		);
 	}
 
-	async commit(projectId: Project["id"]) {
+	async commit(projectId: ProjectEntity["id"]) {
 		const project = projects.all.find(p => p.id == projectId);
 		if (!project) return;
 
@@ -126,12 +125,12 @@ class Checkpoints {
 		this.#checkpoints[projectId] = prev.filter(c => c.id != id);
 	}
 
-	async clear(projectId: Project["id"]) {
+	async clear(projectId: ProjectEntity["id"]) {
 		await checkpointsRepo.deleteMany({ where: { projectId } });
 		this.#checkpoints[projectId] = [];
 	}
 
-	async migrate(from: Project["id"], to: Project["id"]) {
+	async migrate(from: ProjectEntity["id"], to: ProjectEntity["id"]) {
 		await checkpointsRepo.updateMany({ where: { projectId: from }, set: { projectId: to } });
 
 		const fromArr = snapshot(this.#checkpoints[from] ?? []);

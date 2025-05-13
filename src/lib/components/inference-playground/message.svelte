@@ -48,9 +48,7 @@
 
 			const dataUrl = await fileToDataURL(file);
 			if (message.images?.includes(dataUrl)) return;
-			console.log(dataUrl, getBase64ImageSize(dataUrl));
 			const compressed = await compressBase64Image({ base64: dataUrl, maxSizeKB: 200 });
-			console.log(compressed, getBase64ImageSize(compressed));
 
 			const prev = message.images ?? [];
 			conversation.updateMessage({ index, message: { images: [...prev, compressed] } });

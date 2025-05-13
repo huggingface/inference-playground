@@ -1,7 +1,7 @@
 <script lang="ts" module>
-	let project = $state<ProjectEntityMembers>();
+	let project = $state<ProjectEntity>();
 
-	export function showShareModal(p: ProjectEntityMembers) {
+	export function showShareModal(p: ProjectEntity) {
 		project = p;
 	}
 
@@ -12,7 +12,7 @@
 
 <script lang="ts">
 	import { clickOutside } from "$lib/actions/click-outside.js";
-	import type { Project } from "$lib/types.js";
+	import { ProjectEntity, projects, type ProjectEntityMembers } from "$lib/state/projects.svelte";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { decodeString, encodeObject } from "$lib/utils/encode.js";
 	import { fade, scale } from "svelte/transition";
@@ -22,12 +22,33 @@
 	import IconSave from "~icons/carbon/save";
 	import LocalToasts from "./local-toasts.svelte";
 	import { addToast as addToastGlobally } from "./toaster.svelte.js";
-	import { projects, type ProjectEntityMembers } from "$lib/state/projects.svelte";
+	import { conversations, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
+	import { omit } from "$lib/utils/object.svelte";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
 	const open = $derived(!!project);
-	const encoded = $derived(encodeObject(project));
+
+	type ParsedConversation = Omit<ConversationEntityMembers, "createdAt"> & {
+		createdAt: string;
+	};
+
+	type ParsedProject = Omit<FullProject, "conversations"> & {
+		conversations: ParsedConversation[];
+	};
+
+	type FullProject = ProjectEntityMembers & {
+		conversations: ConversationEntityMembers[];
+	};
+
+	const fullProject: FullProject | undefined = $derived.by(() => {
+		if (!project) return;
+		return {
+			...project,
+			conversations: conversations.for(project.id).map(c => c.data),
+		};
+	});
+	const encoded = $derived(encodeObject(fullProject));
 	let pasted = $state("");
 
 	$effect(() => {
@@ -41,7 +62,8 @@
 		}
 	});
 
-	const isProject = typia.createIs<Project>();
+	const isProject = typia.createIs<ParsedProject>();
+	let saving = $state(false);
 </script>
 
 <dialog class="backdrop:bg-transparent" bind:this={dialog} onclose={() => close()}>
@@ -110,17 +132,28 @@
 						{#snippet children({ addToast, trigger })}
 							<form
 								class="mt-4 flex gap-2"
-								onsubmit={e => {
+								onsubmit={async e => {
 									e.preventDefault();
+									saving = true;
+
 									const decoded = decodeString(pasted);
 									if (!isProject(decoded)) {
 										addToast({ data: { content: "String isn't valid", variant: "danger" } });
+										saving = false;
 										return;
 									}
-									projects.create(`Saved - ${decoded.name}`);
-									// TODO: add other stuff too!
+									const projectId = await projects.create(`Saved - ${decoded.name}`);
+									await Promise.allSettled(
+										decoded.conversations.map(c => {
+											conversations.create({
+												...omit(c, "id", "createdAt"),
+												projectId,
+											});
+										})
+									);
+									projects.activeId = projectId;
+									saving = false;
 
-									// session.addProject({ ...decoded, name: `Saved - ${decoded.name}`, id: crypto.randomUUID() });
 									addToastGlobally({
 										variant: "success",
 										title: "Saved project",
@@ -135,8 +168,25 @@
 									bind:value={pasted}
 								/>
 								<button {...trigger} class="btn flex items-center gap-2" type="submit">
-									<IconSave />
-									Save
+									{#if saving}
+										<svg
+											class="mr-2 h-4 w-4 animate-spin text-white"
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+										Saving...
+									{:else}
+										<IconSave />
+										Save
+									{/if}
 								</button>
 							</form>
 						{/snippet}
