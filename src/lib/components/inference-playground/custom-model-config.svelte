@@ -21,22 +21,21 @@
 
 <script lang="ts">
 	import { autofocus } from "$lib/actions/autofocus.js";
-	import IconCaret from "~icons/carbon/chevron-down";
 	import { clickOutside } from "$lib/actions/click-outside.js";
 	import { models } from "$lib/state/models.svelte";
 	import { PipelineTag, pipelineTagLabel, type Conversation, type CustomModel } from "$lib/types.js";
-	import type { HTMLFormAttributes } from "svelte/elements";
-	import { fade, scale } from "svelte/transition";
-	import IconCross from "~icons/carbon/close";
-	import typia from "typia";
-	import { handleNonStreamingResponse } from "./utils.svelte.js";
-	import { watch } from "runed";
-	import Tooltip from "../tooltip.svelte";
 	import { createFieldValidation } from "$lib/utils/form.svelte.js";
+	import { keys } from "$lib/utils/object.svelte.js";
 	import { isValidURL } from "$lib/utils/url.js";
 	import { Select } from "melt/components";
-	import { keys } from "$lib/utils/object.svelte.js";
-	import { ConversationClass } from "$lib/state/conversations.svelte.js";
+	import { watch } from "runed";
+	import type { HTMLFormAttributes } from "svelte/elements";
+	import { fade, scale } from "svelte/transition";
+	import typia from "typia";
+	import IconCaret from "~icons/carbon/chevron-down";
+	import IconCross from "~icons/carbon/close";
+	import Tooltip from "../tooltip.svelte";
+	import { handleNonStreamingResponse } from "./utils.svelte.js";
 
 	let dialog: HTMLDialogElement | undefined = $state();
 	const exists = $derived(!!models.custom.find(m => m._id === model?._id));

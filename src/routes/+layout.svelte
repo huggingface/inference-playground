@@ -4,7 +4,6 @@
 	import Prompts from "$lib/components/prompts.svelte";
 	import QuotaModal from "$lib/components/quota-modal.svelte";
 	import ShareModal from "$lib/components/share-modal.svelte";
-	import { initRemultSvelteReactivity } from "$lib/remult.js";
 	import "../app.css";
 
 	interface Props {
@@ -12,8 +11,6 @@
 	}
 
 	let { children }: Props = $props();
-
-	// initRemultSvelteReactivity();
 </script>
 
 {@render children?.()}

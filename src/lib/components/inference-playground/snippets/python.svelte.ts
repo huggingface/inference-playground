@@ -49,6 +49,7 @@ client = InferenceClient(
 	api_key="${accessToken || "{API_TOKEN}"}"
 )`;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toPythonDict(obj: any, indent: number = 6, level: number = 0): string {
 	const pad = (lvl: number) => " ".repeat(indent * lvl);
 

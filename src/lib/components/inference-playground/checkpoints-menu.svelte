@@ -3,7 +3,7 @@
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 	import { iterate } from "$lib/utils/array.js";
-	import { formatDate, formatDateTime } from "$lib/utils/date.js";
+	import { formatDateTime } from "$lib/utils/date.js";
 	import { Popover } from "melt/builders";
 	import { Tooltip } from "melt/components";
 	import { fly } from "svelte/transition";
