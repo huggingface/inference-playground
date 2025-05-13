@@ -41,7 +41,7 @@
 		});
 	}
 
-	let editingStructuredOutput = $state(true);
+	let editingStructuredOutput = $state(false);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">

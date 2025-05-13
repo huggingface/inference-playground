@@ -48,6 +48,15 @@
 	function getSnippet({ tokenStr, conversation, lang }: GetSnippetArgs) {
 		const model = conversation.model;
 		const data = conversation.data;
+		const opts = {
+			messages: data.messages,
+			streaming: data.streaming,
+			max_tokens: data.config.max_tokens,
+			temperature: data.config.temperature,
+			top_p: data.config.top_p,
+			structured_output: data.structuredOutput,
+		};
+
 		if (isCustomModel(model)) {
 			const snippets = getInferenceSnippet(
 				{
@@ -60,13 +69,7 @@
 				"hf-inference",
 				lang,
 				tokenStr,
-				{
-					messages: data.messages,
-					streaming: data.streaming,
-					max_tokens: data.config.max_tokens,
-					temperature: data.config.temperature,
-					top_p: data.config.top_p,
-				}
+				opts
 			);
 			return snippets
 				.filter(s => s.client.startsWith("open") || lang === "curl")
@@ -80,13 +83,7 @@
 				});
 		}
 
-		return getInferenceSnippet(model, data.provider as InferenceProvider, lang, tokenStr, {
-			messages: data.messages,
-			streaming: data.streaming,
-			max_tokens: data.config.max_tokens,
-			temperature: data.config.temperature,
-			top_p: data.config.top_p,
-		});
+		return getInferenceSnippet(model, data.provider as InferenceProvider, lang, tokenStr, opts);
 	}
 
 	// { javascript: 0, python: 0, http: 0 } at first

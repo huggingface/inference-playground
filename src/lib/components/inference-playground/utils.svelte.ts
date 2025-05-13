@@ -1,5 +1,5 @@
 import ctxLengthData from "$lib/data/context_length.json";
-import { ConversationClass } from "$lib/state/conversations.svelte";
+import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import {
 	isCustomModel,
@@ -11,7 +11,8 @@ import {
 } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
 import { tryGet } from "$lib/utils/object.svelte.js";
-import { HfInference, snippets, type InferenceProvider } from "@huggingface/inference";
+import { HfInference, type InferenceProvider } from "@huggingface/inference";
+import { snippets } from "./snippets/index.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
@@ -295,7 +296,14 @@ export function getInferenceSnippet(
 	provider: InferenceProvider,
 	language: InferenceSnippetLanguage,
 	accessToken: string,
-	opts?: Record<string, unknown>
+	opts?: {
+		messages?: ConversationEntityMembers["messages"];
+		streaming?: ConversationEntityMembers["streaming"];
+		max_tokens?: ConversationEntityMembers["config"]["max_tokens"];
+		temperature?: ConversationEntityMembers["config"]["temperature"];
+		top_p?: ConversationEntityMembers["config"]["top_p"];
+		structured_output?: ConversationEntityMembers["structuredOutput"];
+	}
 ): GetInferenceSnippetReturn {
 	// If it's a custom model, we don't generate inference snippets
 	if (isCustomModel(model)) {
