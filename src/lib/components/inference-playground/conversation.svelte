@@ -50,13 +50,6 @@
 		});
 	}
 
-	function deleteMessage(idx: number) {
-		conversation.update({
-			...conversation.data,
-			messages: conversation.data.messages.slice(0, idx),
-		});
-	}
-
 	async function regenMessage(idx: number) {
 		// TODO: migrate to new logic
 		const msg = conversation.data.messages[idx];
@@ -84,7 +77,7 @@
 				{index}
 				{conversation}
 				autofocus={index === conversation.data.messages.length - 1}
-				onDelete={() => deleteMessage(index)}
+				onDelete={() => conversation.deleteMessage(index)}
 				onRegen={() => regenMessage(index)}
 			/>
 		{/each}

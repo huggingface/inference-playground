@@ -19,6 +19,8 @@ import { showQuotaModal } from "$lib/components/quota-modal.svelte";
 import { idb } from "$lib/remult.js";
 import { poll } from "$lib/utils/poll.js";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
+import { images } from "./images.svelte";
+import { isString } from "$lib/utils/is.js";
 
 @Entity("conversation")
 export class ConversationEntity {
@@ -144,10 +146,29 @@ export class ConversationClass {
 		});
 	}
 
+	async deleteMessage(idx: number) {
+		const imgKeys = this.data.messages.flatMap(m => m.images).filter(isString);
+		await Promise.all([
+			...imgKeys.map(k => images.delete(k)),
+			this.update({
+				...this.data,
+				messages: this.data.messages.slice(0, idx),
+			}),
+		]);
+	}
+
 	async deleteMessages(from: number) {
-		await this.update({
-			messages: this.data.messages.slice(0, from),
-		});
+		const sliced = this.data.messages.slice(0, from);
+		const notSliced = this.data.messages.slice(from);
+
+		const imgKeys = notSliced.flatMap(m => m.images).filter(isString);
+		await Promise.all([
+			...imgKeys.map(k => images.delete(k)),
+			this.update({
+				...this.data,
+				messages: sliced,
+			}),
+		]);
 	}
 
 	async genNextMessage() {

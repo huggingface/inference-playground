@@ -3,9 +3,9 @@
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
+	import { images } from "$lib/state/images.svelte";
 	import { PipelineTag, type ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
-	import { compressBase64Image, fileToDataURL } from "$lib/utils/file.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
 	import IconCopy from "~icons/carbon/copy";
@@ -14,6 +14,7 @@
 	import IconCustom from "../icon-custom.svelte";
 	import LocalToasts from "../local-toasts.svelte";
 	import ImgPreview from "./img-preview.svelte";
+	import { AsyncQueue } from "$lib/utils/queue.js";
 
 	type Props = {
 		conversation: ConversationClass;
@@ -39,22 +40,27 @@
 			"pipeline_tag" in conversation.model &&
 			conversation.model.pipeline_tag === PipelineTag.ImageTextToText
 	);
+
+	const fileQueue = new AsyncQueue();
 	const fileUpload = new FileUpload({
 		accept: "image/*",
+		multiple: true,
 		async onAccept(file) {
 			if (!message?.images) {
 				conversation.updateMessage({ index, message: { images: [] } });
 			}
 
-			const dataUrl = await fileToDataURL(file);
-			if (message.images?.includes(dataUrl)) return;
-			const compressed = await compressBase64Image({ base64: dataUrl, maxSizeKB: 200 });
+			fileQueue.add(async () => {
+				console.log("queue item start");
+				const key = await images.upload(file);
 
-			const prev = message.images ?? [];
-			conversation.updateMessage({ index, message: { images: [...prev, compressed] } });
-			// We're dealing with files ourselves, so we don't want fileUpload to have any internal state,
-			// to avoid conflicts
-			fileUpload.clear();
+				const prev = message.images ?? [];
+				await conversation.updateMessage({ index, message: { images: [...prev, key] } });
+				// We're dealing with files ourselves, so we don't want fileUpload to have any internal state,
+				// to avoid conflicts
+				if (fileQueue.queue.length <= 1) fileUpload.clear();
+				console.log("queue item end");
+			});
 		},
 		disabled: () => !canUploadImgs,
 	});
@@ -206,35 +212,41 @@
 		</div>
 	</div>
 
-	{#if message?.images?.length}
-		<div class="mt-2">
-			<div class="flex items-center gap-2">
-				{#each message.images as img (img)}
+	<div class="mt-2">
+		<div class="flex items-center gap-2">
+			{#each message.images ?? [] as imgKey (imgKey)}
+				{#await images.get(imgKey)}
+					<!-- nothing -->
+				{:then imgSrc}
 					<div class="group/img relative">
 						<button
 							aria-label="expand"
 							class="absolute inset-0 z-10 grid place-items-center bg-gray-800/70 opacity-0 group-hover/img:opacity-100"
-							onclick={() => (previewImg = img)}
+							onclick={() => (previewImg = imgSrc)}
 						>
 							<IconMaximize />
 						</button>
-						<img src={img} alt="uploaded" class="size-12 object-cover" />
+						<img src={imgSrc} alt="uploaded" class="size-12 rounded-md object-cover" />
 						<button
 							aria-label="remove"
 							type="button"
-							onclick={e => {
+							onclick={async e => {
 								e.stopPropagation();
-								conversation.updateMessage({ index, message: { images: message.images?.filter(i => i !== img) } });
+								await conversation.updateMessage({
+									index,
+									message: { images: message.images?.filter(i => i !== imgKey) },
+								});
+								images.delete(imgKey);
 							}}
 							class="invisible absolute -top-1 -right-1 z-20 grid size-5 place-items-center rounded-full bg-gray-800 text-xs text-white group-hover/img:visible hover:bg-gray-700"
 						>
 							✕
 						</button>
 					</div>
-				{/each}
-			</div>
+				{/await}
+			{/each}
 		</div>
-	{/if}
+	</div>
 </div>
 
 <ImgPreview bind:img={previewImg} />

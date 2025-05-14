@@ -17,12 +17,16 @@ import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import OpenAI from "openai";
+import { images } from "$lib/state/images.svelte.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
 
-function parseMessage(message: ConversationMessage): ChatCompletionInputMessage {
+async function parseMessage(message: ConversationMessage): Promise<ChatCompletionInputMessage> {
 	if (!message.images) return message;
+
+	const urls = await Promise.all(message.images?.map(k => images.get(k)) ?? []);
+
 	return {
 		...omit(message, "images"),
 		content: [
@@ -30,10 +34,10 @@ function parseMessage(message: ConversationMessage): ChatCompletionInputMessage 
 				type: "text",
 				text: message.content ?? "",
 			},
-			...message.images.map(img => {
+			...message.images.map((_imgKey, i) => {
 				return {
 					type: "image_url",
-					image_url: { url: img },
+					image_url: { url: urls[i] as string },
 				} satisfies ChatCompletionInputMessageChunk;
 			}),
 		],
@@ -74,10 +78,10 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 	return ctxLength;
 }
 
-function getCompletionMetadata(
+async function getCompletionMetadata(
 	conversation: ConversationClass | Conversation,
 	signal?: AbortSignal
-): CompletionMetadata {
+): Promise<CompletionMetadata> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
 	const { systemMessage } = data;
@@ -99,7 +103,7 @@ function getCompletionMetadata(
 		});
 
 		const args = {
-			messages: messages.map(parseMessage) as OpenAI.ChatCompletionMessageParam[],
+			messages: (await Promise.all(messages.map(parseMessage))) as OpenAI.ChatCompletionMessageParam[],
 			...data.config,
 			model: model.id,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,7 +157,7 @@ export async function handleStreamingResponse(
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
-	const metadata = getCompletionMetadata(conversation, abortController.signal);
+	const metadata = await getCompletionMetadata(conversation, abortController.signal);
 
 	if (metadata.type === "openai") {
 		const stream = await metadata.client.chat.completions.create({
@@ -184,7 +188,7 @@ export async function handleStreamingResponse(
 export async function handleNonStreamingResponse(
 	conversation: ConversationClass | Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const metadata = getCompletionMetadata(conversation);
+	const metadata = await getCompletionMetadata(conversation);
 
 	if (metadata.type === "openai") {
 		const response = await metadata.client.chat.completions.create({
