@@ -56,6 +56,7 @@ export type CustomModel = {
 	accessToken?: string;
 	/** @default "text-generation" */
 	pipeline_tag?: PipelineTag;
+	supports_response_schema?: boolean;
 };
 
 export type Config = {

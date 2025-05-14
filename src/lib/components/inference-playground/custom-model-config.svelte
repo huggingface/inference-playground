@@ -243,6 +243,24 @@
 						</Select>
 					</div>
 
+					<div class="relative flex items-start">
+						<div class="flex h-5 items-center">
+							<input
+								id="strict"
+								name="strict"
+								type="checkbox"
+								class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500"
+								bind:checked={model.supports_response_schema}
+							/>
+						</div>
+						<div class="ml-3 text-sm">
+							<label for="strict" class="font-medium text-gray-300">Supports Structured Output</label>
+							<p id="strict-description" class="text-gray-500">
+								If checked, will allow you to define a JSON response schema.
+							</p>
+						</div>
+					</div>
+
 					{#if message}
 						<div
 							class={[

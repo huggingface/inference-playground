@@ -72,9 +72,8 @@ class Models {
 	}
 
 	supportsStructuredOutput(model: Model | CustomModel, provider?: string): boolean {
-		//		console.log("model", model.id);
-		if (typia.is<CustomModel>(model)) return false;
-		//		console.log(model.inferenceProviderMapping);
+		if (typia.is<CustomModel>(model)) return model.supports_response_schema ?? false;
+
 		const providerMap = model.inferenceProviderMapping.filter(item => {
 			if (!provider) return true;
 			return item.provider === provider;
