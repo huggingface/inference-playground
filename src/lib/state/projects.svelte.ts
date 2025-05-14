@@ -2,7 +2,6 @@ import { idb } from "$lib/remult.js";
 import { dequal } from "dequal";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
 import { conversations } from "./conversations.svelte";
-
 import { PersistedState } from "runed";
 import { checkpoints } from "./checkpoints.svelte";
 

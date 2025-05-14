@@ -16,6 +16,7 @@
 	import IconStar from "~icons/carbon/star";
 	import IconEye from "~icons/carbon/view";
 	import Tooltip from "../tooltip.svelte";
+	import IconArrayObjects from "~icons/carbon/array-objects";
 	import { openCustomModelConfig } from "./custom-model-config.svelte";
 
 	interface Props {
@@ -127,6 +128,20 @@
 								</div>
 							{/snippet}
 							Image text-to-text
+						</Tooltip>
+					{/if}
+
+					{#if models.supportsStructuredOutput(model)}
+						<Tooltip openDelay={100}>
+							{#snippet trigger(tooltip)}
+								<div
+									class="ml-2 grid size-5 place-items-center rounded bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300"
+									{...tooltip.trigger}
+								>
+									<IconArrayObjects class="size-3.5" />
+								</div>
+							{/snippet}
+							Structured Output
 						</Tooltip>
 					{/if}
 
