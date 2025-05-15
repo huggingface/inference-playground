@@ -41,7 +41,7 @@
 			<!-- Content -->
 			<div
 				class="relative w-lg rounded-xl bg-white shadow-sm dark:bg-gray-900"
-				use:clickOutside={() => (open = false)}
+				{@attach clickOutside(() => (open = false))}
 				transition:scale={{ start: 0.975, duration: 250 }}
 			>
 				<h2 class="mt-8 text-center text-2xl font-semibold text-balance sm:text-3xl dark:text-white">

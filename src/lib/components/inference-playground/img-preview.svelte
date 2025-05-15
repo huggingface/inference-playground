@@ -39,7 +39,7 @@
 				class="max-h-[calc(100vh-120px)] max-w-[calc(100vw-120px)] object-contain"
 				src={img}
 				alt=""
-				use:clickOutside={() => (img = undefined)}
+				{@attach clickOutside(() => (img = undefined))}
 				transition:scale={{ start: 0.975, duration: 250 }}
 			/>
 

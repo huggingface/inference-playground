@@ -140,7 +140,7 @@
 			<!-- Content -->
 			<form
 				class="relative w-xl rounded-xl bg-white shadow-sm dark:bg-gray-900"
-				use:clickOutside={() => close()}
+				{@attach clickOutside(() => close())}
 				transition:scale={{ start: 0.975, duration: 250 }}
 				{onsubmit}
 			>

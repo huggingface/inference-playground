@@ -51,7 +51,7 @@
 		class="relative max-h-full w-full max-w-xl p-4 outline-hidden"
 		bind:this={modalEl}
 		onkeydown={handleKeydown}
-		use:clickOutside={() => dispatch("close")}
+		{@attach clickOutside(() => dispatch("close"))}
 	>
 		<form onsubmit={preventDefault(bubble("submit"))} class="relative rounded-lg bg-white shadow-sm dark:bg-gray-900">
 			<div class="flex items-center justify-between rounded-t border-b p-4 md:px-5 md:py-4 dark:border-gray-800">

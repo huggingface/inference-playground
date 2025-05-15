@@ -2,6 +2,7 @@
 	import { autoUpdate, computePosition } from "@floating-ui/dom";
 	import { Toaster } from "melt/builders";
 	import { type Snippet } from "svelte";
+	import { type Attachment } from "svelte/attachments";
 	import { fly } from "svelte/transition";
 
 	interface Props {
@@ -29,7 +30,7 @@
 
 	export const addToast = toaster.addToast;
 
-	function float(node: HTMLElement) {
+	const float: Attachment<HTMLElement> = function (node) {
 		const triggerEl = document.querySelector(`[data-local-toast-trigger=${id}]`);
 		if (!triggerEl) return;
 
@@ -44,10 +45,8 @@
 				});
 			});
 
-		return {
-			destroy: autoUpdate(triggerEl, node, compute),
-		};
-	}
+		return autoUpdate(triggerEl, node, compute);
+	};
 
 	const classMap: Record<ToastData["variant"], string> = {
 		info: "border border-blue-400 bg-gradient-to-b from-blue-500 to-blue-600",
@@ -65,7 +64,7 @@
 		class={[!toastSnippet && `${classMap[toast.data.variant]} rounded-full px-2 py-1 text-xs`]}
 		in:fly={{ y: 10 }}
 		out:fly={{ y: -4 }}
-		use:float
+		{@attach float}
 	>
 		{#if toastSnippet}
 			{@render toastSnippet({ toast, float })}

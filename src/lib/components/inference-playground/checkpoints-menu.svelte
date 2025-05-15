@@ -37,7 +37,7 @@
 <dialog
 	bind:this={dialog}
 	class="mb-2 !overflow-visible rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
-	use:clickOutside={() => (popover.open = false)}
+	{@attach clickOutside(() => (popover.open = false))}
 	{...popover.content}
 >
 	<div

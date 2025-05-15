@@ -49,7 +49,7 @@
 			<form
 				onsubmit={onSubmit}
 				class="relative w-xl rounded-lg bg-white shadow-sm dark:bg-gray-900"
-				use:clickOutside={resolvePrompt}
+				{@attach clickOutside(resolvePrompt)}
 			>
 				<div class="flex items-center justify-between rounded-t border-b p-4 md:px-5 md:py-4 dark:border-gray-800">
 					<h3 class="flex items-center gap-2.5 text-lg font-semibold text-gray-900 dark:text-white">
