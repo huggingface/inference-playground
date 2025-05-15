@@ -1,14 +1,12 @@
 import { tick } from "svelte";
+import type { Attachment } from "svelte/attachments";
 
-export function autofocus(node: HTMLElement, enabled = true) {
-	function update(enabled = true) {
-		if (enabled) {
-			tick().then(() => {
-				node.focus();
-			});
-		}
-	}
-	update(enabled);
+export function autofocus(enabled = true): Attachment<HTMLElement> {
+	return node => {
+		if (!enabled) return;
 
-	return { update };
+		tick().then(() => {
+			node.focus();
+		});
+	};
 }

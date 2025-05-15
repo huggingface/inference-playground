@@ -166,12 +166,12 @@
 							Model ID <span class="text-red-800 dark:text-red-300">*</span>
 						</p>
 						<input
-							use:autofocus
 							bind:value={model.id}
 							required
 							placeholder="e.g. mistralai/mistral-large-2407"
 							type="text"
 							class="input block w-full"
+							{@attach autofocus()}
 						/>
 					</label>
 					<label class="flex flex-col gap-2">

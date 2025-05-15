@@ -85,13 +85,13 @@
 						Hugging Face Token
 					</label>
 					<input
-						use:autofocus
 						required
 						placeholder="Enter HF Token"
 						type="text"
 						id="hf-token"
 						name="hf-token"
 						class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+						{@attach autofocus()}
 					/>
 				</div>
 				<label class="mt-4 flex items-center gap-x-1.5 text-gray-900 dark:text-gray-200">

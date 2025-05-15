@@ -82,10 +82,10 @@
 			</div>
 			<input
 				{...combobox.input}
-				use:autofocus
 				class="flex h-10 w-full rounded-md bg-transparent py-3 text-sm placeholder-gray-400 outline-hidden"
 				placeholder="Search models ..."
 				bind:value={query}
+				{@attach autofocus()}
 			/>
 		</div>
 		<div

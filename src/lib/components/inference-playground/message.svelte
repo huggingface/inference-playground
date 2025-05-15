@@ -51,7 +51,6 @@
 			}
 
 			fileQueue.add(async () => {
-				console.log("queue item start");
 				const key = await images.upload(file);
 
 				const prev = message.images ?? [];
@@ -59,7 +58,6 @@
 				// We're dealing with files ourselves, so we don't want fileUpload to have any internal state,
 				// to avoid conflicts
 				if (fileQueue.queue.length <= 1) fileUpload.clear();
-				console.log("queue item end");
 			});
 		},
 		disabled: () => !canUploadImgs,
@@ -102,7 +100,6 @@
 		<div class="flex w-full gap-4">
 			<textarea
 				bind:this={element}
-				use:autofocusAction={autofocus}
 				value={message?.content}
 				onchange={e => {
 					const el = e.target as HTMLTextAreaElement;
@@ -114,6 +111,7 @@
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"
 				data-message
+				{@attach autofocusAction(autofocus)}
 			></textarea>
 
 			<!-- Sticky wrapper for action buttons -->
