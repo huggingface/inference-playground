@@ -97,7 +97,7 @@
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"
 				data-message
-				onkeydown={(event) => {
+				onkeydown={event => {
 					if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
 						event.preventDefault();
 						event.stopPropagation();
