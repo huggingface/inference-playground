@@ -1,10 +1,6 @@
-import type { Model, ModelsJson } from "$lib/types.js";
+import type { Model } from "$lib/types.js";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types.js";
-import { env } from "$env/dynamic/private";
-import * as fs from "fs/promises";
-import { safeParse } from "$lib/utils/json.js";
-import typia from "typia";
 
 enum CacheStatus {
 	SUCCESS = "success",
@@ -94,32 +90,13 @@ function buildApiUrl(params: ApiQueryParams): string {
 
 export type ApiModelsResponse = {
 	models: Model[];
-	specs: ModelsJson | undefined;
 };
 
 function createResponse(data: ApiModelsResponse): Response {
 	return json(data);
 }
 
-async function getModelsFile(): Promise<ApiModelsResponse["specs"]> {
-	if (!env.MODELS_FILE) return;
-	const contents = (await fs.readFile(env.MODELS_FILE, "utf8")).toString();
-	const parsed = safeParse(contents);
-
-	const validation = typia.validate<ModelsJson>(parsed);
-
-	if (!validation.success) {
-		console.log(validation.errors);
-		return;
-	}
-
-	return validation.data;
-}
-
 export const GET: RequestHandler = async ({ fetch }) => {
-	const specs = await getModelsFile();
-	console.log(specs);
-
 	const timestamp = Date.now();
 
 	// Determine if cache is valid
@@ -129,7 +106,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 	// Use cache if it's still valid and has data
 	if (elapsed < cacheRefreshTime && cache.data?.length) {
 		console.log(`Using ${cache.status} cache (${Math.floor(elapsed / 1000 / 60)} min old)`);
-		return createResponse({ models: cache.data, specs });
+		return createResponse({ models: cache.data });
 	}
 
 	try {
@@ -199,7 +176,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			cache.status = CacheStatus.ERROR;
 			cache.timestamp = timestamp; // Update timestamp to avoid rapid retry loops
 			cache.failedApiCalls = newFailedApiCalls;
-			return createResponse({ models: cache.data, specs });
+			return createResponse({ models: cache.data });
 		}
 
 		// For API calls we didn't need to make, use cached models
@@ -235,7 +212,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 				`API failures: text=${newFailedApiCalls.textGeneration}, img=${newFailedApiCalls.imageTextToText}`
 		);
 
-		return createResponse({ models, specs });
+		return createResponse({ models });
 	} catch (error) {
 		console.error("Error fetching models:", error);
 
@@ -247,7 +224,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 				textGeneration: true,
 				imageTextToText: true,
 			};
-			return createResponse({ models: cache.data, specs });
+			return createResponse({ models: cache.data });
 		}
 
 		// No cache available, return empty array
@@ -257,6 +234,6 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			textGeneration: true,
 			imageTextToText: true,
 		};
-		return createResponse({ models: [], specs });
+		return createResponse({ models: [] });
 	}
 };

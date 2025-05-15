@@ -90,6 +90,7 @@ async function getCompletionMetadata(
 		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
 		...data.messages,
 	];
+	const parsed = await Promise.all(messages.map(parseMessage));
 
 	// Handle OpenAI-compatible models
 	if (isCustomModel(model)) {
@@ -103,7 +104,7 @@ async function getCompletionMetadata(
 		});
 
 		const args = {
-			messages: (await Promise.all(messages.map(parseMessage))) as OpenAI.ChatCompletionMessageParam[],
+			messages: parsed,
 			...data.config,
 			model: model.id,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,7 +128,7 @@ async function getCompletionMetadata(
 	}
 	const args = {
 		model: model.id,
-		messages: messages.map(parseMessage),
+		messages: parsed,
 		provider: data.provider,
 		...data.config,
 		// max_tokens: maxAllowedTokens(conversation) - currTokens,

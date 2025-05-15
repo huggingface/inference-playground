@@ -1,11 +1,10 @@
 import { page } from "$app/state";
-import type { CustomModel, Model } from "$lib/types.js";
+import { type CustomModel } from "$lib/types.js";
 import { edit, randomPick } from "$lib/utils/array.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
 import type { PageData } from "../../routes/$types.js";
 import { conversations } from "./conversations.svelte";
-import { keys } from "$lib/utils/object.svelte.js";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
@@ -16,8 +15,6 @@ class Models {
 	trending = $derived(this.remote.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
 	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)));
 	all = $derived([...this.remote, ...this.custom]);
-
-	specs = $derived(pageData.specs);
 
 	constructor() {
 		const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -68,23 +65,6 @@ class Models {
 		conversations.active.forEach(c => {
 			if (c.model._id !== uuid) return;
 			c.update({ modelId: randomPick(models.trending)?.id });
-		});
-	}
-
-	supportsStructuredOutput(model: Model | CustomModel, provider?: string): boolean {
-		if (typia.is<CustomModel>(model)) return model.supports_response_schema ?? false;
-
-		const providerMap = model.inferenceProviderMapping.filter(item => {
-			if (!provider) return true;
-			return item.provider === provider;
-		});
-
-		return keys(this.specs ?? {}).some(mid => {
-			const validMid = providerMap.some(pid => mid.toLowerCase().includes(pid.providerId.toLowerCase()));
-			if (!validMid) return false;
-
-			const spec = this.specs![mid];
-			return spec?.supports_response_schema;
 		});
 	}
 }

@@ -131,20 +131,6 @@
 						</Tooltip>
 					{/if}
 
-					{#if models.supportsStructuredOutput(model)}
-						<Tooltip openDelay={100}>
-							{#snippet trigger(tooltip)}
-								<div
-									class="ml-2 grid size-5 place-items-center rounded bg-gray-500/10 text-gray-500 dark:bg-gray-500/20 dark:text-gray-300"
-									{...tooltip.trigger}
-								>
-									<IconArrayObjects class="size-3.5" />
-								</div>
-							{/snippet}
-							Structured Output
-						</Tooltip>
-					{/if}
-
 					{#if isCustom(model)}
 						<Tooltip openDelay={100}>
 							{#snippet trigger(tooltip)}

@@ -8,8 +8,6 @@
 	import { run } from "svelte/legacy";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import IconProvider from "../icon-provider.svelte";
-	import IconArrayObjects from "~icons/carbon/array-objects";
-	import Tooltip from "../tooltip.svelte";
 
 	interface Props {
 		conversation: ConversationClass & { model: Model };
@@ -108,19 +106,6 @@
 				>
 					<IconProvider {provider} />
 					{formatName(provider)}
-					{#if models.supportsStructuredOutput(conversation.model, provider)}
-						<Tooltip openDelay={100}>
-							{#snippet trigger(tooltip)}
-								<div
-									class="grid size-5 place-items-center rounded bg-gray-500/10 text-gray-500 dark:bg-gray-500/50 dark:text-gray-300"
-									{...tooltip.trigger}
-								>
-									<IconArrayObjects class="size-3.5" />
-								</div>
-							{/snippet}
-							Structured Output
-						</Tooltip>
-					{/if}
 				</div>
 			</div>
 		{/each}
