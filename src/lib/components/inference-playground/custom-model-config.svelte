@@ -20,8 +20,8 @@
 </script>
 
 <script lang="ts">
-	import { autofocus } from "$lib/actions/autofocus.js";
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import { autofocus } from "$lib/attachments/autofocus.js";
+	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { models } from "$lib/state/models.svelte";
 	import { PipelineTag, pipelineTagLabel, type Conversation, type CustomModel } from "$lib/types.js";
 	import { createFieldValidation } from "$lib/utils/form.svelte.js";

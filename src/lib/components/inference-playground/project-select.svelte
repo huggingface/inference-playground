@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { autofocus } from "$lib/actions/autofocus.js";
+	import { autofocus } from "$lib/attachments/autofocus.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";

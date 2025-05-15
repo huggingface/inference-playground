@@ -1,6 +1,6 @@
 <script lang="ts" module>
-	import { autofocus } from "$lib/actions/autofocus.js";
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import { autofocus } from "$lib/attachments/autofocus.js";
+	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import IconCross from "~icons/carbon/close";
 
 	type Prompt = {

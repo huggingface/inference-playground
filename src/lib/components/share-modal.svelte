@@ -11,7 +11,7 @@
 </script>
 
 <script lang="ts">
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { ProjectEntity, projects, type ProjectEntityMembers } from "$lib/state/projects.svelte";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { decodeString, encodeObject } from "$lib/utils/encode.js";

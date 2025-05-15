@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { autofocus as autofocusAction } from "$lib/actions/autofocus.js";
+	import { autofocus as autofocusAction } from "$lib/attachments/autofocus.js";
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";

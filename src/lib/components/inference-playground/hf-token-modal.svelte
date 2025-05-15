@@ -2,11 +2,11 @@
 	import { createBubbler, preventDefault } from "svelte/legacy";
 
 	const bubble = createBubbler();
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
 	import IconCross from "~icons/carbon/close";
-	import { autofocus } from "$lib/actions/autofocus.js";
+	import { autofocus } from "$lib/attachments/autofocus.js";
 
 	interface Props {
 		storeLocallyHfToken?: boolean;

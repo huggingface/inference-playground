@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import IconCross from "~icons/carbon/close";
 	import IconCheck from "~icons/carbon/checkmark";
 	import IconExternal from "~icons/carbon/arrow-up-right";

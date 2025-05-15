@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { autofocus } from "$lib/actions/autofocus.js";
+	import { autofocus } from "$lib/attachments/autofocus.js";
 	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
 	import type { CustomModel, Model } from "$lib/types.js";

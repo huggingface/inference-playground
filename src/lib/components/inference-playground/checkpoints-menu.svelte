@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { clickOutside } from "$lib/actions/click-outside.js";
+	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 	import { iterate } from "$lib/utils/array.js";

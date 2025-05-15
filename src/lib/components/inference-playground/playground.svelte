@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { observe, observed, ObservedElements } from "$lib/actions/observe.svelte.js";
+	import { observe, observed, ObservedElements } from "$lib/attachments/observe.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
 	import { Popover } from "melt/components";
