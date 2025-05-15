@@ -64,7 +64,7 @@
 	"dependencies": {
 		"dequal": "^2.0.3",
 		"eslint-plugin-svelte": "^3.3.1",
-		"remult": "^3.0.1",
+		"remult": "^3.0.2",
 		"typia": "^8.0.0"
 	}
 }

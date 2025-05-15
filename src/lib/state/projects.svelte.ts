@@ -19,8 +19,8 @@ export type ProjectEntityMembers = MembersOnly<ProjectEntity>;
 const projectsRepo = repo(ProjectEntity, idb);
 
 const LOCAL_STORAGE_KEY = "hf_inf_pg_active_pid";
-const DEFAULT_ID = "default";
-const defaultProj = projectsRepo.create({ id: DEFAULT_ID, name: "Default" });
+export const DEFAULT_PROJECT_ID = "default";
+const defaultProj = projectsRepo.create({ id: DEFAULT_PROJECT_ID, name: "Default" });
 
 class Projects {
 	#projects: Record<ProjectEntity["id"], ProjectEntity> = $state({ default: defaultProj });
@@ -36,7 +36,7 @@ class Projects {
 
 	constructor() {
 		projectsRepo.find().then(res => {
-			if (!res.some(p => p.id === this.activeId)) this.activeId === DEFAULT_ID;
+			if (!res.some(p => p.id === this.activeId)) this.activeId === DEFAULT_PROJECT_ID;
 
 			res.forEach(p => {
 				if (dequal(this.#projects[p.id], p)) return;
@@ -52,7 +52,7 @@ class Projects {
 	}
 
 	saveProject = async (args: { name: string; moveCheckpoints?: boolean }) => {
-		const defaultProject = this.all.find(p => p.id === DEFAULT_ID);
+		const defaultProject = this.all.find(p => p.id === DEFAULT_PROJECT_ID);
 		if (!defaultProject) return;
 
 		const id = await this.create(args.name);
@@ -99,7 +99,7 @@ class Projects {
 		delete this.#projects[id];
 
 		if (this.activeId === id) {
-			this.activeId = DEFAULT_ID;
+			this.activeId = DEFAULT_PROJECT_ID;
 		}
 	}
 }

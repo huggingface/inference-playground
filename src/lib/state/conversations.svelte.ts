@@ -11,7 +11,7 @@ import { AbortManager } from "$lib/spells/abort-manager.svelte";
 import { PipelineTag, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
 import { models } from "./models.svelte";
-import { ProjectEntity, projects } from "./projects.svelte";
+import { DEFAULT_PROJECT_ID, ProjectEntity, projects } from "./projects.svelte";
 import { token } from "./token.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Svelte imports are broken in TS files
@@ -21,6 +21,7 @@ import { poll } from "$lib/utils/poll.js";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
 import { images } from "./images.svelte";
 import { isString } from "$lib/utils/is.js";
+import { createInit } from "$lib/spells/create-init.svelte";
 
 @Entity("conversation")
 export class ConversationEntity {
@@ -234,10 +235,36 @@ export class ConversationClass {
 class Conversations {
 	#conversations: Record<ProjectEntity["id"], ConversationClass[]> = $state.raw({});
 	generationStats = $derived(this.active.map(c => c.generationStats));
-
 	loaded = $state(false);
 
 	#active = $derived(this.for(projects.activeId));
+
+	init = createInit(() => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const searchProvider = searchParams.get("provider");
+		const searchModelId = searchParams.get("modelId");
+
+		const searchModel = models.remote.find(m => m.id === searchModelId);
+		if (!searchModel) return;
+
+		conversationsRepo
+			.upsert({
+				// @ts-expect-error -- its working, just broken types
+				where: { projectId: DEFAULT_PROJECT_ID },
+				set: {
+					modelId: searchModelId,
+					provider: searchProvider,
+				},
+			})
+			.then(res => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- types are broken
+				this.#conversations = { ...this.#conversations, [DEFAULT_PROJECT_ID]: [new ConversationClass(res as any)] };
+			});
+	});
+
+	get conversations() {
+		return this.#conversations;
+	}
 
 	get generating() {
 		return this.#active.some(c => c.generating);

@@ -15,8 +15,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1(eslint@9.22.0(jiti@2.4.2))(svelte@5.28.2)
       remult:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.0.2
+        version: 3.0.2
       typia:
         specifier: ^8.0.0
         version: 8.0.0(@samchon/openapi@3.0.0)(typescript@5.8.2)
@@ -2290,8 +2290,8 @@ packages:
   regex@6.0.1:
     resolution: {integrity: sha512-uorlqlzAKjKQZ5P+kTJr3eeJGSVroLKoHmquUj4zHWuR+hEyNqlXsSKlYYF5F4NI6nl7tWCs0apKJ0lmfsXAPA==}
 
-  remult@3.0.1:
-    resolution: {integrity: sha512-9Lal9EIjqQkhv+rx56dB3EZJrjF0svQl+w9zEv5dAkYNs/fmAxz6AZf5IFf68/n1DpMyQ8ld7mt05+3ZRNTnCw==}
+  remult@3.0.2:
+    resolution: {integrity: sha512-DpXRCpjidpwrQ9bGuVOg1EmxKvM9heD9xnCJ7Z7EIuuZVyBg9wQAfK5RsGmHo/+oX7psH2vls9gf4BW3KwUU9g==}
 
   repeat-string@1.6.1:
     resolution: {integrity: sha512-PV0dzCYDNfRi1jCDbJzpW7jNNDRuCOG/jI5ctQcGKt/clZD+YcPS3yIlWuTJMmESC8aevCFmWJy5wjAFgNqN6w==}
@@ -4671,7 +4671,7 @@ snapshots:
     dependencies:
       regex-utilities: 2.3.0
 
-  remult@3.0.1:
+  remult@3.0.2:
     dependencies:
       '@paralleldrive/cuid2': 2.2.2
       reflect-metadata: 0.1.14
