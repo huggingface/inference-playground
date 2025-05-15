@@ -241,15 +241,14 @@ class Conversations {
 
 	init = createInit(() => {
 		const searchParams = new URLSearchParams(window.location.search);
-		const searchProvider = searchParams.get("provider");
-		const searchModelId = searchParams.get("modelId");
+		const searchProvider = searchParams.get("provider") ?? "";
+		const searchModelId = searchParams.get("modelId") ?? "";
 
 		const searchModel = models.remote.find(m => m.id === searchModelId);
 		if (!searchModel) return;
 
 		conversationsRepo
 			.upsert({
-				// @ts-expect-error -- its working, just broken types
 				where: { projectId: DEFAULT_PROJECT_ID },
 				set: {
 					modelId: searchModelId,
@@ -257,8 +256,7 @@ class Conversations {
 				},
 			})
 			.then(res => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- types are broken
-				this.#conversations = { ...this.#conversations, [DEFAULT_PROJECT_ID]: [new ConversationClass(res as any)] };
+				this.#conversations = { ...this.#conversations, [DEFAULT_PROJECT_ID]: [new ConversationClass(res)] };
 			});
 	});
 

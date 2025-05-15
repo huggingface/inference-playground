@@ -1,5 +1,5 @@
 import { compressBase64Image, fileToDataURL } from "$lib/utils/file.js";
-import { JsonEntityIndexedDbStorage } from "remult";
+import { JsonEntityIndexedDbStorage } from "$lib/remult.js";
 
 const store = new JsonEntityIndexedDbStorage();
 
@@ -19,7 +19,7 @@ class Images {
 	}
 
 	async delete(key: string) {
-		return await store.setItem(key, "");
+		return await store.deleteItem(key);
 	}
 }
 
