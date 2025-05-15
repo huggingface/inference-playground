@@ -215,6 +215,7 @@
 										<option value="boolean">boolean</option>
 										<option value="array">array</option>
 										<option value="object">object</option>
+										<option value="enum">enum</option>
 										<option value="null">null</option>
 									</select>
 								</div>
@@ -235,6 +236,33 @@
 											updateSchemaNested({ properties: updatedProperties });
 										})}
 									/>
+								</div>
+
+								<div class="flex items-start">
+									<div class="flex h-5 items-center">
+										<input
+											id="required-{propertyName}"
+											aria-describedby="required-{propertyName}-description"
+											name="required-{propertyName}"
+											type="checkbox"
+											class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500"
+											checked={schemaObj.current.schema?.required?.includes(propertyName)}
+											onchange={e => {
+												let updatedRequired = [...(schemaObj.current.schema?.required || [])];
+												if (e.currentTarget.checked) {
+													if (!updatedRequired.includes(propertyName)) {
+														updatedRequired.push(propertyName);
+													}
+												} else {
+													updatedRequired = updatedRequired.filter(name => name !== propertyName);
+												}
+												updateSchemaNested({ required: updatedRequired });
+											}}
+										/>
+									</div>
+									<div class="ml-3 text-sm">
+										<label for="required-{propertyName}" class="font-medium text-gray-300">Required</label>
+									</div>
 								</div>
 							</div>
 						{:else}
@@ -259,46 +287,6 @@
 				>
 					Add Property
 				</button>
-			</div>
-
-			<!-- Required properties -->
-			<div class="border-t border-gray-700 pt-4">
-				<h3 class="text-lg leading-6 font-medium text-gray-100">Required Properties</h3>
-				<p class="text-sm text-gray-500">Select which properties are required.</p>
-				<div class="mt-3 space-y-2">
-					{#if schemaObj.current.schema?.properties}
-						{#each Object.keys(schemaObj.current.schema.properties) as propertyName}
-							<div class="relative flex items-start">
-								<div class="flex h-5 items-center">
-									<input
-										id="required-{propertyName}"
-										aria-describedby="required-{propertyName}-description"
-										name="required-{propertyName}"
-										type="checkbox"
-										class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-blue-600 focus:ring-blue-500"
-										checked={schemaObj.current.schema?.required?.includes(propertyName)}
-										onchange={e => {
-											let updatedRequired = [...(schemaObj.current.schema?.required || [])];
-											if (e.currentTarget.checked) {
-												if (!updatedRequired.includes(propertyName)) {
-													updatedRequired.push(propertyName);
-												}
-											} else {
-												updatedRequired = updatedRequired.filter(name => name !== propertyName);
-											}
-											updateSchemaNested({ required: updatedRequired });
-										}}
-									/>
-								</div>
-								<div class="ml-3 text-sm">
-									<label for="required-{propertyName}" class="font-medium text-gray-300">{propertyName}</label>
-								</div>
-							</div>
-						{/each}
-					{:else}
-						<p class="text-sm text-gray-500">Add properties first to mark them as required.</p>
-					{/if}
-				</div>
 			</div>
 
 			<!-- Strict and Additional Properties -->
