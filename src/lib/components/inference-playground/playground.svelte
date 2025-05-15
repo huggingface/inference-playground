@@ -170,9 +170,13 @@
 					{@const tceRight = observed["token-count-end"].offset.right}
 					<span
 						style:translate={isLast ? (baLeft - 12 < tceRight ? baLeft - tceRight - 12 + "px" : "") : undefined}
-						use:observe={{ name: isLast ? ObservedElements.TokenCountEnd : ObservedElements.TokenCountStart }}
-						>{tokens} tokens · Latency {latency}ms</span
+						{@attach observe({
+							name: isLast ? ObservedElements.TokenCountEnd : ObservedElements.TokenCountStart,
+							useRaf: true,
+						})}
 					>
+						{tokens} tokens · Latency {latency}ms
+					</span>
 				{/each}
 			</div>
 			<div class="flex flex-1 justify-end gap-x-2">
@@ -180,7 +184,7 @@
 					type="button"
 					onclick={() => (viewCode = !viewCode)}
 					class="btn"
-					use:observe={{ name: ObservedElements.BottomActions }}
+					{@attach observe({ name: ObservedElements.BottomActions, useRaf: true })}
 				>
 					<IconCode />
 					{!viewCode ? "View Code" : "Hide Code"}

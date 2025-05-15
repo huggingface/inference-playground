@@ -1,4 +1,7 @@
-import type { Action } from "svelte/action";
+import { sleep } from "$lib/utils/sleep.js";
+import { AnimationFrames } from "runed";
+import { tick } from "svelte";
+import type { Attachment } from "svelte/attachments";
 
 export enum ObservedElements {
 	BottomActions = "bottom-actions",
@@ -55,6 +58,7 @@ export const observed: Record<ObservedElements, ObservedData> = $state(
 
 type ObserveArgs = {
 	name: ObservedElements;
+	useRaf?: boolean;
 };
 
 function getOffsetPosition(el: HTMLElement) {
@@ -72,42 +76,42 @@ function getOffsetPosition(el: HTMLElement) {
 	return { top, left, width, height, right: left + width, bottom: top + height };
 }
 
-export const observe: Action<HTMLElement, ObserveArgs> = (node, args) => {
-	let resizeObserver: ResizeObserver;
+export function observe(args: ObserveArgs): Attachment<HTMLElement> {
+	return node => {
+		function setVars(name: ObservedElements) {
+			// 1. Standard rect (includes transforms)
+			const rect = node.getBoundingClientRect();
+			document.documentElement.style.setProperty(`--${name}-width`, `${rect.width}px`);
+			document.documentElement.style.setProperty(`--${name}-height`, `${rect.height}px`);
+			document.documentElement.style.setProperty(`--${name}-top`, `${rect.top}px`);
+			document.documentElement.style.setProperty(`--${name}-left`, `${rect.left}px`);
+			document.documentElement.style.setProperty(`--${name}-right`, `${rect.right}px`);
+			document.documentElement.style.setProperty(`--${name}-bottom`, `${rect.bottom}px`);
 
-	function setVars(name: ObservedElements) {
-		// 1. Standard rect (includes transforms)
-		const rect = node.getBoundingClientRect();
-		document.documentElement.style.setProperty(`--${name}-width`, `${rect.width}px`);
-		document.documentElement.style.setProperty(`--${name}-height`, `${rect.height}px`);
-		document.documentElement.style.setProperty(`--${name}-top`, `${rect.top}px`);
-		document.documentElement.style.setProperty(`--${name}-left`, `${rect.left}px`);
-		document.documentElement.style.setProperty(`--${name}-right`, `${rect.right}px`);
-		document.documentElement.style.setProperty(`--${name}-bottom`, `${rect.bottom}px`);
+			// 2. Offset position (ignores transforms)
+			const offset = getOffsetPosition(node);
+			document.documentElement.style.setProperty(`--${name}-width-offset`, `${offset.width}px`);
+			document.documentElement.style.setProperty(`--${name}-height-offset`, `${offset.height}px`);
+			document.documentElement.style.setProperty(`--${name}-top-offset`, `${offset.top}px`);
+			document.documentElement.style.setProperty(`--${name}-left-offset`, `${offset.left}px`);
+			document.documentElement.style.setProperty(`--${name}-right-offset`, `${offset.right}px`);
+			document.documentElement.style.setProperty(`--${name}-bottom-offset`, `${offset.bottom}px`);
 
-		// 2. Offset position (ignores transforms)
-		const offset = getOffsetPosition(node);
-		document.documentElement.style.setProperty(`--${name}-width-offset`, `${offset.width}px`);
-		document.documentElement.style.setProperty(`--${name}-height-offset`, `${offset.height}px`);
-		document.documentElement.style.setProperty(`--${name}-top-offset`, `${offset.top}px`);
-		document.documentElement.style.setProperty(`--${name}-left-offset`, `${offset.left}px`);
-		document.documentElement.style.setProperty(`--${name}-right-offset`, `${offset.right}px`);
-		document.documentElement.style.setProperty(`--${name}-bottom-offset`, `${offset.bottom}px`);
-
-		observed[name] = {
-			rect,
-			offset,
-		};
-	}
-
-	function update(args: ObserveArgs) {
-		if (resizeObserver) {
-			resizeObserver.disconnect();
+			observed[name] = {
+				rect,
+				offset,
+			};
 		}
 
-		resizeObserver = new ResizeObserver(() => {
+		function onWindowChange() {
+			setVars(args.name);
+		}
+
+		/** Initialize */
+		const resizeObserver = new ResizeObserver(() => {
 			setVars(args.name);
 		});
+
 		resizeObserver.observe(node);
 
 		// Listen for scroll and resize events
@@ -115,22 +119,16 @@ export const observe: Action<HTMLElement, ObserveArgs> = (node, args) => {
 		window.addEventListener("resize", onWindowChange, true);
 
 		setVars(args.name); // Initial set after observing
-	}
+		if (args.useRaf) {
+			new AnimationFrames(() => {
+				setVars(args.name);
+			});
+		}
 
-	function onWindowChange() {
-		setVars(args.name);
-	}
-
-	update(args); // Initial setup
-
-	function destroy() {
-		resizeObserver.disconnect();
-		window.removeEventListener("scroll", onWindowChange, true);
-		window.removeEventListener("resize", onWindowChange, true);
-	}
-
-	return {
-		update,
-		destroy,
+		return function destroy() {
+			resizeObserver.disconnect();
+			window.removeEventListener("scroll", onWindowChange, true);
+			window.removeEventListener("resize", onWindowChange, true);
+		};
 	};
-};
+}
