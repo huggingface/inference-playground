@@ -1,6 +1,4 @@
-import { sleep } from "$lib/utils/sleep.js";
 import { AnimationFrames } from "runed";
-import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 
 export enum ObservedElements {
