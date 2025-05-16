@@ -27,8 +27,6 @@
 	});
 
 	type Schema = {
-		name?: string;
-		description?: string;
 		schema?: {
 			type?: string;
 			properties?: { [key: string]: { type: string; description?: string } };
@@ -76,8 +74,6 @@
 				keys(v.schema?.properties ?? {}).includes(name)
 			);
 			const validated: Schema = {
-				name: v.name,
-				description: v.description,
 				schema: {
 					...v.schema,
 					required,
@@ -133,31 +129,6 @@
 
 	{#if radioGroup.value === "form"}
 		<div class="fade-y -mx-2 mt-2 -mb-4 max-h-200 space-y-4 overflow-auto px-2 py-4 text-left">
-			<!-- Top-level properties -->
-			<div>
-				<label for="schema-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-				<input
-					type="text"
-					id="schema-name"
-					class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-					value={schemaObj.current.name}
-					{...onchange(value => updateSchema({ name: value }))}
-				/>
-			</div>
-
-			<div>
-				<label for="schema-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-					Description
-				</label>
-				<textarea
-					id="schema-description"
-					rows="3"
-					class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-					value={schemaObj.current.description}
-					{...onchange(value => updateSchema({ description: value }))}
-				></textarea>
-			</div>
-
 			<!-- Properties Section -->
 			<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
 				<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Properties</h3>

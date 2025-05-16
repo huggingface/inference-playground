@@ -11,9 +11,10 @@
 		onClose?: () => void;
 		open: boolean;
 		onSubmit?: EventHandler<SubmitEvent>;
+		class?: string;
 	}
 
-	let { children, onClose, open, title, footer, onSubmit }: Props = $props();
+	let { children, onClose, open, title, footer, onSubmit, class: classes }: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -30,7 +31,7 @@
 	{#if open}
 		<form class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/85" onsubmit={onSubmit}>
 			<div
-				class="relative w-xl rounded-xl bg-white shadow-sm dark:bg-gray-900"
+				class={["relative w-xl rounded-xl bg-white shadow-sm dark:bg-gray-900", classes]}
 				{@attach clickOutside(() => onClose?.())}
 			>
 				<div class="flex items-center justify-between rounded-t border-b p-4 md:px-5 md:py-4 dark:border-gray-800">
