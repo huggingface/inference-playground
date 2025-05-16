@@ -105,11 +105,10 @@
 				placeholder={systemPromptSupported
 					? "Enter a custom prompt"
 					: "System prompt is not supported with the chosen model."}
-				value={systemPromptSupported ? conversations.active[0]?.data.systemMessage.content : ""}
-				oninput={e => {
-					for (const c of conversations.active) {
-						c.update({ ...c.data, systemMessage: { ...c.data.systemMessage, content: e.currentTarget.value } });
-					}
+				value={systemPromptSupported ? (projects.current?.systemMessage ?? "") : ""}
+				onchange={e => {
+					if (!projects.current) return;
+					projects.update({ ...projects.current, systemMessage: e.currentTarget.value });
 				}}
 				class="absolute inset-x-0 bottom-0 h-full resize-none bg-transparent px-3 pt-10 text-sm outline-hidden"
 			></textarea>

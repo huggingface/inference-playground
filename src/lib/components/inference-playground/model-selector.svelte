@@ -6,7 +6,6 @@
 	import Avatar from "../avatar.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ProviderSelect from "./provider-select.svelte";
-	import { defaultSystemMessage } from "./utils.svelte.js";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -24,7 +23,6 @@
 		}
 		conversation.update({
 			modelId: model.id,
-			systemMessage: { role: "system", content: defaultSystemMessage?.[modelId] ?? "" },
 			provider: undefined,
 		});
 	}

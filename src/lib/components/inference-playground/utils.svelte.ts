@@ -18,6 +18,7 @@ import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import OpenAI from "openai";
 import { images } from "$lib/state/images.svelte.js";
+import { projects } from "$lib/state/projects.svelte.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -84,10 +85,10 @@ async function getCompletionMetadata(
 ): Promise<CompletionMetadata> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
-	const { systemMessage } = data;
+	const systemMessage = projects.current?.systemMessage;
 
-	const messages = [
-		...(isSystemPromptSupported(model) && systemMessage.content?.length ? [systemMessage] : []),
+	const messages: ConversationMessage[] = [
+		...(isSystemPromptSupported(model) && systemMessage?.length ? [{ role: "system", content: systemMessage }] : []),
 		...data.messages,
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));

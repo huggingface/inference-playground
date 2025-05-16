@@ -40,9 +40,6 @@ export class ConversationEntity {
 	@Fields.json()
 	messages!: ConversationMessage[];
 
-	@Fields.json()
-	systemMessage: ConversationMessage = { role: "system" };
-
 	@Fields.boolean()
 	streaming = false;
 
@@ -64,10 +61,6 @@ export type ConversationEntityMembers = MembersOnly<ConversationEntity>;
 const conversationsRepo = repo(ConversationEntity, idb);
 
 const startMessageUser: ConversationMessage = { role: "user", content: "" };
-const systemMessage: ConversationMessage = {
-	role: "system",
-	content: "",
-};
 
 export const emptyModel: Model = {
 	_id: "",
@@ -89,7 +82,6 @@ function getDefaultConversation(projectId: string) {
 		modelId: models.trending[0]?.id ?? models.remote[0]?.id ?? emptyModel.id,
 		config: { ...defaultGenerationConfig },
 		messages: [{ ...startMessageUser }],
-		systemMessage,
 		streaming: true,
 		createdAt: new Date(),
 	} satisfies Partial<ConversationEntityMembers>;

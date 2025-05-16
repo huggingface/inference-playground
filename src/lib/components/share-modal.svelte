@@ -153,7 +153,7 @@
 										saving = false;
 										return;
 									}
-									const projectId = await projects.create(`Saved - ${decoded.name}`);
+									const projectId = await projects.create({ name: `Saved - ${decoded.name}` });
 									await Promise.allSettled(
 										decoded.conversations.map(c => {
 											conversations.create({

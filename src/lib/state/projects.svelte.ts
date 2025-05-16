@@ -1,9 +1,9 @@
 import { idb } from "$lib/remult.js";
 import { dequal } from "dequal";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
-import { conversations } from "./conversations.svelte";
 import { PersistedState } from "runed";
 import { checkpoints } from "./checkpoints.svelte";
+import { conversations } from "./conversations.svelte";
 
 @Entity("project")
 export class ProjectEntity {
@@ -12,6 +12,9 @@ export class ProjectEntity {
 
 	@Fields.string()
 	name!: string;
+
+	@Fields.string()
+	systemMessage?: string;
 }
 
 export type ProjectEntityMembers = MembersOnly<ProjectEntity>;
@@ -45,17 +48,17 @@ class Projects {
 		});
 	}
 
-	async create(name: string): Promise<string> {
-		const { id } = await projectsRepo.save({ name });
-		this.#projects[id] = { name, id };
-		return id;
+	async create(args: Omit<ProjectEntity, "id">): Promise<string> {
+		const p = await projectsRepo.save({ ...args });
+		this.#projects[p.id] = p;
+		return p.id;
 	}
 
 	saveProject = async (args: { name: string; moveCheckpoints?: boolean }) => {
 		const defaultProject = this.all.find(p => p.id === DEFAULT_PROJECT_ID);
 		if (!defaultProject) return;
 
-		const id = await this.create(args.name);
+		const id = await this.create({ name: args.name, systemMessage: defaultProject.systemMessage });
 
 		if (args.moveCheckpoints) {
 			checkpoints.migrate(defaultProject.id, id);
@@ -87,7 +90,7 @@ class Projects {
 
 	async update(data: ProjectEntity) {
 		if (!data.id) return;
-		await projectsRepo.update(data.id, data);
+		await projectsRepo.upsert({ where: { id: data.id }, set: data });
 		this.#projects[data.id] = { ...data };
 	}
 
