@@ -6,7 +6,6 @@
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import StructuredOutputModal from "./structured-output-modal.svelte";
 	import { maxAllowedTokens } from "./utils.svelte.js";
-	import { models } from "$lib/state/models.svelte.js";
 
 	interface Props {
 		conversation: ConversationClass;

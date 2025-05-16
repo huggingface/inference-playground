@@ -16,7 +16,6 @@
 	import IconStar from "~icons/carbon/star";
 	import IconEye from "~icons/carbon/view";
 	import Tooltip from "../tooltip.svelte";
-	import IconArrayObjects from "~icons/carbon/array-objects";
 	import { openCustomModelConfig } from "./custom-model-config.svelte";
 
 	interface Props {
