@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { autoUpdate, computePosition } from "@floating-ui/dom";
+	import { autoUpdate, computePosition, flip, type Placement } from "@floating-ui/dom";
 	import { Toaster } from "melt/builders";
 	import { type Snippet } from "svelte";
 	import { type Attachment } from "svelte/attachments";
-	import { fly } from "svelte/transition";
 
 	interface Props {
 		children: Snippet<[{ addToast: typeof toaster.addToast; trigger: typeof trigger }]>;
@@ -31,21 +30,96 @@
 	export const addToast = toaster.addToast;
 
 	const float: Attachment<HTMLElement> = function (node) {
+		let placement: Placement = $state("top");
+
 		const triggerEl = document.querySelector(`[data-local-toast-trigger=${id}]`);
 		if (!triggerEl) return;
 
 		const compute = () =>
 			computePosition(triggerEl, node, {
-				placement: "top",
 				strategy: "absolute",
-			}).then(({ x, y }) => {
+				placement: "top",
+				middleware: [flip({ fallbackPlacements: ["left"] })],
+			}).then(({ x, y, placement: _placement }) => {
+				placement = _placement;
 				Object.assign(node.style, {
-					left: `${x}px`,
-					top: `${y - 8}px`,
+					left: placement === "top" ? `${x}px` : `${x - 4}px`,
+					top: placement === "top" ? `${y - 6}px` : `${y}px`,
+				});
+
+				// Animate
+				// Cancel any ongoing animations
+				node.getAnimations().forEach(anim => anim.cancel());
+
+				// Determine animation direction based on placement
+				let keyframes: Keyframe[] = [];
+				switch (placement) {
+					case "top":
+						keyframes = [
+							{ opacity: 0, transform: "translateY(8px)", scale: "0.8" },
+							{ opacity: 1, transform: "translateY(0)", scale: "1" },
+						];
+						break;
+					case "left":
+						keyframes = [
+							{ opacity: 0, transform: "translateX(8px)", scale: "0.8" },
+							{ opacity: 1, transform: "translateX(0)", scale: "1" },
+						];
+						break;
+				}
+
+				node.animate(keyframes, {
+					duration: 500,
+					easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+					fill: "forwards",
 				});
 			});
 
-		return autoUpdate(triggerEl, node, compute);
+		const reference = node.cloneNode(true) as HTMLElement;
+		node.before(reference);
+		reference.style.visibility = "hidden";
+
+		const destroyers = [
+			autoUpdate(triggerEl, node, compute),
+			async () => {
+				// clone node
+				const cloned = node.cloneNode(true) as HTMLElement;
+				reference.before(cloned);
+				reference.remove();
+				cloned.getAnimations().forEach(anim => anim.cancel());
+
+				// Animate out
+				// Cancel any ongoing animations
+				cloned.getAnimations().forEach(anim => anim.cancel());
+
+				// Determine animation direction based on placement
+				let keyframes: Keyframe[] = [];
+				switch (placement) {
+					case "top":
+						keyframes = [
+							{ opacity: 1, transform: "translateY(0)" },
+							{ opacity: 0, transform: "translateY(-8px)" },
+						];
+						break;
+					case "left":
+						keyframes = [
+							{ opacity: 1, transform: "translateX(0)" },
+							{ opacity: 0, transform: "translateX(-8px)" },
+						];
+						break;
+				}
+
+				await cloned.animate(keyframes, {
+					duration: 400,
+					easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+					fill: "forwards",
+				}).finished;
+
+				cloned.remove();
+			},
+		];
+
+		return () => destroyers.forEach(d => d());
 	};
 
 	const classMap: Record<ToastData["variant"], string> = {
@@ -62,8 +136,6 @@
 		data-local-toast
 		data-variant={toast.data.variant}
 		class={[!toastSnippet && `${classMap[toast.data.variant]} rounded-full px-2 py-1 text-xs`]}
-		in:fly={{ y: 10 }}
-		out:fly={{ y: -4 }}
 		{@attach float}
 	>
 		{#if toastSnippet}
