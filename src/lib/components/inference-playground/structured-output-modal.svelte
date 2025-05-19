@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isDark } from "$lib/spells/is-dark.svelte";
 	import { Synced } from "$lib/spells/synced.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte";
 	import type { ConversationClass } from "$lib/state/conversations.svelte.js";
@@ -8,9 +9,8 @@
 	import { RadioGroup } from "melt/builders";
 	import { codeToHtml } from "shiki";
 	import typia from "typia";
-	import IconX from "~icons/carbon/close";
 	import Dialog from "../dialog.svelte";
-	import { isDark } from "$lib/spells/is-dark.svelte";
+	import SchemaProperty, { type PropertyDefinition } from "./schema-property.svelte";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -29,7 +29,7 @@
 	type Schema = {
 		schema?: {
 			type?: string;
-			properties?: { [key: string]: { type: string; description?: string } };
+			properties?: { [key: string]: PropertyDefinition };
 			required?: string[];
 			additionalProperties?: boolean;
 		};
@@ -135,119 +135,49 @@
 				{#if schemaObj.current.schema?.properties}
 					<div class="mt-3 space-y-3">
 						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition], index (index)}
-							<div
-								class="relative space-y-2 rounded-md border border-gray-300 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
-							>
-								<div>
-									<label for="{propertyName}-name" class="block text-xs font-medium text-gray-500 dark:text-gray-400">
-										Name
-									</label>
-									<input
-										type="text"
-										id="{propertyName}-name"
-										class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-										value={propertyName}
-										{...onchange(value => {
-											const updatedProperties = { ...schemaObj.current.schema?.properties };
-											if (!updatedProperties || !updatedProperties[propertyName]) return;
-											updatedProperties[value] = updatedProperties[propertyName];
-											delete updatedProperties[propertyName];
-											updateSchemaNested({ properties: updatedProperties });
-										})}
-									/>
-								</div>
-
-								<button
-									type="button"
-									class="absolute top-2 right-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
-									onclick={() => {
+							<SchemaProperty
+								bind:name={
+									() => propertyName,
+									value => {
 										const updatedProperties = { ...schemaObj.current.schema?.properties };
 										if (!updatedProperties || !updatedProperties[propertyName]) return;
+										updatedProperties[value] = updatedProperties[propertyName];
 										delete updatedProperties[propertyName];
 										updateSchemaNested({ properties: updatedProperties });
-									}}
-									aria-label="delete"
-								>
-									<IconX />
-								</button>
-
-								<div>
-									<label for="{propertyName}-type" class="block text-xs font-medium text-gray-500 dark:text-gray-400">
-										Type
-									</label>
-									<select
-										id="{propertyName}-type"
-										class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-										bind:value={
-											() => propertyDefinition.type,
-											value => {
-												const updatedProperties = { ...schemaObj.current.schema?.properties };
-												if (updatedProperties && updatedProperties[propertyName]) {
-													updatedProperties[propertyName].type = value;
-													updateSchemaNested({ properties: updatedProperties });
-												}
-											}
-										}
-									>
-										<option value="string">string</option>
-										<option value="integer">integer</option>
-										<option value="number">number</option>
-										<option value="boolean">boolean</option>
-										<option value="array">array</option>
-										<option value="object">object</option>
-										<option value="enum">enum</option>
-										<option value="null">null</option>
-									</select>
-								</div>
-
-								<div>
-									<label
-										for="{propertyName}-description"
-										class="block text-xs font-medium text-gray-500 dark:text-gray-400">Description</label
-									>
-									<input
-										type="text"
-										id="{propertyName}-description"
-										class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-										value={propertyDefinition.description}
-										{...onchange(value => {
-											const updatedProperties = { ...schemaObj.current.schema?.properties };
-											if (!updatedProperties || !updatedProperties[propertyName]) return;
-											updatedProperties[propertyName].description = value;
+									}
+								}
+								bind:definition={
+									() => propertyDefinition,
+									v => {
+										const updatedProperties = { ...schemaObj.current.schema?.properties };
+										if (updatedProperties && updatedProperties[propertyName]) {
+											updatedProperties[propertyName] = v;
 											updateSchemaNested({ properties: updatedProperties });
-										})}
-									/>
-								</div>
-
-								<div class="flex items-start">
-									<div class="flex h-5 items-center">
-										<input
-											id="required-{propertyName}"
-											aria-describedby="required-{propertyName}-description"
-											name="required-{propertyName}"
-											type="checkbox"
-											class="h-4 w-4 rounded border border-gray-300 bg-white text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-											checked={schemaObj.current.schema?.required?.includes(propertyName)}
-											onchange={e => {
-												let updatedRequired = [...(schemaObj.current.schema?.required || [])];
-												if (e.currentTarget.checked) {
-													if (!updatedRequired.includes(propertyName)) {
-														updatedRequired.push(propertyName);
-													}
-												} else {
-													updatedRequired = updatedRequired.filter(name => name !== propertyName);
-												}
-												updateSchemaNested({ required: updatedRequired });
-											}}
-										/>
-									</div>
-									<div class="ml-3 text-sm">
-										<label for="required-{propertyName}" class="font-medium text-gray-700 dark:text-gray-300">
-											Required
-										</label>
-									</div>
-								</div>
-							</div>
+										}
+									}
+								}
+								bind:required={
+									() => schemaObj.current.schema?.required?.includes(propertyName) ?? false,
+									v => {
+										let updatedRequired = [...(schemaObj.current.schema?.required || [])];
+										if (v) {
+											if (!updatedRequired.includes(propertyName)) {
+												updatedRequired.push(propertyName);
+											}
+										} else {
+											updatedRequired = updatedRequired.filter(name => name !== name);
+										}
+										updateSchemaNested({ required: updatedRequired });
+									}
+								}
+								array={false}
+								onDelete={() => {
+									const updatedProperties = { ...schemaObj.current.schema?.properties };
+									if (!updatedProperties || !updatedProperties[propertyName]) return;
+									delete updatedProperties[propertyName];
+									updateSchemaNested({ properties: updatedProperties });
+								}}
+							/>
 						{:else}
 							<p class="mt-3 text-sm text-gray-500">No properties defined yet.</p>
 						{/each}
@@ -263,12 +193,12 @@
 						const newPropertyName = `newProperty${Object.keys(schemaObj.current.schema?.properties || {}).length + 1}`;
 						const updatedProperties = {
 							...(schemaObj.current.schema?.properties || {}),
-							[newPropertyName]: { type: "string", description: "" },
+							[newPropertyName]: { type: "string" as const, description: "" },
 						};
 						updateSchemaNested({ properties: updatedProperties });
 					}}
 				>
-					Add Property
+					Add property
 				</button>
 			</div>
 
