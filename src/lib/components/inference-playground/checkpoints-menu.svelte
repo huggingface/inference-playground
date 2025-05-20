@@ -12,7 +12,6 @@
 	import IconStar from "~icons/carbon/star";
 	import IconStarFilled from "~icons/carbon/star-filled";
 	import IconDelete from "~icons/carbon/trash-can";
-	import IconArrayObjects from "~icons/carbon/array-objects";
 
 	const popover = new Popover({
 		floatingConfig: {
