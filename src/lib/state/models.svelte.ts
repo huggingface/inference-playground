@@ -1,5 +1,5 @@
 import { page } from "$app/state";
-import { type CustomModel } from "$lib/types.js";
+import { Provider, type CustomModel } from "$lib/types.js";
 import { edit, randomPick } from "$lib/utils/array.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
@@ -9,6 +9,13 @@ import { conversations } from "./conversations.svelte";
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
 const pageData = $derived(page.data as PageData);
+
+export const structuredForbiddenProviders: Provider[] = [
+	Provider.Hyperbolic,
+	Provider.Nebius,
+	Provider.Novita,
+	Provider.Sambanova,
+];
 
 class Models {
 	remote = $derived(pageData.models);

@@ -6,6 +6,7 @@
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import StructuredOutputModal from "./structured-output-modal.svelte";
 	import { maxAllowedTokens } from "./utils.svelte.js";
+	import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -99,24 +100,28 @@
 		></div>
 	</label>
 
-	<label class="mt-2 flex cursor-pointer items-center justify-between" for="structured-output">
-		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Structured Output</span>
-		<div class="flex items-center gap-2">
-			<input
-				type="checkbox"
-				bind:checked={
-					() => conversation.data.structuredOutput?.enabled,
-					v => conversation.update({ structuredOutput: { ...conversation.data.structuredOutput, enabled: v ?? false } })
-				}
-				class="peer sr-only"
-				id="structured-output"
-			/>
-			<button class="btn-mini" type="button" onclick={() => (editingStructuredOutput = true)}> edit </button>
-			<div
-				class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
-			></div>
-		</div>
-	</label>
+	<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
+	{#if !structuredForbiddenProviders.includes(conversation.data.provider as any)}
+		<label class="mt-2 flex cursor-pointer items-center justify-between" for="structured-output">
+			<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Structured Output</span>
+			<div class="flex items-center gap-2">
+				<input
+					type="checkbox"
+					bind:checked={
+						() => conversation.data.structuredOutput?.enabled,
+						v =>
+							conversation.update({ structuredOutput: { ...conversation.data.structuredOutput, enabled: v ?? false } })
+					}
+					class="peer sr-only"
+					id="structured-output"
+				/>
+				<button class="btn-mini" type="button" onclick={() => (editingStructuredOutput = true)}> edit </button>
+				<div
+					class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
+				></div>
+			</div>
+		</label>
+	{/if}
 </div>
 
 <StructuredOutputModal {conversation} bind:open={editingStructuredOutput} />

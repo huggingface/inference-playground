@@ -4,6 +4,7 @@ import { token } from "$lib/state/token.svelte";
 import {
 	isCustomModel,
 	isHFModel,
+	Provider,
 	type Conversation,
 	type ConversationMessage,
 	type CustomModel,
@@ -19,6 +20,7 @@ import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import OpenAI from "openai";
 import { images } from "$lib/state/images.svelte.js";
 import { projects } from "$lib/state/projects.svelte.js";
+import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -101,12 +103,20 @@ async function getCompletionMetadata(
 	} as any;
 
 	const json = safeParse(data.structuredOutput?.schema ?? "");
-	if (json && data.structuredOutput?.enabled) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	if (json && data.structuredOutput?.enabled && !structuredForbiddenProviders.includes(data.provider as any)) {
 		switch (data.provider) {
 			case "cohere": {
 				baseArgs.response_format = {
 					type: "json_object",
 					...json,
+				};
+				break;
+			}
+			case Provider.Nebius: {
+				baseArgs.response_format = {
+					type: "json_object",
+					json_schema: { ...json, name: "schema" },
 				};
 				break;
 			}
