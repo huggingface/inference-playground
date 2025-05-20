@@ -30,7 +30,7 @@
 		},
 	});
 
-	const nameMap: Record<InferenceProvider, string> = {
+	const nameMap: Partial<Record<InferenceProvider, string>> = {
 		"sambanova": "SambaNova",
 		"fal-ai": "fal",
 		"cerebras": "Cerebras",

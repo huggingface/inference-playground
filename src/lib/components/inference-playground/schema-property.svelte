@@ -83,18 +83,20 @@
 
 	const type = {
 		get $() {
-			return innerDefinition.$.type;
+			return "enum" in innerDefinition.$ ? "enum" : innerDefinition.$.type;
 		},
 		set $(v) {
 			delete definition.enum;
 			delete definition.properties;
 
+			const inner = { type: v === "enum" ? "string" : v } as PropertyDefinition;
+			if (v === "enum") inner.enum = [];
+
 			if (definition.type === "array") {
-				definition = { ...definition, items: { type: v } };
-				return;
+				definition = { ...definition, items: inner };
 			}
 
-			definition = { ...definition, type: v };
+			definition = { ...definition, ...inner };
 		},
 	};
 
@@ -265,7 +267,7 @@
 		{/each}
 	{/if}
 
-	{#if innerDefinition.$.type === "enum"}
+	{#if "enum" in innerDefinition.$}
 		<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Values</p>
 		{#each innerDefinition.$.enum ?? [] as val, index (index)}
 			<div
