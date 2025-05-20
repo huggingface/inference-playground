@@ -49,7 +49,9 @@
 <script lang="ts">
 	import { onchange } from "$lib/utils/template.js";
 	import IconX from "~icons/carbon/close";
+	import IconAdd from "~icons/carbon/add-large";
 	import SchemaProperty from "./schema-property.svelte";
+	import Tooltip from "../tooltip.svelte";
 
 	type Props = {
 		name: string;
@@ -113,46 +115,93 @@
 			}
 		},
 	};
+
+	const nestingClasses = [
+		"border-gray-300 dark:border-gray-700",
+		"border-gray-300 dark:border-gray-600",
+		"border-gray-300 dark:border-gray-500",
+		"border-gray-300 dark:border-gray-600",
+	];
 </script>
 
 <div
 	class={[
-		"relative space-y-2 border-l-2 bg-white py-1 pl-3 dark:bg-gray-900",
-		nesting % 2 === 0 && "border-gray-300 dark:border-gray-700",
-		nesting % 2 === 1 && "border-blue-300 dark:border-blue-900",
+		"relative space-y-2 border-l-2 bg-white py-2 pl-4 dark:bg-gray-900",
+		...nestingClasses.map((c, i) => {
+			return nesting % nestingClasses.length === i && c;
+		}),
 	]}
 >
-	<div>
-		<label for="{name}-name" class="block text-xs font-medium text-gray-500 dark:text-gray-400"> Name </label>
-		<input
-			type="text"
-			id="{name}-name"
-			class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-			value={name}
-			{...onchange(v => (name = v))}
-		/>
-	</div>
+	<div class="flex gap-2">
+		<div class="grow">
+			<label for="{name}-name" class="block text-xs font-medium text-gray-500 dark:text-gray-400"> Name </label>
+			<input
+				type="text"
+				id="{name}-name"
+				class="mt-1 w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+				value={name}
+				{...onchange(v => (name = v))}
+			/>
+		</div>
 
-	<button
-		type="button"
-		class="absolute top-0 right-0 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
-		onclick={onDelete}
-		aria-label="delete"
-	>
-		<IconX />
-	</button>
-
-	<div>
-		<label for="{name}-type" class="block text-xs font-medium text-gray-500 dark:text-gray-400"> Type </label>
-		<select
-			id="{name}-type"
-			class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-			bind:value={() => type.$, v => (type.$ = v)}
+		<div class="grow">
+			<label for="{name}-type" class="block text-xs font-medium text-gray-500 dark:text-gray-400"> Type </label>
+			<select
+				id="{name}-type"
+				class="mt-1 w-full rounded-md border border-gray-300 bg-white px-2 py-1.25 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+				bind:value={() => type.$, v => (type.$ = v)}
+			>
+				{#each propertyTypes.filter(t => t !== "array") as type}
+					<option value={type}>{type}</option>
+				{/each}
+			</select>
+		</div>
+		{#if type.$ === "object"}
+			<Tooltip>
+				{#snippet trigger(tooltip)}
+					<button
+						type="button"
+						class="btn-xs self-end rounded-md"
+						onclick={() => {
+							const prevProperties = innerDefinition.$.properties || {};
+							innerDefinition.$ = { ...innerDefinition.$, properties: { ...prevProperties, "": { type: "string" } } };
+						}}
+						aria-label="Add nested"
+						{...tooltip.trigger}
+					>
+						<IconAdd />
+					</button>
+				{/snippet}
+				Add nested property
+			</Tooltip>
+		{/if}
+		{#if type.$ === "enum"}
+			<Tooltip>
+				{#snippet trigger(tooltip)}
+					<button
+						type="button"
+						class="btn-xs self-end rounded-md"
+						onclick={() => {
+							const prevValues = innerDefinition.$.enum || [];
+							innerDefinition.$ = { ...innerDefinition.$, enum: [...prevValues, ""] };
+						}}
+						aria-label="Add enum value"
+						{...tooltip.trigger}
+					>
+						<IconAdd />
+					</button>
+				{/snippet}
+				Add enum value
+			</Tooltip>
+		{/if}
+		<button
+			type="button"
+			class="btn-xs self-end rounded-md text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
+			onclick={onDelete}
+			aria-label="delete"
 		>
-			{#each propertyTypes.filter(t => t !== "array") as type}
-				<option value={type}>{type}</option>
-			{/each}
-		</select>
+			<IconX />
+		</button>
 	</div>
 
 	{#if !nesting}
@@ -214,25 +263,22 @@
 				nesting={nesting + 1}
 			/>
 		{/each}
-
-		<button
-			type="button"
-			class="btn-sm mt-4 flex w-full items-center justify-center rounded-md"
-			onclick={() => {
-				const prevProperties = innerDefinition.$.properties || {};
-				innerDefinition.$ = { ...innerDefinition.$, properties: { ...prevProperties, "": { type: "string" } } };
-			}}
-		>
-			Add nested property
-		</button>
 	{/if}
 
 	{#if innerDefinition.$.type === "enum"}
+		<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Values</p>
 		{#each innerDefinition.$.enum ?? [] as val, index (index)}
-			<div class="flex items-center">
+			<div
+				class={[
+					"flex border-l-2 pl-2",
+					...nestingClasses.map((c, i) => {
+						return (nesting + 1) % nestingClasses.length === i && c;
+					}),
+				]}
+			>
 				<input
 					id="{name}-enum-{index}"
-					class="py-1} mt-1 block w-full rounded-md border border-gray-300 bg-white px-2
+					class="block w-full rounded-md border border-gray-300 bg-white px-2 py-1
 		text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
 					type="text"
 					value={val}
@@ -244,7 +290,7 @@
 				/>
 				<button
 					type="button"
-					class="btn-sm ml-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
+					class="btn-xs ml-2 rounded-md text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
 					onclick={() => {
 						innerDefinition.$.enum = innerDefinition.$.enum ?? [];
 						innerDefinition.$.enum.splice(index, 1);
@@ -254,16 +300,8 @@
 					<IconX />
 				</button>
 			</div>
+		{:else}
+			<p class="mt-2 text-xs italic text-gray-400">No enum values defined.</p>
 		{/each}
-		<button
-			type="button"
-			class="btn-sm mt-4 flex w-full items-center justify-center rounded-md"
-			onclick={() => {
-				const prevValues = innerDefinition.$.enum || [];
-				innerDefinition.$ = { ...innerDefinition.$, enum: [...prevValues, ""] };
-			}}
-		>
-			Add enum value
-		</button>
 	{/if}
 </div>

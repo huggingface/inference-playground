@@ -106,7 +106,7 @@
 	});
 </script>
 
-<Dialog title="Edit Structured Output" {open} onClose={() => (open = false)}>
+<Dialog class="!w-2xl max-w-[90vw]" title="Edit Structured Output" {open} onClose={() => (open = false)}>
 	<div class="flex justify-end">
 		<div
 			class="flex items-center gap-0.5 rounded-md border border-gray-300 bg-white p-0.5 text-sm dark:border-gray-600 dark:bg-gray-800"
