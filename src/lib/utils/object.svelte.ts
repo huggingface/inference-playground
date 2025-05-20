@@ -84,3 +84,21 @@ export function deepMerge<T extends DeepMergeable, U extends DeepMergeable>(targ
 
 	return result as T & U;
 }
+
+export function renameKey<T extends object>(
+	obj: T,
+	oldKey: keyof T,
+	newKey: string
+): { [K in keyof T as K extends typeof oldKey ? typeof newKey : K]: T[K] } {
+	const entries = Object.entries(obj);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const result: any = {};
+	for (const [key, value] of entries) {
+		if (key === oldKey) {
+			result[newKey] = value;
+		} else {
+			result[key] = value;
+		}
+	}
+	return result;
+}

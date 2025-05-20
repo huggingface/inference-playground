@@ -4,7 +4,7 @@
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte";
 	import type { ConversationClass } from "$lib/state/conversations.svelte.js";
 	import { safeParse } from "$lib/utils/json.js";
-	import { keys } from "$lib/utils/object.svelte";
+	import { keys, renameKey } from "$lib/utils/object.svelte";
 	import { onchange, oninput } from "$lib/utils/template.js";
 	import { RadioGroup } from "melt/builders";
 	import { codeToHtml } from "shiki";
@@ -134,15 +134,16 @@
 				<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Properties</h3>
 				{#if schemaObj.current.schema?.properties}
 					<div class="mt-3 space-y-3">
-						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition], index (index)}
+						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition]}
 							<SchemaProperty
 								bind:name={
 									() => propertyName,
 									value => {
-										const updatedProperties = { ...schemaObj.current.schema?.properties };
-										if (!updatedProperties || !updatedProperties[propertyName]) return;
-										updatedProperties[value] = updatedProperties[propertyName];
-										delete updatedProperties[propertyName];
+										const updatedProperties = renameKey(
+											schemaObj.current.schema?.properties ?? {},
+											propertyName,
+											value
+										);
 										updateSchemaNested({ properties: updatedProperties });
 									}
 								}
@@ -170,7 +171,6 @@
 										updateSchemaNested({ required: updatedRequired });
 									}
 								}
-								array={false}
 								onDelete={() => {
 									const updatedProperties = { ...schemaObj.current.schema?.properties };
 									if (!updatedProperties || !updatedProperties[propertyName]) return;
@@ -193,7 +193,7 @@
 						const newPropertyName = `newProperty${Object.keys(schemaObj.current.schema?.properties || {}).length + 1}`;
 						const updatedProperties = {
 							...(schemaObj.current.schema?.properties || {}),
-							[newPropertyName]: { type: "string" as const, description: "" },
+							[newPropertyName]: { type: "string" as const },
 						};
 						updateSchemaNested({ properties: updatedProperties });
 					}}
