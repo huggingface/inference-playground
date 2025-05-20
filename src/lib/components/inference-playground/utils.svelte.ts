@@ -93,6 +93,34 @@ async function getCompletionMetadata(
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));
 
+	const baseArgs = {
+		...data.config,
+		messages: parsed,
+		model: model.id,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	} as any;
+
+	const json = safeParse(data.structuredOutput?.schema ?? "");
+	if (json && data.structuredOutput?.enabled) {
+		switch (data.provider) {
+			case "cohere": {
+				baseArgs.response_format = {
+					type: "json_object",
+					...json,
+				};
+				break;
+			}
+			default: {
+				baseArgs.response_format = {
+					type: "json_object",
+					json_schema: json,
+				};
+
+				break;
+			}
+		}
+	}
+
 	// Handle OpenAI-compatible models
 	if (isCustomModel(model)) {
 		const openai = new OpenAI({
@@ -105,21 +133,9 @@ async function getCompletionMetadata(
 		});
 
 		const args = {
-			messages: parsed,
-			...data.config,
-			model: model.id,
+			...baseArgs,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
-
-		if (data.structuredOutput?.enabled) {
-			const json = safeParse(data.structuredOutput.schema ?? "");
-			if (json) {
-				args.response_format = {
-					type: "json_schema",
-					json_schema: json,
-				};
-			}
-		}
 
 		return {
 			type: "openai",
@@ -128,23 +144,11 @@ async function getCompletionMetadata(
 		};
 	}
 	const args = {
-		model: model.id,
-		messages: parsed,
+		...baseArgs,
 		provider: data.provider,
-		...data.config,
 		// max_tokens: maxAllowedTokens(conversation) - currTokens,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} as any;
-
-	if (data.structuredOutput?.enabled) {
-		const json = safeParse(data.structuredOutput.schema ?? "");
-		if (json) {
-			args.response_format = {
-				type: "json_schema",
-				json_schema: json,
-			};
-		}
-	}
 
 	// Handle HuggingFace models
 	return {
