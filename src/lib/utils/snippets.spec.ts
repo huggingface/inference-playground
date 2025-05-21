@@ -6,6 +6,7 @@ type TestCase = {
 	snippet: string;
 	objToAdd: Record<string, unknown>;
 	description: string; // Optional description for the test
+	pythonSyntax?: "kwargs" | "dict"; // Add this field
 };
 
 // JavaScript/TypeScript test cases
@@ -46,22 +47,123 @@ for await (const chunk of stream) {
 `,
 		objToAdd: { maxTokens: 100, frequencyPenalty: 0.2 },
 	},
-	// Add more JavaScript test cases as needed
+	{
+		description: "JavaScript with OpenAI library",
+		snippet: `import { OpenAI } from "openai";
+
+const client = new OpenAI({
+	baseURL: "https://api.cerebras.ai/v1",
+	apiKey: "YOUR_HF_TOKEN",
+});
+
+const stream = await client.chat.completions.create({
+    model: "qwen-3-32b",
+    messages: [
+        {
+            role: "user",
+            content: "What is the capital of Brazil?",
+        },
+        {
+            content: "{\"answer_the_question\": 5, \"how_many_legs_does_a_dog_have\": true, \"answer_the_question_HERE\": \"elderberry\"}",
+            role: "assistant",
+        },
+    ],
+    temperature: 0.5,
+    top_p: 0.7,
+    stream: true,
+});
+
+for await (const chunk of stream) {
+    process.stdout.write(chunk.choices[0]?.delta?.content || "");
+}`,
+		objToAdd: { maxTokens: 100, frequencyPenalty: 0.2 },
+	},
 ];
 
 // Python test cases
 const pythonTestCases: TestCase[] = [
 	{
+		description: "Python HuggingFace client",
+		snippet: `from huggingface_hub import InferenceClient
+
+client = InferenceClient(
+    provider="cerebras",
+    api_key="YOUR_HF_TOKEN",
+)
+
+stream = client.chat.completions.create(
+    model="Qwen/Qwen3-32B",
+    messages=[
+        {
+            "role": "user",
+            "content": "What is the capital of Brazil?"
+        },
+        {
+            "content": "{\"answer_the_question\": 5, \"how_many_legs_does_a_dog_have\": true, \"answer_the_question_HERE\": \"elderberry\"}",
+            "role": "assistant"
+        }
+    ],
+    temperature=0.5,
+    top_p=0.7,
+    stream=True,
+)
+
+for chunk in stream:
+    print(chunk.choices[0].delta.content, end="")`,
+		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
+		pythonSyntax: "kwargs", // Add this line
+	},
+	{
+		description: "Python with Requests",
+		snippet: `import json
+import requests
+
+API_URL = "https://api.cerebras.ai/v1/chat/completions"
+headers = {
+    "Authorization": "Bearer YOUR_HF_TOKEN",
+}
+
+def query(payload):
+    response = requests.post(API_URL, headers=headers, json=payload, stream=True)
+    for line in response.iter_lines():
+        if not line.startswith(b"data:"):
+            continue
+        if line.strip() == b"data: [DONE]":
+            return
+        yield json.loads(line.decode("utf-8").lstrip("data:").rstrip("/n"))
+
+chunks = query({
+    "messages": [
+        {
+            "role": "user",
+            "content": "What is the capital of Brazil?"
+        },
+        {
+            "content": "{\"answer_the_question\": 5, \"how_many_legs_does_a_dog_have\": true, \"answer_the_question_HERE\": \"elderberry\"}",
+            "role": "assistant"
+        }
+    ],
+    "temperature": 0.5,
+    "top_p": 0.7,
+    "model": "qwen-3-32b",
+    "stream": True,
+})
+
+for chunk in chunks:
+    print(chunk["choices"][0]["delta"]["content"], end="")`,
+		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
+		pythonSyntax: "dict", // Add this line
+	},
+	{
 		description: "Python OpenAI client",
-		snippet: `
-from openai import OpenAI
+		snippet: `from openai import OpenAI
 
 client = OpenAI(
     base_url="https://api.cerebras.ai/v1",
     api_key="YOUR_HF_TOKEN",
 )
 
-completion = client.chat.completions.create(
+stream = client.chat.completions.create(
     model="qwen-3-32b",
     messages=[
         {
@@ -75,11 +177,13 @@ completion = client.chat.completions.create(
     ],
     temperature=0.5,
     top_p=0.7,
+    stream=True,
 )
 
-print(completion.choices[0].message)
-`,
+for chunk in stream:
+    print(chunk.choices[0].delta.content, end="")`,
 		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
+		pythonSyntax: "kwargs", // Add this line
 	},
 	// Add more Python test cases as needed
 ];
@@ -154,18 +258,30 @@ describe("modifySnippet", () => {
 					let expectedValue;
 					if (typeof value === "string") expectedValue = `"${value}"`;
 					else if (typeof value === "boolean") expectedValue = value ? "True" : "False";
-					else expectedValue = value;
+					else expectedValue = String(value); // Ensure value is string for regex
 
-					const pattern = new RegExp(`${key}\\s*=\\s*${expectedValue}`);
+					let pattern;
+					if (testCase.pythonSyntax === "dict") {
+						pattern = new RegExp(`"${key}"\\s*:\\s*${expectedValue}`);
+					} else {
+						// Default to kwargs for other Python cases
+						pattern = new RegExp(`${key}\\s*=\\s*${expectedValue}`);
+					}
 					expect(pattern.test(result)).toBeTruthy();
 				});
 
 				// Check that original properties are preserved
-				expect(result).toContain("temperature=0.5");
-				expect(result).toContain("top_p=0.7");
-
-				// Check that the structure is maintained
-				expect(result.includes("(") && result.includes(")")).toBeTruthy();
+				if (testCase.pythonSyntax === "dict") {
+					expect(result).toContain('"temperature": 0.5');
+					expect(result).toContain('"top_p": 0.7');
+					// Check that the structure is maintained (dict uses {})
+					expect(result.includes("{") && result.includes("}")).toBeTruthy();
+				} else {
+					expect(result).toContain("temperature=0.5");
+					expect(result).toContain("top_p=0.7");
+					// Check that the structure is maintained (kwargs uses ())
+					expect(result.includes("(") && result.includes(")")).toBeTruthy();
+				}
 			});
 		});
 	});

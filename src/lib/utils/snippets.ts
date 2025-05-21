@@ -71,7 +71,7 @@ function insertPropertiesInternal(
 		for (const line of lines) {
 			const lineIndentMatch = line.match(/^(\s+)\S/);
 			if (lineIndentMatch) {
-				indent = lineIndentMatch[1];
+				indent = lineIndentMatch[1] ?? "";
 				break;
 			}
 		}
@@ -89,73 +89,144 @@ function insertPropertiesInternal(
 		newPropsStr += propFormatter(key, valueFormatter(value), indent);
 	});
 
-	let existingContentProcessed = currentContent.trimEnd();
-	if (existingContentProcessed && !existingContentProcessed.endsWith(",")) {
-		existingContentProcessed += ",";
-	}
-
+	const trimmedOriginalContent = currentContent.trim();
 	let combinedContent;
-	if (existingContentProcessed) {
-		combinedContent = existingContentProcessed + "\n" + newPropsStr;
+
+	if (trimmedOriginalContent) {
+		// There was actual non-whitespace content.
+		// Preserve original currentContent structure as much as possible.
+		// Find the end of the textual part of currentContent (before any pure trailing whitespace).
+		let endOfTextualPart = currentContent.length;
+		while (endOfTextualPart > 0 && /\s/.test(currentContent.charAt(endOfTextualPart - 1))) {
+			endOfTextualPart--;
+		}
+		const textualPartOfCurrentContent = currentContent.substring(0, endOfTextualPart);
+		const trailingWhitespaceOfCurrentContent = currentContent.substring(endOfTextualPart);
+
+		let processedTextualPart = textualPartOfCurrentContent;
+		if (processedTextualPart && !processedTextualPart.endsWith(",")) {
+			processedTextualPart += ",";
+		}
+
+		// Add a newline separator if the original trailing whitespace doesn't end with one.
+		const separator =
+			trailingWhitespaceOfCurrentContent.endsWith("\n") || trailingWhitespaceOfCurrentContent.endsWith("\r")
+				? ""
+				: "\n";
+		combinedContent = processedTextualPart + trailingWhitespaceOfCurrentContent + separator + newPropsStr;
 	} else {
-		// If currentContent was empty or just whitespace, new props need to be formatted correctly.
-		// Check if openChar was followed by a newline.
-		if (currentContent.startsWith("\n") || snippet[openCharIndex + 1] === "\n") {
-			combinedContent = newPropsStr; // Indent is already part of newPropsStr
+		// currentContent was empty or contained only whitespace.
+		// Check if the original block opening (e.g., '{' or '(') was immediately followed by a newline.
+		const openCharFollowedByNewline =
+			snippet[openCharIndex + 1] === "\n" ||
+			(snippet[openCharIndex + 1] === "\r" && snippet[openCharIndex + 2] === "\n");
+		if (openCharFollowedByNewline) {
+			combinedContent = newPropsStr; // newPropsStr already starts with indent
 		} else {
-			combinedContent = "\n" + newPropsStr; // Add newline if it was like {prop:val} or {}
+			combinedContent = "\n" + newPropsStr; // Add a newline first, then newPropsStr
 		}
 	}
 
-	// Remove trailing comma from the very end
+	// Remove the trailing comma (and its trailing whitespace/newline) from the last property added.
 	combinedContent = combinedContent.replace(/,\s*$/, "");
 
-	// Ensure a newline before the closing character if there's content
-	if (combinedContent.trim() && !combinedContent.endsWith("\n")) {
-		combinedContent += "\n";
-		// Add indent for the closing char line if it wasn't there
-		const closingLineIndent = indent.length >= 4 ? indent.substring(0, indent.length - 4) : "";
-		combinedContent += closingLineIndent;
-	} else if (!combinedContent.trim() && !currentContent.includes("\n")) {
-        // Handles empty {} -> {\n}
-        combinedContent = "\n";
-    }
+	// Ensure the block content ends with a newline, and the closing character is on its own line, indented.
+	if (combinedContent.trim()) {
+		// If there's any actual content in the block
+		if (!combinedContent.endsWith("\n")) {
+			combinedContent += "\n";
+		}
+		// Determine the base indent for the closing character's line
+		const lineOfOpenCharStart = snippet.lastIndexOf("\n", openCharIndex) + 1;
+		const openCharLine = snippet.substring(lineOfOpenCharStart, openCharIndex);
+		const baseIndentMatch = openCharLine.match(/^(\s*)/);
+		const baseIndent = baseIndentMatch ? baseIndentMatch[1] : "";
+		combinedContent += baseIndent;
+	} else {
+		// Block is effectively empty (e.g., was {} and no properties added, or newPropsStr was empty - though current logic prevents this if newProperties is not empty).
+		// Format as an empty block with the closing char on a new, indented line.
+		const lineOfOpenCharStart = snippet.lastIndexOf("\n", openCharIndex) + 1;
+		const openCharLine = snippet.substring(lineOfOpenCharStart, openCharIndex);
+		const baseIndentMatch = openCharLine.match(/^(\s*)/);
+		const baseIndent = baseIndentMatch ? baseIndentMatch[1] : "";
 
+		const openCharFollowedByNewline =
+			snippet[openCharIndex + 1] === "\n" ||
+			(snippet[openCharIndex + 1] === "\r" && snippet[openCharIndex + 2] === "\n");
+		if (openCharFollowedByNewline) {
+			// Original was like {\n}
+			combinedContent = baseIndent; // Just the indent for the closing char
+		} else {
+			// Original was like {}
+			combinedContent = "\n" + baseIndent; // Newline, then indent for closing char
+		}
+	}
 
 	return contentBeforeBlock + combinedContent + contentAfterBlock;
 }
 
 export function modifySnippet(snippet: string, newProperties: Record<string, unknown>): string {
+	// JS: HuggingFace InferenceClient
 	if (snippet.includes("client.chatCompletionStream")) {
-		// JS/TS
 		return insertPropertiesInternal(
 			snippet,
 			newProperties,
-			/client\.chatCompletionStream\s*\(\s*/,
-			"{",
+			/client\.chatCompletionStream\s*\(\s*/, // Finds "client.chatCompletionStream("
+			"{", // The parameters are in an object literal
 			"}",
 			(key, value, indent) => `${indent}${key}: ${value},\n`,
 			formatJsJsonValue
 		);
-	} else if (snippet.includes("client.chat.completions.create")) {
-		// Python
+	}
+	// JS: OpenAI Client
+	// Check for client.chat.completions.create and a common JS import pattern
+	else if (
+		snippet.includes("client.chat.completions.create") &&
+		(snippet.includes('import { OpenAI } from "openai"') || snippet.includes("new OpenAI("))
+	) {
 		return insertPropertiesInternal(
 			snippet,
 			newProperties,
-			/client\.chat\.completions\.create\s*\(/,
-			"(",
+			/client\.chat\.completions\.create\s*\(\s*/, // Finds "client.chat.completions.create("
+			"{", // The parameters are in an object literal
+			"}",
+			(key, value, indent) => `${indent}${key}: ${value},\n`,
+			formatJsJsonValue
+		);
+	}
+	// Python: OpenAI or HuggingFace Client using client.chat.completions.create
+	else if (snippet.includes("client.chat.completions.create")) {
+		return insertPropertiesInternal(
+			snippet,
+			newProperties,
+			/client\.chat\.completions\.create\s*\(/, // Finds "client.chat.completions.create("
+			"(", // The parameters are directly in the function call tuple
 			")",
 			(key, value, indent) => `${indent}${key}=${value},\n`,
 			formatPythonValue
 		);
-	} else if (snippet.includes("curl") && snippet.includes("-d")) {
-		// Shell/curl (JSON content)
+	}
+	// Python: requests example with query({...})
+	else if (snippet.includes("def query(payload):") && snippet.includes("query({")) {
 		return insertPropertiesInternal(
 			snippet,
 			newProperties,
-			/-d\s*'(?:\\n)?\s*/, // Matches up to the opening quote of the JSON string
-			"{", // JSON content starts with {
-			"}", // JSON content ends with }
+			/query\s*\(\s*/, // Finds "query(" and expects a dictionary literal next
+			"{", // The parameters are in a dictionary literal
+			"}",
+			// Python dict keys are strings, values formatted for Python
+			(key, formattedValue, indent) => `${indent}"${key}": ${formattedValue},\n`,
+			formatPythonValue // Use formatPythonValue for the values themselves
+		);
+	}
+	// Shell/curl (JSON content)
+	else if (snippet.includes("curl") && snippet.includes("-d")) {
+		return insertPropertiesInternal(
+			snippet,
+			newProperties,
+			/-d\s*'(?:\\n)?\s*/,
+			"{",
+			"}",
 			(key, value, indent) => `${indent}"${key}": ${value},\n`,
 			formatJsJsonValue
 		);

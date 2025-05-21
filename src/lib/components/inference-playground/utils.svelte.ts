@@ -353,7 +353,8 @@ export function getInferenceSnippet(
 	return allSnippets
 		.filter(s => s.language === language)
 		.map(s => {
-			return { ...s, content: modifySnippet(s.content, { prop: "hi" }) };
+			return { ...s };
+			// return { ...s, content: modifySnippet(s.content, { prop: "hi" }) };
 		});
 }
 
