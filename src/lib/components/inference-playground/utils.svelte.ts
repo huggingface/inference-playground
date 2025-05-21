@@ -21,6 +21,7 @@ import OpenAI from "openai";
 import { images } from "$lib/state/images.svelte.js";
 import { projects } from "$lib/state/projects.svelte.js";
 import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
+import { modifySnippet } from "$lib/utils/snippets.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -333,14 +334,27 @@ export function getInferenceSnippet(
 		{ ...providerMapping, hfModelId: model.id },
 		opts
 	);
-	// GET_SNIPPET_FN[language](
-	// 	{ ...model, inference: "" },
-	// 	accessToken,
-	// 	provider,
-	// 	providerId,
-	// 	opts
-	// );
-	return allSnippets.filter(s => s.language === language);
+
+	if (opts?.structured_output && !structuredForbiddenProviders.includes(provider as Provider)) {
+		allSnippets.forEach(s => {
+			const modified = modifySnippet(s.content, { prop: "hi" });
+			if (s.content === modified) {
+				console.log("Failed for", s.language, "\n");
+			} else {
+				console.log("Original snippet");
+				console.log(s.content);
+				console.log("\nModified");
+				console.log(modified);
+				console.log();
+			}
+		});
+	}
+
+	return allSnippets
+		.filter(s => s.language === language)
+		.map(s => {
+			return { ...s, content: modifySnippet(s.content, { prop: "hi" }) };
+		});
 }
 
 /**

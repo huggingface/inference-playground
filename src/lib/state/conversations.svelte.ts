@@ -8,9 +8,9 @@ import {
 } from "$lib/components/inference-playground/utils.svelte.js";
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
-import { PipelineTag, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
+import { PipelineTag, Provider, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
-import { models } from "./models.svelte";
+import { models, structuredForbiddenProviders } from "./models.svelte";
 import { DEFAULT_PROJECT_ID, ProjectEntity, projects } from "./projects.svelte";
 import { token } from "./token.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -101,6 +101,16 @@ export class ConversationClass {
 
 	get data() {
 		return this.#data;
+	}
+
+	get isStructuredOutputAllowed() {
+		const forbiddenProvider =
+			this.data.provider && structuredForbiddenProviders.includes(this.data.provider as Provider);
+		return !forbiddenProvider;
+	}
+
+	get isStructuredOutputEnabled() {
+		return this.isStructuredOutputAllowed && this.data.structuredOutput?.enabled;
 	}
 
 	async update(data: Partial<ConversationEntityMembers>) {
