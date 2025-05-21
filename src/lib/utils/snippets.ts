@@ -1,46 +1,59 @@
-// Helper to format values for JS/JSON
-function formatJsJsonValue(value: unknown): string {
+const INDENT_STEP = "    "; // 4 spaces for indentation
+
+function stringifyJsJsonRecursive(value: unknown, currentIndent: string): string {
 	if (typeof value === "string") return `"${value}"`;
 	if (value === null) return "null";
 	if (typeof value === "boolean" || typeof value === "number") return String(value);
 
 	if (typeof value === "object" && value !== null) {
+		const nextIndent = currentIndent + INDENT_STEP;
 		if (Array.isArray(value)) {
-			// Format as compact JSON array: e.g., [1, "text", true]
-			return `[${value.map(v => formatJsJsonValue(v)).join(", ")}]`;
+			if (value.length === 0) return "[]";
+			const items = value.map(v => stringifyJsJsonRecursive(v, nextIndent));
+			return "[\n" + items.map(item => nextIndent + item).join(",\n") + "\n" + currentIndent + "]";
 		}
-		// Format as compact JSON object: e.g., { "key1": "value1", "key2": 123 }
+
 		const entries = Object.entries(value);
 		if (entries.length === 0) return "{}";
-		const formattedEntries = entries.map(([k, v]) => `"${k}": ${formatJsJsonValue(v)}`).join(", ");
-		return `{ ${formattedEntries} }`;
+		const properties = entries.map(
+			([k, v]) => `${nextIndent}"${k}": ${stringifyJsJsonRecursive(v, nextIndent)}`
+		);
+		return "{\n" + properties.join(",\n") + "\n" + currentIndent + "}";
 	}
-	// Fallback for any other types (e.g., undefined, function - though these are unlikely here)
-	return String(value);
+	return String(value); // Fallback for other types
 }
 
-// Helper to format values for Python
-function formatPythonValue(value: unknown): string {
-	if (typeof value === "string") return `"${value}"`; // Python strings
-	if (typeof value === "boolean") return value ? "True" : "False"; // Python booleans
-	if (value === null) return "None"; // Python None
-	if (typeof value === "number") return String(value); // Python numbers
+function formatJsJsonValue(value: unknown, baseIndent: string): string {
+	return stringifyJsJsonRecursive(value, baseIndent);
+}
+
+function stringifyPythonRecursive(value: unknown, currentIndent: string): string {
+	if (typeof value === "string") return `"${value}"`;
+	if (typeof value === "boolean") return value ? "True" : "False";
+	if (value === null) return "None";
+	if (typeof value === "number") return String(value);
 
 	if (typeof value === "object" && value !== null) {
+		const nextIndent = currentIndent + INDENT_STEP;
 		if (Array.isArray(value)) {
-			// Format as Python list: e.g., [1, "text", True]
-			return `[${value.map(v => formatPythonValue(v)).join(", ")}]`;
+			if (value.length === 0) return "[]";
+			const items = value.map(v => stringifyPythonRecursive(v, nextIndent));
+			return "[\n" + items.map(item => nextIndent + item).join(",\n") + "\n" + currentIndent + "]";
 		}
-		// Format as Python dictionary: e.g., { "key1": "value1", "key2": 123 }
+
 		const entries = Object.entries(value);
 		if (entries.length === 0) return "{}";
-		const formattedEntries = entries
-			.map(([k, v]) => `"${k}": ${formatPythonValue(v)}`) // Dict keys are typically strings
-			.join(", ");
-		return `{ ${formattedEntries} }`;
+		// In Python, dictionary keys are typically strings.
+		const properties = entries.map(
+			([k, v]) => `${nextIndent}"${k}": ${stringifyPythonRecursive(v, nextIndent)}`
+		);
+		return "{\n" + properties.join(",\n") + "\n" + currentIndent + "}";
 	}
-	// Fallback
-	return String(value);
+	return String(value); // Fallback
+}
+
+function formatPythonValue(value: unknown, baseIndent: string): string {
+	return stringifyPythonRecursive(value, baseIndent);
 }
 
 /**
@@ -53,7 +66,7 @@ function insertPropertiesInternal(
 	openChar: string, // The opening character, e.g., '{' or '('
 	closeChar: string, // The closing character, e.g., '}' or ')'
 	propFormatter: (key: string, formattedValue: string, indent: string) => string,
-	valueFormatter: (value: unknown) => string
+	valueFormatter: (value: unknown, baseIndent: string) => string
 ): string {
 	if (Object.keys(newProperties).length === 0) {
 		return snippet;
@@ -115,7 +128,7 @@ function insertPropertiesInternal(
 
 	let newPropsStr = "";
 	Object.entries(newProperties).forEach(([key, value]) => {
-		newPropsStr += propFormatter(key, valueFormatter(value), indent);
+		newPropsStr += propFormatter(key, valueFormatter(value, indent), indent);
 	});
 
 	const trimmedOriginalContent = currentContent.trim();

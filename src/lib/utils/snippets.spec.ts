@@ -19,10 +19,11 @@ const SHARED_OBJ_TO_ADD = {
 };
 
 // Helper to create regex for matching stringified values (JS/JSON and Python)
-// This needs to be robust enough for different formatting of arrays/objects.
-// For simplicity, this version focuses on the presence and basic structure.
-// A more robust regex might be very complex.
+// This version is updated to handle multi-line, indented ("pretty-printed") structures.
 function createValueRegex(value: unknown, language: "js" | "python" | "json"): string {
+	// Flexible whitespace: matches any number of spaces, tabs, or newlines.
+	const ws = "(?:\\s|\\n)*";
+
 	if (typeof value === "string") {
 		return `"${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`; // Escape special regex chars in string
 	}
@@ -36,25 +37,29 @@ function createValueRegex(value: unknown, language: "js" | "python" | "json"): s
 		return String(value);
 	}
 	if (Array.isArray(value)) {
-		// Matches arrays like [item1, item2, item3] allowing for spaces
-		const itemRegexes = value.map(item => createValueRegex(item, language)).join("\\s*,\\s*");
-		return `\\[\\s*${itemRegexes}\\s*\\]`;
+		if (value.length === 0) {
+			return `\\[${ws}\\]`; // Matches "[]" or "[ \n ]" etc.
+		}
+		const itemRegexes = value.map(item => createValueRegex(item, language)).join(`${ws},${ws}`);
+		return `\\[${ws}${itemRegexes}${ws}\\]`;
 	}
 	if (typeof value === "object" && value !== null) {
-		// Matches objects like { "key1": value1, "key2": value2 }
-		// This is a simplified regex: it checks for key-value pairs but doesn't enforce order or all keys.
-		// It's hard to make a perfect regex for arbitrary object stringification.
-		// We'll check for the presence of each key-value pair individually in the tests.
-		const entriesRegex = Object.entries(value)
+		const entries = Object.entries(value);
+		if (entries.length === 0) {
+			return `\\{${ws}\\}`; // Matches "{}" or "{ \n }" etc.
+		}
+		const entriesRegex = entries
 			.map(([k, v]) => {
+				// In Python kwargs, keys are not quoted. This regex builder is for values that look like JSON/Python dicts.
+				// The main test loops handle Python kwarg key formatting separately.
 				const keyRegex = `"${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`;
 				const valueRegexPart = createValueRegex(v, language);
-				return `${keyRegex}\\s*:\\s*${valueRegexPart}`;
+				return `${keyRegex}${ws}:${ws}${valueRegexPart}`;
 			})
-			.join(".*"); // Use ".*" to allow other properties and flexible ordering/spacing within the stringified object
-		return `{\\s*${entriesRegex}.*}`; // Allow for flexible spacing and other properties
+			.join(`${ws},${ws}`); // Join key-value pairs with a comma and flexible whitespace
+		return `\\{${ws}${entriesRegex}${ws}\\}`;
 	}
-	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Fallback for other primitive types
 }
 
 type TestCase = {
