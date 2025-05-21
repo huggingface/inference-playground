@@ -12,7 +12,9 @@
 		"lint": "prettier . --check . && eslint src/",
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
-		"update-ctx-length": "jiti scripts/update-ctx-length.ts"
+		"update-ctx-length": "jiti scripts/update-ctx-length.ts",
+		"test:unit": "vitest",
+		"test": "npm run test:unit -- --run"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.3.0",
@@ -32,6 +34,8 @@
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
 		"@tailwindcss/container-queries": "^0.1.1",
 		"@tailwindcss/postcss": "^4.0.9",
+		"@testing-library/jest-dom": "^6.6.3",
+		"@testing-library/svelte": "^5.2.4",
 		"@types/node": "^22.14.1",
 		"clsx": "^2.1.1",
 		"dotenv": "^16.5.0",
@@ -41,6 +45,7 @@
 		"globals": "^16.0.0",
 		"highlight.js": "^11.10.0",
 		"jiti": "^2.4.2",
+		"jsdom": "^26.0.0",
 		"melt": "^0.30.1",
 		"openai": "^4.90.0",
 		"postcss": "^8.4.38",
@@ -58,7 +63,8 @@
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.26.1",
 		"unplugin-icons": "^22.1.0",
-		"vite": "^5.4.4"
+		"vite": "^5.4.4",
+		"vitest": "^3.0.0"
 	},
 	"type": "module",
 	"dependencies": {
@@ -66,5 +72,10 @@
 		"eslint-plugin-svelte": "^3.6.0",
 		"remult": "^3.0.2",
 		"typia": "^8.0.0"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild"
+		]
 	}
 }
