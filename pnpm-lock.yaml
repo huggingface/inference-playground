@@ -34,8 +34,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       '@huggingface/inference':
-        specifier: ^3.5.1
-        version: 3.5.1
+        specifier: ^3.13.2
+        version: 3.13.2
       '@huggingface/tasks':
         specifier: ^0.17.1
         version: 0.17.1
@@ -513,12 +513,16 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@huggingface/inference@3.5.1':
-    resolution: {integrity: sha512-NwTj5MS1eb4HfSp/O1/PyH1bEhTXl/iFh/K+8yYkUTHtK4AHXi/NDsV2LblhACaTEIhpOpYswL9cZx7z3y1tlg==}
+  '@huggingface/inference@3.13.2':
+    resolution: {integrity: sha512-s9grNTO33FeBIvKg4KjnG3sTQWppGDTdQxtpaVqKtn2Hl24yKwc59TfwNAKDzW12aZrc9njYBPwA/Y/mxX/kew==}
     engines: {node: '>=18'}
 
   '@huggingface/jinja@0.3.3':
     resolution: {integrity: sha512-vQQr2JyWvVFba3Lj9es4q9vCl1sAc74fdgnEMoX8qHrXtswap9ge9uO3ONDzQB0cQ0PUyaKY2N6HaVbTBvSXvw==}
+    engines: {node: '>=18'}
+
+  '@huggingface/jinja@0.5.0':
+    resolution: {integrity: sha512-Ptc03/jGRiYRoi0bUYKZ14MkDslsBRT24oxmsvUlfYrvQMldrxCevhPnT+hfX8awKTT8/f/0ZBBWldoeAcMHdQ==}
     engines: {node: '>=18'}
 
   '@huggingface/tasks@0.17.1':
@@ -2968,11 +2972,14 @@ snapshots:
     dependencies:
       '@huggingface/tasks': 0.19.8
 
-  '@huggingface/inference@3.5.1':
+  '@huggingface/inference@3.13.2':
     dependencies:
-      '@huggingface/tasks': 0.17.1
+      '@huggingface/jinja': 0.5.0
+      '@huggingface/tasks': 0.19.8
 
   '@huggingface/jinja@0.3.3': {}
+
+  '@huggingface/jinja@0.5.0': {}
 
   '@huggingface/tasks@0.17.1': {}
 
