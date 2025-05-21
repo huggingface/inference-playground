@@ -5,7 +5,7 @@ import { modifySnippet } from "./snippets.js";
 type TestCase = {
 	snippet: string;
 	objToAdd: Record<string, unknown>;
-	description?: string; // Optional description for the test
+	description: string; // Optional description for the test
 };
 
 // JavaScript/TypeScript test cases
@@ -118,7 +118,7 @@ describe("modifySnippet", () => {
 	// Test JavaScript/TypeScript snippets
 	describe("JavaScript/TypeScript", () => {
 		jsTestCases.forEach((testCase, index) => {
-			it(`should add properties to JS snippet #${index + 1}${testCase.description ? `: ${testCase.description}` : ""}`, () => {
+			it(`should add properties to JS snippet #${index + 1}: ${testCase.description}`, () => {
 				const result = modifySnippet(testCase.snippet, testCase.objToAdd);
 
 				// Check that all new properties are added with correct JS syntax
@@ -146,7 +146,7 @@ describe("modifySnippet", () => {
 	// Test Python snippets
 	describe("Python", () => {
 		pythonTestCases.forEach((testCase, index) => {
-			it(`should add properties to Python snippet #${index + 1}${testCase.description ? `: ${testCase.description}` : ""}`, () => {
+			it(`should add properties to Python snippet #${index + 1}: ${testCase.description}`, () => {
 				const result = modifySnippet(testCase.snippet, testCase.objToAdd);
 
 				// Check that all new properties are added with correct Python syntax
@@ -173,7 +173,7 @@ describe("modifySnippet", () => {
 	// Test Shell/curl snippets
 	describe("Shell/curl", () => {
 		shellTestCases.forEach((testCase, index) => {
-			it(`should add properties to shell snippet #${index + 1}${testCase.description ? `: ${testCase.description}` : ""}`, () => {
+			it(`should add properties to shell snippet #${index + 1}: ${testCase.description}`, () => {
 				const result = modifySnippet(testCase.snippet, testCase.objToAdd);
 
 				// Check that all new properties are added with correct JSON syntax
