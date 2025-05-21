@@ -108,6 +108,32 @@ for await (const chunk of stream) {
 		objToAdd: SHARED_OBJ_TO_ADD,
 	},
 	{
+		description: "JavaScript InferenceClient without streaming",
+		snippet: `import { InferenceClient } from "@huggingface/inference";
+
+const client = new InferenceClient("YOUR_HF_TOKEN");
+
+const chatCompletion = await client.chatCompletion({
+    provider: "cohere",
+    model: "CohereLabs/c4ai-command-r-plus",
+    messages: [
+        {
+            role: "user",
+            content: "hey, how are you???",
+        },
+        {
+            role: "assistant",
+            content: "{ \"answer_the_question\": \n\n\n\n            \n           \n\n-1.175\n\n\n\n, \n \"how_many_legs_does_a_dog_have\": \nfalse, \n\n\"answer_the_question_HERE\": \n\n\"A\"\n\n\n}",
+        },
+    ],
+    temperature: 0.5,
+    top_p: 0.7,
+});
+
+console.log(chatCompletion.choices[0].message);`,
+		objToAdd: SHARED_OBJ_TO_ADD,
+	},
+	{
 		description: "JavaScript with OpenAI library",
 		snippet: `import { OpenAI } from "openai";
 

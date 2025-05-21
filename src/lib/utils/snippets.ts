@@ -15,9 +15,8 @@ function stringifyJsJsonRecursive(value: unknown, currentIndent: string): string
 
 		const entries = Object.entries(value);
 		if (entries.length === 0) return "{}";
-		const properties = entries.map(
-			([k, v]) => `${nextIndent}"${k}": ${stringifyJsJsonRecursive(v, nextIndent)}`
-		);
+		const properties = entries.map(([k, v]) => `${nextIndent}"${k}": ${stringifyJsJsonRecursive(v, nextIndent)}`);
+
 		return "{\n" + properties.join(",\n") + "\n" + currentIndent + "}";
 	}
 	return String(value); // Fallback for other types
@@ -44,9 +43,8 @@ function stringifyPythonRecursive(value: unknown, currentIndent: string): string
 		const entries = Object.entries(value);
 		if (entries.length === 0) return "{}";
 		// In Python, dictionary keys are typically strings.
-		const properties = entries.map(
-			([k, v]) => `${nextIndent}"${k}": ${stringifyPythonRecursive(v, nextIndent)}`
-		);
+		const properties = entries.map(([k, v]) => `${nextIndent}"${k}": ${stringifyPythonRecursive(v, nextIndent)}`);
+
 		return "{\n" + properties.join(",\n") + "\n" + currentIndent + "}";
 	}
 	return String(value); // Fallback
@@ -208,7 +206,7 @@ function insertPropertiesInternal(
 }
 
 export function modifySnippet(snippet: string, newProperties: Record<string, unknown>): string {
-	// JS: HuggingFace InferenceClient
+	// JS: HuggingFace InferenceClient (streaming)
 	if (snippet.includes("client.chatCompletionStream")) {
 		return insertPropertiesInternal(
 			snippet,
@@ -216,7 +214,20 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			/client\.chatCompletionStream\s*\(\s*/, // Finds "client.chatCompletionStream("
 			"{", // The parameters are in an object literal
 			"}",
-			(key, value, indent) => `${indent}${key}: ${value},\n`,
+			(key, value, indent) => `${indent}${key}: ${value},\n`, // JS object literal style
+			formatJsJsonValue
+		);
+	}
+	// JS: HuggingFace InferenceClient (non-streaming)
+	else if (snippet.includes("client.chatCompletion") && snippet.includes("InferenceClient")) {
+		// Ensure it's not the OpenAI client by also checking for InferenceClient
+		return insertPropertiesInternal(
+			snippet,
+			newProperties,
+			/client\.chatCompletion\s*\(\s*/, // Finds "client.chatCompletion("
+			"{", // The parameters are in an object literal
+			"}",
+			(key, value, indent) => `${indent}${key}: ${value},\n`, // JS object literal style
 			formatJsJsonValue
 		);
 	}
