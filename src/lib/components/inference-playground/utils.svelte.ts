@@ -1,5 +1,5 @@
 import ctxLengthData from "$lib/data/context_length.json";
-import { snippets } from "@huggingface/inference";
+import { InferenceClient, snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import {
@@ -13,7 +13,7 @@ import {
 } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
 import { omit, tryGet } from "$lib/utils/object.svelte.js";
-import { HfInference, type InferenceProvider } from "@huggingface/inference";
+import { type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
@@ -50,8 +50,8 @@ async function parseMessage(message: ConversationMessage): Promise<ChatCompletio
 
 type HFCompletionMetadata = {
 	type: "huggingface";
-	client: HfInference;
-	args: Parameters<HfInference["chatCompletion"]>[0];
+	client: InferenceClient;
+	args: Parameters<InferenceClient["chatCompletion"]>[0];
 };
 
 type OpenAICompletionMetadata = {
@@ -164,7 +164,7 @@ async function getCompletionMetadata(
 	// Handle HuggingFace models
 	return {
 		type: "huggingface",
-		client: new HfInference(token.value),
+		client: new InferenceClient(token.value),
 		args,
 	};
 }
