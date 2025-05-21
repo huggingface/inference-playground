@@ -3,7 +3,7 @@ import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 import typia from "typia";
 import type { ConversationEntityMembers } from "./state/conversations.svelte";
 
-export type ConversationMessage = Pick<ChatCompletionInputMessage, "name" | "role" | "tool_calls"> & {
+export type ConversationMessage = Pick<ChatCompletionInputMessage, "name" | "role"> & {
 	content?: string;
 	images?: string[];
 };

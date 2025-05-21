@@ -76,7 +76,7 @@
 				opts
 			);
 			return snippets
-				.filter(s => s.client.startsWith("open") || lang === "curl")
+				.filter(s => s.client.startsWith("open") || lang === "sh")
 				.map(s => {
 					return {
 						...s,
@@ -107,7 +107,7 @@
 
 	function highlight(code?: string, language?: InferenceSnippetLanguage) {
 		if (!code || !language) return "";
-		return hljs.highlight(code, { language: language === "curl" ? "http" : language }).value;
+		return hljs.highlight(code, { language: language === "sh" ? "http" : language }).value;
 	}
 
 	const tokenStr = $derived.by(() => {
@@ -123,7 +123,7 @@
 	const snippetsByLang = $derived({
 		javascript: getSnippet({ lang: "js", tokenStr, conversation }),
 		python: getSnippet({ lang: "python", tokenStr, conversation }),
-		http: getSnippet({ lang: "curl", tokenStr, conversation }),
+		http: getSnippet({ lang: "sh", tokenStr, conversation }),
 	} as Record<Language, GetInferenceSnippetReturn>);
 
 	const selectedSnippet = $derived(snippetsByLang[lang][selectedSnippetIdxByLang[lang]]);

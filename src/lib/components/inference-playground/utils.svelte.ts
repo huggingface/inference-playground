@@ -1,4 +1,5 @@
 import ctxLengthData from "$lib/data/context_length.json";
+import { snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import {
@@ -13,7 +14,6 @@ import {
 import { safeParse } from "$lib/utils/json.js";
 import { omit, tryGet } from "$lib/utils/object.svelte.js";
 import { HfInference, type InferenceProvider } from "@huggingface/inference";
-import { snippets } from "./snippets/index.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
@@ -299,17 +299,11 @@ export const customMaxTokens: { [key: string]: number } = {
 } as const;
 
 // Order of the elements in InferenceModal.svelte is determined by this const
-export const inferenceSnippetLanguages = ["python", "js", "curl"] as const;
+export const inferenceSnippetLanguages = ["python", "js", "sh"] as const;
 
 export type InferenceSnippetLanguage = (typeof inferenceSnippetLanguages)[number];
 
-const GET_SNIPPET_FN = {
-	curl: snippets.curl.getCurlInferenceSnippet,
-	js: snippets.js.getJsInferenceSnippet,
-	python: snippets.python.getPythonInferenceSnippet,
-} as const;
-
-export type GetInferenceSnippetReturn = (InferenceSnippet & { language: InferenceSnippetLanguage })[];
+export type GetInferenceSnippetReturn = InferenceSnippet[];
 
 export function getInferenceSnippet(
 	model: Model,
@@ -330,15 +324,23 @@ export function getInferenceSnippet(
 		return [];
 	}
 
-	const providerId = model.inferenceProviderMapping.find(p => p.provider === provider)?.providerId;
-	const snippetsByClient = GET_SNIPPET_FN[language](
+	const providerMapping = model.inferenceProviderMapping.find(p => p.provider === provider);
+	if (!providerMapping) return [];
+	const allSnippets = snippets.getInferenceSnippets(
 		{ ...model, inference: "" },
 		accessToken,
 		provider,
-		providerId,
+		{ ...providerMapping, hfModelId: model.id },
 		opts
 	);
-	return snippetsByClient.map(snippetByClient => ({ ...snippetByClient, language }));
+	// GET_SNIPPET_FN[language](
+	// 	{ ...model, inference: "" },
+	// 	accessToken,
+	// 	provider,
+	// 	providerId,
+	// 	opts
+	// );
+	return allSnippets.filter(s => s.language === language);
 }
 
 /**

@@ -37,8 +37,8 @@ importers:
         specifier: ^3.13.2
         version: 3.13.2
       '@huggingface/tasks':
-        specifier: ^0.17.1
-        version: 0.17.1
+        specifier: ^0.19.8
+        version: 0.19.8
       '@huggingface/transformers':
         specifier: ^3.5.1
         version: 3.5.1
@@ -524,9 +524,6 @@ packages:
   '@huggingface/jinja@0.5.0':
     resolution: {integrity: sha512-Ptc03/jGRiYRoi0bUYKZ14MkDslsBRT24oxmsvUlfYrvQMldrxCevhPnT+hfX8awKTT8/f/0ZBBWldoeAcMHdQ==}
     engines: {node: '>=18'}
-
-  '@huggingface/tasks@0.17.1':
-    resolution: {integrity: sha512-kN5F/pzwxtmdZ0jORumNyegNKOX/ciU5G/DMZcqK3SJShod4C6yfvBRCMn5sEDzanxtU8VjX+7TaInQFmmU8Nw==}
 
   '@huggingface/tasks@0.19.8':
     resolution: {integrity: sha512-gR88OvYQQ2zu1Dt/tfFRVWJRfsKCdssxJBb8bz3tVd9fh3rneNE/pjkaGyG3oT1VlHv7wEmrqrnkmMcXy8O0rg==}
@@ -3054,8 +3051,6 @@ snapshots:
   '@huggingface/jinja@0.4.1': {}
 
   '@huggingface/jinja@0.5.0': {}
-
-  '@huggingface/tasks@0.17.1': {}
 
   '@huggingface/tasks@0.19.8': {}
 
