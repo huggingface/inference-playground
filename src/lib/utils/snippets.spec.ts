@@ -2,6 +2,61 @@
 import { describe, it, expect } from "vitest";
 import { modifySnippet } from "./snippets.js";
 
+// Shared object to add, including various types
+const SHARED_OBJ_TO_ADD = {
+	maxTokens: 200,
+	frequencyPenalty: 0.3,
+	presencePenalty: null,
+	stopSequences: ["stop1", "stop2"],
+	complexObject: {
+		nestedKey: "nestedValue",
+		nestedNum: 123,
+		nestedBool: false,
+		nestedArr: ["a", 1, true, null],
+	},
+	anotherString: "test string",
+	isStreaming: true,
+};
+
+// Helper to create regex for matching stringified values (JS/JSON and Python)
+// This needs to be robust enough for different formatting of arrays/objects.
+// For simplicity, this version focuses on the presence and basic structure.
+// A more robust regex might be very complex.
+function createValueRegex(value: unknown, language: "js" | "python" | "json"): string {
+	if (typeof value === "string") {
+		return `"${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`; // Escape special regex chars in string
+	}
+	if (value === null) {
+		return language === "python" ? "None" : "null";
+	}
+	if (typeof value === "boolean") {
+		return language === "python" ? (value ? "True" : "False") : String(value);
+	}
+	if (typeof value === "number") {
+		return String(value);
+	}
+	if (Array.isArray(value)) {
+		// Matches arrays like [item1, item2, item3] allowing for spaces
+		const itemRegexes = value.map(item => createValueRegex(item, language)).join("\\s*,\\s*");
+		return `\\[\\s*${itemRegexes}\\s*\\]`;
+	}
+	if (typeof value === "object" && value !== null) {
+		// Matches objects like { "key1": value1, "key2": value2 }
+		// This is a simplified regex: it checks for key-value pairs but doesn't enforce order or all keys.
+		// It's hard to make a perfect regex for arbitrary object stringification.
+		// We'll check for the presence of each key-value pair individually in the tests.
+		const entriesRegex = Object.entries(value)
+			.map(([k, v]) => {
+				const keyRegex = `"${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`;
+				const valueRegexPart = createValueRegex(v, language);
+				return `${keyRegex}\\s*:\\s*${valueRegexPart}`;
+			})
+			.join(".*"); // Use ".*" to allow other properties and flexible ordering/spacing within the stringified object
+		return `{\\s*${entriesRegex}.*}`; // Allow for flexible spacing and other properties
+	}
+	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 type TestCase = {
 	snippet: string;
 	objToAdd: Record<string, unknown>;
@@ -45,7 +100,7 @@ for await (const chunk of stream) {
   }
 }
 `,
-		objToAdd: { maxTokens: 100, frequencyPenalty: 0.2 },
+		objToAdd: SHARED_OBJ_TO_ADD,
 	},
 	{
 		description: "JavaScript with OpenAI library",
@@ -76,7 +131,7 @@ const stream = await client.chat.completions.create({
 for await (const chunk of stream) {
     process.stdout.write(chunk.choices[0]?.delta?.content || "");
 }`,
-		objToAdd: { maxTokens: 100, frequencyPenalty: 0.2 },
+		objToAdd: SHARED_OBJ_TO_ADD,
 	},
 ];
 
@@ -110,8 +165,8 @@ stream = client.chat.completions.create(
 
 for chunk in stream:
     print(chunk.choices[0].delta.content, end="")`,
-		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
-		pythonSyntax: "kwargs", // Add this line
+		objToAdd: SHARED_OBJ_TO_ADD, // Use shared object
+		pythonSyntax: "kwargs",
 	},
 	{
 		description: "Python with Requests",
@@ -151,8 +206,8 @@ chunks = query({
 
 for chunk in chunks:
     print(chunk["choices"][0]["delta"]["content"], end="")`,
-		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
-		pythonSyntax: "dict", // Add this line
+		objToAdd: SHARED_OBJ_TO_ADD, // Use shared object
+		pythonSyntax: "dict",
 	},
 	{
 		description: "Python OpenAI client",
@@ -182,8 +237,8 @@ stream = client.chat.completions.create(
 
 for chunk in stream:
     print(chunk.choices[0].delta.content, end="")`,
-		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
-		pythonSyntax: "kwargs", // Add this line
+		objToAdd: SHARED_OBJ_TO_ADD, // Use shared object
+		pythonSyntax: "kwargs",
 	},
 	// Add more Python test cases as needed
 ];
@@ -213,7 +268,7 @@ curl https://api.cerebras.ai/v1/chat/completions \\
         "stream": false
     }'
 `,
-		objToAdd: { max_tokens: 100, frequency_penalty: 0.2 },
+		objToAdd: SHARED_OBJ_TO_ADD, // Use shared object
 	},
 	// Add more shell test cases as needed
 ];
@@ -227,14 +282,13 @@ describe("modifySnippet", () => {
 
 				// Check that all new properties are added with correct JS syntax
 				Object.entries(testCase.objToAdd).forEach(([key, value]) => {
-					const formattedKey = key.replace(/([A-Z])/g, match => match.toLowerCase()); // Convert camelCase to lowercase for comparison
-					const expectedValue = typeof value === "string" ? `"${value}"` : value;
-
-					// Check for either camelCase or snake_case versions of the key
-					const camelCasePattern = new RegExp(`${key}:\\s*${expectedValue}`);
-					const snakeCasePattern = new RegExp(`${formattedKey}:\\s*${expectedValue}`);
-
-					expect(camelCasePattern.test(result) || snakeCasePattern.test(result)).toBeTruthy();
+					// For JS, keys are typically camelCase or as-is from the object.
+					// The value needs to be regex-matched due to potential complex structures.
+					const valueRegexStr = createValueRegex(value, "js");
+					// Regex to match 'key: value' or '"key": value' (for keys that might be quoted if they have special chars, though not in SHARED_OBJ_TO_ADD)
+					// Allowing for flexible spacing around colon.
+					const propertyPattern = new RegExp(`"${key}"\\s*:\\s*${valueRegexStr}|${key}\\s*:\\s*${valueRegexStr}`);
+					expect(result).toMatch(propertyPattern);
 				});
 
 				// Check that original properties are preserved
@@ -255,31 +309,30 @@ describe("modifySnippet", () => {
 
 				// Check that all new properties are added with correct Python syntax
 				Object.entries(testCase.objToAdd).forEach(([key, value]) => {
-					let expectedValue;
-					if (typeof value === "string") expectedValue = `"${value}"`;
-					else if (typeof value === "boolean") expectedValue = value ? "True" : "False";
-					else expectedValue = String(value); // Ensure value is string for regex
+					const valueRegexStr = createValueRegex(value, "python");
+					let propertyPattern;
 
-					let pattern;
 					if (testCase.pythonSyntax === "dict") {
-						pattern = new RegExp(`"${key}"\\s*:\\s*${expectedValue}`);
+						// Python dict: "key": value
+						propertyPattern = new RegExp(`"${key}"\\s*:\\s*${valueRegexStr}`);
 					} else {
-						// Default to kwargs for other Python cases
-						pattern = new RegExp(`${key}\\s*=\\s*${expectedValue}`);
+						// Python kwargs: key=value
+						// Convert camelCase keys from SHARED_OBJ_TO_ADD to snake_case for Python kwargs
+						const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+						propertyPattern = new RegExp(`${snakeKey}\\s*=\\s*${valueRegexStr}`);
 					}
-					expect(pattern.test(result)).toBeTruthy();
+					expect(result).toMatch(propertyPattern);
 				});
 
 				// Check that original properties are preserved
 				if (testCase.pythonSyntax === "dict") {
 					expect(result).toContain('"temperature": 0.5');
 					expect(result).toContain('"top_p": 0.7');
-					// Check that the structure is maintained (dict uses {})
 					expect(result.includes("{") && result.includes("}")).toBeTruthy();
 				} else {
+					// kwargs
 					expect(result).toContain("temperature=0.5");
 					expect(result).toContain("top_p=0.7");
-					// Check that the structure is maintained (kwargs uses ())
 					expect(result.includes("(") && result.includes(")")).toBeTruthy();
 				}
 			});
@@ -294,9 +347,13 @@ describe("modifySnippet", () => {
 
 				// Check that all new properties are added with correct JSON syntax
 				Object.entries(testCase.objToAdd).forEach(([key, value]) => {
-					const expectedValue = typeof value === "string" ? `"${value}"` : value;
-					const pattern = new RegExp(`"${key}":\\s*${expectedValue}`);
-					expect(pattern.test(result)).toBeTruthy();
+					// For shell/JSON, keys are typically snake_case or as-is.
+					// Values need to be regex-matched.
+					// Convert camelCase keys from SHARED_OBJ_TO_ADD to snake_case for JSON
+					const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+					const valueRegexStr = createValueRegex(value, "json");
+					const propertyPattern = new RegExp(`"${snakeKey}"\\s*:\\s*${valueRegexStr}`);
+					expect(result).toMatch(propertyPattern);
 				});
 
 				// Check that original properties are preserved

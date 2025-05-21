@@ -82,6 +82,34 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 	return ctxLength;
 }
 
+function getResponseFormatObj(conversation: ConversationClass | Conversation) {
+	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
+	const json = safeParse(data.structuredOutput?.schema ?? "");
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	if (json && data.structuredOutput?.enabled && !structuredForbiddenProviders.includes(data.provider as any)) {
+		switch (data.provider) {
+			case "cohere": {
+				return {
+					type: "json_object",
+					...json,
+				};
+			}
+			case Provider.Cerebras: {
+				return {
+					type: "json_schema",
+					json_schema: { ...json, name: "schema" },
+				};
+			}
+			default: {
+				return {
+					type: "json_schema",
+					json_schema: json,
+				};
+			}
+		}
+	}
+}
+
 async function getCompletionMetadata(
 	conversation: ConversationClass | Conversation,
 	signal?: AbortSignal
@@ -100,37 +128,9 @@ async function getCompletionMetadata(
 		...data.config,
 		messages: parsed,
 		model: model.id,
+		response_format: getResponseFormatObj(conversation),
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} as any;
-
-	const json = safeParse(data.structuredOutput?.schema ?? "");
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if (json && data.structuredOutput?.enabled && !structuredForbiddenProviders.includes(data.provider as any)) {
-		switch (data.provider) {
-			case "cohere": {
-				baseArgs.response_format = {
-					type: "json_object",
-					...json,
-				};
-				break;
-			}
-			case Provider.Cerebras: {
-				baseArgs.response_format = {
-					type: "json_schema",
-					json_schema: { ...json, name: "schema" },
-				};
-				break;
-			}
-			default: {
-				baseArgs.response_format = {
-					type: "json_schema",
-					json_schema: json,
-				};
-
-				break;
-			}
-		}
-	}
 
 	// Handle OpenAI-compatible models
 	if (isCustomModel(model)) {
@@ -307,8 +307,7 @@ export type InferenceSnippetLanguage = (typeof inferenceSnippetLanguages)[number
 export type GetInferenceSnippetReturn = InferenceSnippet[];
 
 export function getInferenceSnippet(
-	model: Model,
-	provider: InferenceProvider,
+	conversation: ConversationClass,
 	language: InferenceSnippetLanguage,
 	accessToken: string,
 	opts?: {
@@ -320,6 +319,10 @@ export function getInferenceSnippet(
 		structured_output?: ConversationEntityMembers["structuredOutput"];
 	}
 ): GetInferenceSnippetReturn {
+	const model = conversation.model;
+	const data = conversation.data;
+	const provider = (isCustomModel(model) ? "hf-inference" : data.provider) as InferenceProvider;
+
 	// If it's a custom model, we don't generate inference snippets
 	if (isCustomModel(model)) {
 		return [];
@@ -353,21 +356,16 @@ export function getInferenceSnippet(
 	return allSnippets
 		.filter(s => s.language === language)
 		.map(s => {
-			return { ...s };
-			// return { ...s, content: modifySnippet(s.content, { prop: "hi" }) };
+			if (opts?.structured_output && !structuredForbiddenProviders.includes(provider as Provider)) {
+				return {
+					...s,
+					content: modifySnippet(s.content, {
+						response_format: getResponseFormatObj(conversation),
+					}),
+				};
+			}
+			return s;
 		});
-}
-
-/**
- * - If language is defined, the function checks if in an inference snippet is available for that specific language
- */
-export function hasInferenceSnippet(
-	model: Model,
-	provider: InferenceProvider,
-	language: InferenceSnippetLanguage
-): boolean {
-	if (isCustomModel(model)) return false;
-	return getInferenceSnippet(model, provider, language, "").length > 0;
 }
 
 const tokenizers = new Map<string, PreTrainedTokenizer | null>();

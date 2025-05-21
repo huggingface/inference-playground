@@ -2,15 +2,44 @@
 function formatJsJsonValue(value: unknown): string {
 	if (typeof value === "string") return `"${value}"`;
 	if (value === null) return "null";
-	// For booleans and numbers, String(value) works fine for JS/JSON
+	if (typeof value === "boolean" || typeof value === "number") return String(value);
+
+	if (typeof value === "object" && value !== null) {
+		if (Array.isArray(value)) {
+			// Format as compact JSON array: e.g., [1, "text", true]
+			return `[${value.map(v => formatJsJsonValue(v)).join(", ")}]`;
+		}
+		// Format as compact JSON object: e.g., { "key1": "value1", "key2": 123 }
+		const entries = Object.entries(value);
+		if (entries.length === 0) return "{}";
+		const formattedEntries = entries.map(([k, v]) => `"${k}": ${formatJsJsonValue(v)}`).join(", ");
+		return `{ ${formattedEntries} }`;
+	}
+	// Fallback for any other types (e.g., undefined, function - though these are unlikely here)
 	return String(value);
 }
 
 // Helper to format values for Python
 function formatPythonValue(value: unknown): string {
-	if (typeof value === "string") return `"${value}"`;
-	if (typeof value === "boolean") return value ? "True" : "False";
-	if (value === null) return "None";
+	if (typeof value === "string") return `"${value}"`; // Python strings
+	if (typeof value === "boolean") return value ? "True" : "False"; // Python booleans
+	if (value === null) return "None"; // Python None
+	if (typeof value === "number") return String(value); // Python numbers
+
+	if (typeof value === "object" && value !== null) {
+		if (Array.isArray(value)) {
+			// Format as Python list: e.g., [1, "text", True]
+			return `[${value.map(v => formatPythonValue(v)).join(", ")}]`;
+		}
+		// Format as Python dictionary: e.g., { "key1": "value1", "key2": 123 }
+		const entries = Object.entries(value);
+		if (entries.length === 0) return "{}";
+		const formattedEntries = entries
+			.map(([k, v]) => `"${k}": ${formatPythonValue(v)}`) // Dict keys are typically strings
+			.join(", ");
+		return `{ ${formattedEntries} }`;
+	}
+	// Fallback
 	return String(value);
 }
 
@@ -202,7 +231,10 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			/client\.chat\.completions\.create\s*\(/, // Finds "client.chat.completions.create("
 			"(", // The parameters are directly in the function call tuple
 			")",
-			(key, value, indent) => `${indent}${key}=${value},\n`,
+			(key, value, indent) => {
+				const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+				return `${indent}${snakeKey}=${value},\n`;
+			},
 			formatPythonValue
 		);
 	}
@@ -227,7 +259,10 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			/-d\s*'(?:\\n)?\s*/,
 			"{",
 			"}",
-			(key, value, indent) => `${indent}"${key}": ${value},\n`,
+			(key, value, indent) => {
+				const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+				return `${indent}"${snakeKey}": ${value},\n`;
+			},
 			formatJsJsonValue
 		);
 	}

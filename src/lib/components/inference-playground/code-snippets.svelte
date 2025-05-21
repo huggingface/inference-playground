@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { emptyModel, type ConversationClass } from "$lib/state/conversations.svelte";
+	import { type ConversationClass } from "$lib/state/conversations.svelte";
+	import { structuredForbiddenProviders } from "$lib/state/models.svelte";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isCustomModel, PipelineTag } from "$lib/types.js";
+	import { isCustomModel } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { entries, fromEntries, keys } from "$lib/utils/object.svelte.js";
-	import type { InferenceProvider } from "@huggingface/inference";
 	import hljs from "highlight.js/lib/core";
 	import http from "highlight.js/lib/languages/http";
 	import javascript from "highlight.js/lib/languages/javascript";
@@ -17,7 +17,6 @@
 		type GetInferenceSnippetReturn,
 		type InferenceSnippetLanguage,
 	} from "./utils.svelte.js";
-	import { structuredForbiddenProviders } from "$lib/state/models.svelte";
 
 	hljs.registerLanguage("javascript", javascript);
 	hljs.registerLanguage("python", python);
@@ -62,19 +61,7 @@
 		}
 
 		if (isCustomModel(model)) {
-			const snippets = getInferenceSnippet(
-				{
-					...emptyModel,
-					_id: model._id,
-					id: model.id,
-					pipeline_tag: PipelineTag.TextGeneration,
-					tags: ["conversational"],
-				},
-				"hf-inference",
-				lang,
-				tokenStr,
-				opts
-			);
+			const snippets = getInferenceSnippet(conversation, lang, tokenStr, opts);
 			return snippets
 				.filter(s => s.client.startsWith("open") || lang === "sh")
 				.map(s => {
@@ -87,7 +74,7 @@
 				});
 		}
 
-		return getInferenceSnippet(model, data.provider as InferenceProvider, lang, tokenStr, opts);
+		return getInferenceSnippet(conversation, lang, tokenStr, opts);
 	}
 
 	// { javascript: 0, python: 0, http: 0 } at first
