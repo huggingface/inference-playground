@@ -28,7 +28,9 @@ describe("Images", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		// Mock crypto.randomUUID
-		vi.spyOn(global.crypto, "randomUUID").mockReturnValue("123e4567-e89b-12d3-a456-426614174000");
+		vi.spyOn(window.crypto, "randomUUID").mockReturnValue(
+			"123e4567-e89b-12d3-a456-426614174000");
+		
 	});
 
 	describe("upload", () => {

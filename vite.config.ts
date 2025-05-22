@@ -20,7 +20,19 @@ export default defineConfig({
 				plugins: [svelteTesting()],
 				test: {
 					name: "client",
-					environment: "jsdom",
+					environment: "browser",
+					browser: {
+						enabled: true,
+						provider: "playwright",
+						instances: [
+							{
+								browser: "chromium",
+							},
+							{
+								browser: "firefox",
+							},
+						],
+					},
 					clearMocks: true,
 					include: ["src/**/*.svelte.{test,spec}.{js,ts}"],
 					exclude: ["src/lib/server/**"],
