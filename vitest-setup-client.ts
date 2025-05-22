@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
+import fakeIndexedDB from "fake-indexeddb";
 
 // required for svelte5 + jsdom as jsdom does not support matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -15,4 +16,4 @@ Object.defineProperty(window, "matchMedia", {
 	})),
 });
 
-// add more mocks here if you need them
+globalThis.indexedDB = fakeIndexedDB;

@@ -42,6 +42,7 @@
 		"eslint": "^9.22.0",
 		"eslint-config-prettier": "^10.1.1",
 		"eslint-plugin-prettier": "^5.2.3",
+		"fake-indexeddb": "^6.0.1",
 		"globals": "^16.0.0",
 		"highlight.js": "^11.10.0",
 		"jiti": "^2.4.2",
