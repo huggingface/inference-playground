@@ -48,9 +48,16 @@ test.describe.serial("Token Handling and Subsequent Tests", () => {
 			const userInput = page.getByRole("textbox", { name: "Enter user message" });
 			await expect(userInput).toBeVisible();
 			await userInput.fill("Hello Hugging Face!");
+			await userInput.blur();
 			expect(await userInput.inputValue()).toBe("Hello Hugging Face!");
 
-			// TODO: Mock API to make this work.
+			// Reload the page
+			await page.reload();
+
+			// Re-select the input field and check its value
+			const userInputAfterReload = page.getByRole("textbox", { name: "Enter user message" });
+			await expect(userInputAfterReload).toBeVisible();
+			expect(await userInputAfterReload.inputValue()).toBe("Hello Hugging Face!");
 		});
 	});
 });
