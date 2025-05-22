@@ -24,3 +24,5 @@ vite.config.ts.timestamp-*
 
 # Model JSON file
 models.json
+
+e2e/*.json
