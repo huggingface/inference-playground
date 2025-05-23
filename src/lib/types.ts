@@ -48,10 +48,6 @@ export type Model = {
 	library_name?: LibraryName;
 };
 
-export type VisualModel = Omit<Model, "pipeline_tag"> & {
-	pipeline_tag: VisualPipelineTag;
-};
-
 export type CustomModel = {
 	id: string;
 	/** UUID */
@@ -184,14 +180,11 @@ export enum LibraryName {
 export enum PipelineTag {
 	TextGeneration = "text-generation",
 	ImageTextToText = "image-text-to-text",
-}
-
-export enum VisualPipelineTag {
 	TextToImage = "text-to-image",
 	TextToVideo = "text-to-video",
 }
 
-export const pipelineTagLabel: Record<PipelineTag, string> = {
+export const pipelineTagLabel: Partial<Record<PipelineTag, string>> = {
 	[PipelineTag.TextGeneration]: "Text→Text",
 	[PipelineTag.ImageTextToText]: "Image+Text→Text",
 };

@@ -1,6 +1,10 @@
-import type { Model } from "$lib/types.js";
+import { PipelineTag, type Model } from "$lib/types.js";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types.js";
+
+// Define supported pipeline tags
+const SUPPORTED_PIPELINE_TAGS: PipelineTag[] = Object.values(PipelineTag);
+const DEFAULT_PIPELINE_TAGS: PipelineTag[] = [PipelineTag.TextGeneration, PipelineTag.ImageTextToText]; // Default tags to fetch
 
 enum CacheStatus {
 	SUCCESS = "success",
@@ -14,10 +18,7 @@ type Cache = {
 	status: CacheStatus;
 	// Track failed models to selectively refetch them
 	failedTokenizers: string[]; // Using array instead of Set for serialization compatibility
-	failedApiCalls: {
-		textGeneration: boolean;
-		imageTextToText: boolean;
-	};
+	successfullyFetchedTags: PipelineTag[]; // Array of pipeline tags successfully fetched in the last attempt
 };
 
 const cache: Cache = {
@@ -25,10 +26,7 @@ const cache: Cache = {
 	timestamp: 0,
 	status: CacheStatus.ERROR,
 	failedTokenizers: [],
-	failedApiCalls: {
-		textGeneration: false,
-		imageTextToText: false,
-	},
+	successfullyFetchedTags: [], // Initialize as empty
 };
 
 // The time between cache refreshes
@@ -54,7 +52,7 @@ const requestInit: RequestInit = {
 };
 
 interface ApiQueryParams {
-	pipeline_tag?: "text-generation" | "image-text-to-text";
+	pipeline_tag?: PipelineTag;
 	filter: string;
 	inference_provider: string;
 	limit: number;
@@ -96,144 +94,147 @@ function createResponse(data: ApiModelsResponse): Response {
 	return json(data);
 }
 
-export const GET: RequestHandler = async ({ fetch }) => {
+export const GET: RequestHandler = async ({ fetch, url: requestUrl }) => {
 	const timestamp = Date.now();
-
-	// Determine if cache is valid
 	const elapsed = timestamp - cache.timestamp;
 	const cacheRefreshTime = cache.status === CacheStatus.SUCCESS ? FULL_CACHE_REFRESH : PARTIAL_CACHE_REFRESH;
 
-	// Use cache if it's still valid and has data
-	if (elapsed < cacheRefreshTime && cache.data?.length) {
-		console.log(`Using ${cache.status} cache (${Math.floor(elapsed / 1000 / 60)} min old)`);
+	// Use cache if it's still valid, has data, and no specific pipeline tags are requested (or requested tags are covered)
+	// For simplicity, if any pipeline_tag is in query, we might re-evaluate or proceed to fetch.
+	// A more sophisticated check could see if current cache.data satisfies the requested pipeline_tags.
+	// For now, we rely on the cacheRefreshTime primarily.
+	const requestedPipelineTagsParams = requestUrl.searchParams.getAll("pipeline_tag") as PipelineTag[];
+	const uniqueRequestedPipelineTags = [
+		...new Set(requestedPipelineTagsParams.filter(tag => SUPPORTED_PIPELINE_TAGS.includes(tag))),
+	];
+
+	if (elapsed < cacheRefreshTime && cache.data?.length && uniqueRequestedPipelineTags.length === 0) {
+		console.log(`Using ${cache.status} cache for default tags (${Math.floor(elapsed / 1000 / 60)} min old)`);
 		return createResponse({ models: cache.data });
 	}
 
+	const pipelineTagsToProcess =
+		uniqueRequestedPipelineTags.length > 0 ? uniqueRequestedPipelineTags : DEFAULT_PIPELINE_TAGS;
+
 	try {
-		// Determine which API calls we need to make based on cache status
-		const needTextGenFetch = elapsed >= FULL_CACHE_REFRESH || cache.failedApiCalls.textGeneration;
-		const needImgTextFetch = elapsed >= FULL_CACHE_REFRESH || cache.failedApiCalls.imageTextToText;
-
-		// Track the existing models we'll keep
-		const existingModels = new Map<string, Model>();
-		if (cache.data) {
-			cache.data.forEach(model => {
-				existingModels.set(model.id, model);
-			});
-		}
-
-		// Initialize new tracking for failed requests
+		const newFailedApiCalls: PipelineTag[] = [];
+		const fetchedModelsByTag = new Map<PipelineTag, Model[]>();
+		const apiPromises: Promise<void>[] = [];
+		// Initialize newFailedTokenizers, though it's not used in the current logic
 		const newFailedTokenizers: string[] = [];
-		const newFailedApiCalls = {
-			textGeneration: false,
-			imageTextToText: false,
-		};
 
-		// Fetch models as needed
-		let textGenModels: Model[] = [];
-		let imgText2TextModels: Model[] = [];
+		for (const tag of pipelineTagsToProcess) {
+			const needsFetch = elapsed >= FULL_CACHE_REFRESH || !cache.successfullyFetchedTags.includes(tag);
 
-		// Make the needed API calls in parallel
-		const apiPromises: Promise<Response | void>[] = [];
-		if (needTextGenFetch) {
-			const url = buildApiUrl({ ...queryParams, pipeline_tag: "text-generation" });
-			apiPromises.push(
-				fetch(url, requestInit).then(async response => {
-					if (!response.ok) {
-						console.error(`Error fetching text-generation models`, response.status, response.statusText);
-						newFailedApiCalls.textGeneration = true;
-					} else {
-						textGenModels = await response.json();
-					}
-				})
-			);
-		}
-
-		if (needImgTextFetch) {
-			apiPromises.push(
-				fetch(buildApiUrl({ ...queryParams, pipeline_tag: "image-text-to-text" }), requestInit).then(async response => {
-					if (!response.ok) {
-						console.error(`Error fetching image-text-to-text models`, response.status, response.statusText);
-						newFailedApiCalls.imageTextToText = true;
-					} else {
-						imgText2TextModels = await response.json();
-					}
-				})
-			);
+			if (needsFetch) {
+				const apiUrl = buildApiUrl({ ...queryParams, pipeline_tag: tag });
+				apiPromises.push(
+					fetch(apiUrl, requestInit)
+						.then(async response => {
+							if (!response.ok) {
+								console.error(`Error fetching ${tag} models: ${response.status} ${response.statusText}`);
+								newFailedApiCalls.push(tag);
+								// If there's old data for this tag in cache, use it as partial data
+								if (cache.data) {
+									const cachedModelsForTag = cache.data.filter(model => model.pipeline_tag === tag);
+									if (cachedModelsForTag.length > 0) {
+										fetchedModelsByTag.set(tag, cachedModelsForTag);
+									}
+								}
+							} else {
+								const models: Model[] = await response.json();
+								fetchedModelsByTag.set(tag, models);
+							}
+						})
+						.catch(err => {
+							console.error(`Network error or other issue fetching ${tag} models:`, err);
+							newFailedApiCalls.push(tag);
+							if (cache.data) {
+								const cachedModelsForTag = cache.data.filter(model => model.pipeline_tag === tag);
+								if (cachedModelsForTag.length > 0) {
+									fetchedModelsByTag.set(tag, cachedModelsForTag);
+								}
+							}
+						})
+				);
+			} else if (cache.data) {
+				// If not fetching, get models for this tag from the current cache
+				const cachedModelsForTag = cache.data.filter(model => model.pipeline_tag === tag);
+				fetchedModelsByTag.set(tag, cachedModelsForTag);
+			}
 		}
 
 		await Promise.all(apiPromises);
 
-		// If both needed API calls failed and we have cached data, use it
-		if (
-			needTextGenFetch &&
-			newFailedApiCalls.textGeneration &&
-			needImgTextFetch &&
-			newFailedApiCalls.imageTextToText &&
-			cache.data?.length
-		) {
-			console.log("All API requests failed. Using existing cache as fallback.");
-			cache.status = CacheStatus.ERROR;
-			cache.timestamp = timestamp; // Update timestamp to avoid rapid retry loops
-			cache.failedApiCalls = newFailedApiCalls;
-			return createResponse({ models: cache.data });
+		const combinedModels: Model[] = [];
+		for (const models of fetchedModelsByTag.values()) {
+			combinedModels.push(...models);
 		}
 
-		// For API calls we didn't need to make, use cached models
-		if (!needTextGenFetch && cache.data) {
-			textGenModels = cache.data.filter(model => model.pipeline_tag === "text-generation").map(model => model as Model);
+		// Deduplicate models by ID and filter out those without inference providers
+		const uniqueModelsMap = new Map<string, Model>();
+		for (const model of combinedModels) {
+			if (model && model.id && !uniqueModelsMap.has(model.id)) {
+				uniqueModelsMap.set(model.id, model);
+			}
 		}
+		const finalModels = Array.from(uniqueModelsMap.values()).filter(m => m.inferenceProviderMapping?.length > 0);
+		finalModels.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
 
-		if (!needImgTextFetch && cache.data) {
-			imgText2TextModels = cache.data
-				.filter(model => model.pipeline_tag === "image-text-to-text")
-				.map(model => model as Model);
-		}
-
-		const models: Model[] = [...textGenModels, ...imgText2TextModels].filter(
-			m => m.inferenceProviderMapping.length > 0
+		// Fallback: if all attempted fetches failed AND we have some old cache data, use the full old cache.
+		const attemptedFetchTags = pipelineTagsToProcess.filter(
+			tag => elapsed >= FULL_CACHE_REFRESH || !cache.successfullyFetchedTags.includes(tag)
 		);
-		models.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
+		if (attemptedFetchTags.length > 0 && newFailedApiCalls.length === attemptedFetchTags.length && cache.data?.length) {
+			console.warn("All attempted API requests failed. Using existing full cache as fallback.");
+			cache.timestamp = timestamp;
+			if (cache.status !== CacheStatus.ERROR) cache.status = CacheStatus.ERROR;
+			// Tags that were attempted and failed should not be in successfullyFetchedTags
+			cache.successfullyFetchedTags = cache.successfullyFetchedTags.filter(t => !newFailedApiCalls.includes(t));
+			return createResponse({ models: cache.data }); // Return old full cache
+		}
 
-		// Determine cache status based on failures
-		const hasApiFailures = newFailedApiCalls.textGeneration || newFailedApiCalls.imageTextToText;
-
-		const cacheStatus = hasApiFailures ? CacheStatus.PARTIAL : CacheStatus.SUCCESS;
-
-		cache.data = models;
+		cache.data = finalModels;
 		cache.timestamp = timestamp;
-		cache.status = cacheStatus;
-		cache.failedTokenizers = newFailedTokenizers;
-		cache.failedApiCalls = newFailedApiCalls;
+		cache.failedTokenizers = newFailedTokenizers; // Still unused, but kept
+		// Update successfullyFetchedTags: includes tags processed in this run that didn't fail
+		cache.successfullyFetchedTags = pipelineTagsToProcess.filter(tag => !newFailedApiCalls.includes(tag));
+
+		const hasApiFailures = newFailedApiCalls.length > 0;
+		if (finalModels.length === 0 && pipelineTagsToProcess.length > 0 && hasApiFailures) {
+			cache.status = CacheStatus.ERROR;
+		} else if (hasApiFailures) {
+			cache.status = CacheStatus.PARTIAL;
+		} else {
+			cache.status = CacheStatus.SUCCESS;
+		}
 
 		console.log(
-			`Cache updated: ${models.length} models, status: ${cacheStatus}, ` +
+			`Cache updated: ${finalModels.length} models, status: ${cache.status}, ` +
+				`processed tags: ${pipelineTagsToProcess.join(", ")}, ` +
+				`successfully fetched tags: ${cache.successfullyFetchedTags.join(", ") || "none"}, ` +
 				`failed tokenizers: ${newFailedTokenizers.length}, ` +
-				`API failures: text=${newFailedApiCalls.textGeneration}, img=${newFailedApiCalls.imageTextToText}`
+				`API failures for tags in current run: ${newFailedApiCalls.length > 0 ? newFailedApiCalls.join(", ") : "none"}`
 		);
 
-		return createResponse({ models });
+		return createResponse({ models: finalModels });
 	} catch (error) {
-		console.error("Error fetching models:", error);
+		console.error("Critical error in GET /api/models:", error);
 
-		// If we have cached data, use it as fallback
 		if (cache.data?.length) {
+			// Fallback to existing cache on critical error
 			cache.status = CacheStatus.ERROR;
-			// Mark all API calls as failed so we retry them next time
-			cache.failedApiCalls = {
-				textGeneration: true,
-				imageTextToText: true,
-			};
+			// Mark all processed tags as failed for this attempt
+			cache.successfullyFetchedTags = cache.successfullyFetchedTags.filter(t => !pipelineTagsToProcess.includes(t));
+			cache.timestamp = timestamp; // Update timestamp
 			return createResponse({ models: cache.data });
 		}
 
-		// No cache available, return empty array
+		// No cache available, and critical error occurred
 		cache.status = CacheStatus.ERROR;
 		cache.timestamp = timestamp;
-		cache.failedApiCalls = {
-			textGeneration: true,
-			imageTextToText: true,
-		};
+		cache.data = [];
+		cache.successfullyFetchedTags = []; // All processed tags failed or no tags processed
 		return createResponse({ models: [] });
 	}
 };
