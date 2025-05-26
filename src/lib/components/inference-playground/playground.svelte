@@ -29,6 +29,7 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
+	import { TEST_IDS } from "$lib/constants.js";
 
 	const multiple = $derived(conversations.active.length > 1);
 
@@ -153,7 +154,13 @@
 				{/if}
 				<Tooltip>
 					{#snippet trigger(tooltip)}
-						<button type="button" onclick={conversations.reset} class="btn size-[39px]" {...tooltip.trigger}>
+						<button
+							type="button"
+							onclick={conversations.reset}
+							class="btn size-[39px]"
+							{...tooltip.trigger}
+							data-test-id={TEST_IDS.reset}
+						>
 							<IconDelete />
 						</button>
 					{/snippet}

@@ -110,7 +110,7 @@ export class ConversationClass {
 		return this.isStructuredOutputAllowed && this.data.structuredOutput?.enabled;
 	}
 
-	async update(data: Partial<ConversationEntityMembers>) {
+	update = async (data: Partial<ConversationEntityMembers>) => {
 		if (this.data.id === -1) return;
 		// if (this.data.id === undefined) return;
 		const cloned = snapshot({ ...this.data, ...data });
@@ -122,16 +122,16 @@ export class ConversationClass {
 			await conversationsRepo.update(this.data.id, cloned);
 			this.#data = cloned;
 		}
-	}
+	};
 
-	async addMessage(message: ConversationMessage) {
+	addMessage = async (message: ConversationMessage) => {
 		this.update({
 			...this.data,
 			messages: [...this.data.messages, snapshot(message)],
 		});
-	}
+	};
 
-	async updateMessage(args: { index: number; message: Partial<ConversationMessage> }) {
+	updateMessage = async (args: { index: number; message: Partial<ConversationMessage> }) => {
 		const prev = await poll(() => this.data.messages[args.index], { interval: 10, maxAttempts: 200 });
 
 		if (!prev) return;
@@ -144,9 +144,9 @@ export class ConversationClass {
 				...this.data.messages.slice(args.index + 1),
 			],
 		});
-	}
+	};
 
-	async deleteMessage(idx: number) {
+	deleteMessage = async (idx: number) => {
 		const imgKeys = this.data.messages.flatMap(m => m.images).filter(isString);
 		await Promise.all([
 			...imgKeys.map(k => images.delete(k)),
@@ -155,9 +155,9 @@ export class ConversationClass {
 				messages: this.data.messages.slice(0, idx),
 			}),
 		]);
-	}
+	};
 
-	async deleteMessages(from: number) {
+	deleteMessages = async (from: number) => {
 		const sliced = this.data.messages.slice(0, from);
 		const notSliced = this.data.messages.slice(from);
 
@@ -169,9 +169,9 @@ export class ConversationClass {
 				messages: sliced,
 			}),
 		]);
-	}
+	};
 
-	async genNextMessage() {
+	genNextMessage = async () => {
 		this.generating = true;
 		const startTime = performance.now();
 
@@ -223,7 +223,7 @@ export class ConversationClass {
 		const endTime = performance.now();
 		this.generationStats.latency = Math.round(endTime - startTime);
 		this.generating = false;
-	}
+	};
 
 	stopGenerating = () => {
 		this.abortManager.abortAll();
@@ -236,7 +236,7 @@ class Conversations {
 	generationStats = $derived(this.active.map(c => c.generationStats));
 	loaded = $state(false);
 
-	#active = $derived(this.for(projects.activeId));
+	#active = $derived.by(() => this.for(projects.activeId));
 
 	init = createInit(() => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -271,7 +271,9 @@ class Conversations {
 		return this.#active;
 	}
 
-	async create(args: { projectId: ProjectEntity["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>) {
+	create = async (
+		args: { projectId: ProjectEntity["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>
+	) => {
 		const conv = snapshot({
 			...getDefaultConversation(args.projectId),
 			...args,
@@ -286,9 +288,9 @@ class Conversations {
 		};
 
 		return id;
-	}
+	};
 
-	for(projectId: ProjectEntity["id"]): ConversationClass[] {
+	for = (projectId: ProjectEntity["id"]): ConversationClass[] => {
 		// Async load from db
 		if (!this.#conversations[projectId]?.length) {
 			conversationsRepo.find({ where: { projectId } }).then(c => {
@@ -310,27 +312,27 @@ class Conversations {
 		return res.slice(0, 2).toSorted((a, b) => {
 			return a.data.createdAt.getTime() - b.data.createdAt.getTime();
 		});
-	}
+	};
 
-	async delete({ id, projectId }: ConversationEntityMembers) {
+	delete = async ({ id, projectId }: ConversationEntityMembers) => {
 		if (!id) return;
 
 		await conversationsRepo.delete(id);
 
 		const prev = this.#conversations[projectId] ?? [];
 		this.#conversations = { ...this.#conversations, [projectId]: prev.filter(c => c.data.id != id) };
-	}
+	};
 
-	async deleteAllFrom(projectId: string) {
+	deleteAllFrom = async (projectId: string) => {
 		this.for(projectId).forEach(c => this.delete(c.data));
-	}
+	};
 
-	async reset() {
-		this.active.forEach(c => this.delete(c.data));
+	reset = async () => {
+		await Promise.allSettled(this.active.map(c => this.delete(c.data)));
 		this.create(getDefaultConversation(projects.activeId));
-	}
+	};
 
-	async migrate(from: ProjectEntity["id"], to: ProjectEntity["id"]) {
+	migrate = async (from: ProjectEntity["id"], to: ProjectEntity["id"]) => {
 		const fromArr = this.#conversations[from] ?? [];
 		await Promise.allSettled(fromArr.map(c => c.update({ projectId: to })));
 		this.#conversations = {
@@ -338,18 +340,18 @@ class Conversations {
 			[to]: [...fromArr],
 			[from]: [],
 		};
-	}
+	};
 
-	async duplicate(from: ProjectEntity["id"], to: ProjectEntity["id"]) {
+	duplicate = async (from: ProjectEntity["id"], to: ProjectEntity["id"]) => {
 		const fromArr = this.#conversations[from] ?? [];
 		await Promise.allSettled(
 			fromArr.map(async c => {
 				conversations.create({ ...c.data, projectId: to });
 			})
 		);
-	}
+	};
 
-	async genNextMessages(conv: "left" | "right" | "both" | ConversationClass = "both") {
+	genNextMessages = async (conv: "left" | "right" | "both" | ConversationClass = "both") => {
 		if (!token.value) {
 			token.showModal = true;
 			return;
@@ -402,7 +404,7 @@ class Conversations {
 				addToast({ title: "Error", description: "An unknown error occurred", variant: "error" });
 			}
 		}
-	}
+	};
 
 	stopGenerating = () => {
 		this.active.forEach(c => c.abortManager.abortAll());

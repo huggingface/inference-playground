@@ -15,6 +15,7 @@
 	import IconCustom from "../icon-custom.svelte";
 	import LocalToasts from "../local-toasts.svelte";
 	import ImgPreview from "./img-preview.svelte";
+	import { TEST_IDS } from "$lib/constants.js";
 
 	type Props = {
 		conversation: ConversationClass;
@@ -106,6 +107,7 @@
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"
 				data-message
+				data-test-id={TEST_IDS.message}
 				{@attach autofocusAction(autofocus)}
 				{@attach autosized.attachment}
 			></textarea>

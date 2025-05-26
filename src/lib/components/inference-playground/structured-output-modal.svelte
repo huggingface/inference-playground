@@ -99,11 +99,7 @@
 		});
 	}
 
-	let textarea = $state<HTMLTextAreaElement>();
-	new TextareaAutosize({
-		element: () => textarea,
-		input: () => tempSchema,
-	});
+	const autosized = new TextareaAutosize();
 </script>
 
 <Dialog class="!w-2xl max-w-[90vw]" title="Edit Structured Output" {open} onClose={() => (open = false)}>
@@ -262,7 +258,6 @@
 				{/await}
 			</div>
 			<textarea
-				bind:this={textarea}
 				autofocus
 				value={conversation.data.structuredOutput?.schema ?? ""}
 				{...onchange(v => {
@@ -270,6 +265,7 @@
 				})}
 				{...oninput(v => (tempSchema = v))}
 				class="relative z-10 h-120 w-full resize-none overflow-hidden rounded-lg bg-transparent whitespace-pre-wrap text-transparent caret-black outline-none @2xl:px-3 dark:caret-white"
+				{@attach autosized.attachment}
 			></textarea>
 		</div>
 	{/if}
