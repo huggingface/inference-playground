@@ -225,9 +225,7 @@
 		"mistralai/Mistral-7B-Instruct-v0.1": 32768,
 		"Qwen/Qwen2.5-7B-Instruct-Turbo": 32768,
 		"Qwen/Qwen2.5-72B-Instruct-Turbo": 131072,
-		"meta-llama/Llama-3.3-70B-Instruct-Turbo": 131072,
 		"Qwen/QwQ-32B": 131072,
-		"meta-llama/Llama-3-70b-chat-hf": 8192,
 		"mistralai/Mixtral-8x7B-Instruct-v0.1": 32768,
 		"google/gemma-2-27b-it": 8192,
 		"Qwen/Qwen2-VL-72B-Instruct": 32768,
@@ -255,6 +253,7 @@
 		"arcee-ai/virtuoso-large": 131072,
 		"arcee-ai/virtuoso-medium-v2": 131072,
 		"meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo": 131072,
+		"meta-llama/Llama-3-70b-chat-hf": 8192,
 		"meta-llama/Llama-3-8b-chat-hf": 8192,
 		"mistralai/Mistral-Small-24B-Instruct-2501": 32768,
 		"meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8": 1048576,
@@ -279,6 +278,8 @@
 		"meta-llama/Llama-Vision-Free": 131072,
 		"meta-llama/Llama-Guard-3-11B-Vision-Turbo": 131072,
 		"meta-llama/Llama-3.2-3B-Instruct-Turbo": 131072,
+		"arcee_ai/arcee-spotlight": 131072,
+		"meta-llama/Llama-3.3-70B-Instruct-Turbo": 131072,
 		"meta-llama/Llama-2-70b-hf": 4096
 	},
 	"fireworks-ai": {

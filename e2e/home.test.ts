@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { TEST_IDS } from "../src/lib/constants.js";
 
 const HF_TOKEN = "hf_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const HF_TOKEN_STORAGE_KEY = "hf_token";
@@ -58,6 +59,53 @@ test.describe.serial("Token Handling and Subsequent Tests", () => {
 			const userInputAfterReload = page.getByRole("textbox", { name: "Enter user message" });
 			await expect(userInputAfterReload).toBeVisible();
 			expect(await userInputAfterReload.inputValue()).toBe("Hello Hugging Face!");
+		});
+
+		test("checkpoints, resetting, and restoring", async ({ page }) => {
+			await page.goto("/");
+			const userMsg = "user message: hi";
+			const assistantMsg = "assistant message: hey";
+
+			// Fill user message
+			await page.getByRole("textbox", { name: "Enter user message" }).click();
+			await page.getByRole("textbox", { name: "Enter user message" }).fill(userMsg);
+			// Blur
+			await page.locator(".relative > div:nth-child(2) > div").first().click();
+
+			// Fill assistant message
+			await page.getByRole("button", { name: "Add message" }).click();
+			await page.getByRole("textbox", { name: "Enter assistant message" }).fill(assistantMsg);
+			// Blur
+			await page.locator(".relative > div:nth-child(2) > div").first().click();
+
+			// Create Checkpoint
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoints_trigger}"]`).click();
+			await page.getByRole("button", { name: "Create new" }).click();
+
+			// Check that there are checkpoints
+			await expect(page.locator(`[data-test-id="${TEST_IDS.checkpoint}"] `)).toBeVisible();
+
+			// Get out of menu
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoints_menu}"] `).press("Escape");
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoints_menu}"] `).press("Escape");
+
+			// Reset
+			await page.locator(`[data-test-id="${TEST_IDS.reset}"]`).click();
+
+			// Check that messages are gone now
+			await expect(page.getByRole("textbox", { name: "Enter user message" })).toHaveValue("");
+
+			// Call in a checkpoint
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoints_trigger}"]`).click();
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoint}"] `).click();
+
+			// Get out of menu
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoints_menu}"] `).press("Escape");
+			await page.locator(`[data-test-id="${TEST_IDS.checkpoints_menu}"] `).press("Escape");
+
+			// Check that the messages are back
+			await expect(page.getByRole("textbox", { name: "Enter user message" })).toHaveValue(userMsg);
+			await expect(page.getByRole("textbox", { name: "Enter assistant message" })).toHaveValue(assistantMsg);
 		});
 	});
 });

@@ -6,6 +6,7 @@
 	import { images } from "$lib/state/images.svelte";
 	import { PipelineTag, type ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
+	import { AsyncQueue } from "$lib/utils/queue.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
 	import IconCopy from "~icons/carbon/copy";
@@ -14,7 +15,7 @@
 	import IconCustom from "../icon-custom.svelte";
 	import LocalToasts from "../local-toasts.svelte";
 	import ImgPreview from "./img-preview.svelte";
-	import { AsyncQueue } from "$lib/utils/queue.js";
+	import { TEST_IDS } from "$lib/constants.js";
 
 	type Props = {
 		conversation: ConversationClass;
@@ -28,11 +29,7 @@
 	const { index, conversation, message, autofocus, onDelete, onRegen }: Props = $props();
 	const isLast = $derived(index === conversation.data.messages.length - 1);
 
-	let element = $state<HTMLTextAreaElement>();
-	const autosized = new TextareaAutosize({
-		element: () => element,
-		input: () => message?.content ?? "",
-	});
+	const autosized = new TextareaAutosize();
 	const shouldStick = $derived(autosized.textareaHeight > 92);
 
 	const canUploadImgs = $derived(
@@ -99,7 +96,6 @@
 		</div>
 		<div class="flex w-full gap-4">
 			<textarea
-				bind:this={element}
 				value={message?.content}
 				onchange={e => {
 					const el = e.target as HTMLTextAreaElement;
@@ -111,7 +107,9 @@
 				class="grow resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 				rows="1"
 				data-message
+				data-test-id={TEST_IDS.message}
 				{@attach autofocusAction(autofocus)}
+				{@attach autosized.attachment}
 			></textarea>
 
 			<!-- Sticky wrapper for action buttons -->

@@ -12,6 +12,7 @@
 	import IconStar from "~icons/carbon/star";
 	import IconStarFilled from "~icons/carbon/star-filled";
 	import IconDelete from "~icons/carbon/trash-can";
+	import { TEST_IDS } from "$lib/constants.js";
 
 	const popover = new Popover({
 		floatingConfig: {
@@ -27,7 +28,7 @@
 	const projCheckpoints = $derived(checkpoints.for(projects.activeId));
 </script>
 
-<button class="btn relative size-[32px] p-0" {...popover.trigger}>
+<button class="btn relative size-[32px] p-0" {...popover.trigger} data-test-id={TEST_IDS.checkpoints_trigger}>
 	<IconHistory />
 	{#if projCheckpoints.length > 0}
 		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-500" aria-label="Project has checkpoints"></div>
@@ -39,6 +40,7 @@
 	class="mb-2 !overflow-visible rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
 	{@attach clickOutside(() => (popover.open = false))}
 	{...popover.content}
+	data-test-id={TEST_IDS.checkpoints_menu}
 >
 	<div
 		class="size-4 translate-x-3 rounded-tl border-t border-l border-gray-200 dark:border-gray-700"
@@ -74,6 +76,7 @@
 					<div
 						class="mb-2 flex w-full items-center rounded-md px-3 hover:bg-gray-100 dark:hover:bg-gray-700"
 						{...tooltip.trigger}
+						data-test-id={TEST_IDS.checkpoint}
 					>
 						<button
 							class="flex flex-1 flex-col py-2 text-left text-sm transition-colors"

@@ -63,6 +63,11 @@ class Checkpoints {
 			})
 		);
 
+		// Hack because dates are formatted to string by save
+		newCheckpoint.conversations.forEach((c, i) => {
+			newCheckpoint.conversations[i] = { ...c, createdAt: new Date(c.createdAt) };
+		});
+
 		const prev: Checkpoint[] = this.#checkpoints[projectId] ?? [];
 		this.#checkpoints[projectId] = [...prev, newCheckpoint];
 	}
@@ -85,8 +90,8 @@ class Checkpoints {
 		// conversations.deleteAllFrom(cloned.projectId);
 		const prev = conversations.for(modified.projectId);
 		modified.conversations.forEach((c, i) => {
-			const p = prev[i];
-			if (p) return p.update(c);
+			const prevC = prev[i];
+			if (prevC) return prevC.update({ ...c });
 			conversations.create({
 				...c,
 				projectId: modified.projectId,
