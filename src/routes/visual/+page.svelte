@@ -65,6 +65,51 @@
 		}
 	}
 
+	async function mockGenerateImage() {
+		if (!prompt.trim()) return;
+
+		const imageId = generateUniqueId();
+		const currentPrompt = prompt.trim();
+
+		// Add loading item
+		images.push({
+			id: imageId,
+			isLoading: true,
+			prompt: currentPrompt,
+		});
+
+		try {
+			// Random delay between 1-4 seconds
+			const min = 1000;
+			const max = 4000;
+			const delay = Math.random() * (max - min) + min;
+			await new Promise(resolve => setTimeout(resolve, delay));
+
+			// Fetch image blob directly from proxy
+			const response = await fetch("/api/sb-image");
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const imageBlob = await response.blob();
+
+			// Find the image item by ID and update it
+			const imageItem = images.find(img => img.id === imageId);
+			if (imageItem) {
+				imageItem.blob = imageBlob;
+				imageItem.isLoading = false;
+			}
+		} catch (error) {
+			// Remove the failed image item
+			const index = images.findIndex(img => img.id === imageId);
+			if (index !== -1) {
+				images.splice(index, 1);
+			}
+			console.error("Mock image generation failed:", error);
+		}
+	}
+
 	function deleteImage(imageId: string) {
 		const index = images.findIndex(img => img.id === imageId);
 		if (index !== -1) {
@@ -94,6 +139,7 @@
 			</label>
 		</div>
 		<button class="btn" onclick={generateImage}>Generate</button>
+		<button class="btn btn-secondary" onclick={mockGenerateImage}>Mock Generate</button>
 	</div>
 
 	<!-- Main content -->
