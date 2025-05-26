@@ -17,6 +17,10 @@
 		blob?: Blob;
 		isLoading: boolean;
 		prompt: string;
+		model?: string;
+		provider?: string;
+		generationTimeMs?: number;
+		startTime?: number;
 	}
 
 	const images = $state<ImageItem[]>([]);
@@ -25,17 +29,31 @@
 		return `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 	}
 
+	function formatGenerationTime(ms: number): string {
+		if (ms < 1000) {
+			return `${Math.round(ms)}ms`;
+		} else {
+			return `${(ms / 1000).toFixed(1)}s`;
+		}
+	}
+
 	async function generateImage() {
 		if (!prompt.trim()) return;
 
 		const imageId = generateUniqueId();
 		const currentPrompt = prompt.trim();
+		const currentModel = model.id;
+		const currentProvider = provider;
+		const startTime = Date.now();
 
 		// Add loading item
 		images.push({
 			id: imageId,
 			isLoading: true,
 			prompt: currentPrompt,
+			model: currentModel,
+			provider: currentProvider,
+			startTime,
 		});
 
 		try {
@@ -49,11 +67,15 @@
 				parameters: { num_inference_steps: 4 },
 			})) as unknown as Blob;
 
+			const endTime = Date.now();
+			const generationTimeMs = endTime - startTime;
+
 			// Find the image item by ID and update it
 			const imageItem = images.find(img => img.id === imageId);
 			if (imageItem) {
 				imageItem.blob = image;
 				imageItem.isLoading = false;
+				imageItem.generationTimeMs = generationTimeMs;
 			}
 		} catch (error) {
 			// Remove the failed image item
@@ -70,12 +92,16 @@
 
 		const imageId = generateUniqueId();
 		const currentPrompt = prompt.trim();
+		const startTime = Date.now();
 
 		// Add loading item
 		images.push({
 			id: imageId,
 			isLoading: true,
 			prompt: currentPrompt,
+			model: "Mock Model (Safebooru)",
+			provider: "mock",
+			startTime,
 		});
 
 		try {
@@ -93,12 +119,15 @@
 			}
 
 			const imageBlob = await response.blob();
+			const endTime = Date.now();
+			const generationTimeMs = endTime - startTime;
 
 			// Find the image item by ID and update it
 			const imageItem = images.find(img => img.id === imageId);
 			if (imageItem) {
 				imageItem.blob = imageBlob;
 				imageItem.isLoading = false;
+				imageItem.generationTimeMs = generationTimeMs;
 			}
 		} catch (error) {
 			// Remove the failed image item
@@ -156,9 +185,16 @@
 							<div class="grid aspect-square place-items-center rounded border border-dashed border-neutral-500">
 								<LoadingAnimation />
 							</div>
-							<div class="flex gap-2">
+							<div class="flex flex-col gap-1">
 								<span class="text-sm text-gray-500">Generating: {imageItem.prompt}</span>
-								<button class="btn-sm btn-danger ml-auto" onclick={() => deleteImage(imageItem.id)}> Cancel </button>
+								<div class="text-xs text-gray-400">
+									<div>Model: {imageItem.model}</div>
+									<div>Provider: {imageItem.provider}</div>
+									<div>Time: ...</div>
+								</div>
+								<button class="btn-sm btn-danger mt-1 ml-auto" onclick={() => deleteImage(imageItem.id)}>
+									Cancel
+								</button>
 							</div>
 						</div>
 					{:else if imageItem.blob}
@@ -168,21 +204,30 @@
 								alt="Generated image: {imageItem.prompt}"
 								class="w-full rounded-lg shadow-md"
 							/>
-							<div class="flex gap-2">
-								<button
-									class="btn-sm"
-									onclick={() => {
-										const url = URL.createObjectURL(imageItem.blob!);
-										const a = document.createElement("a");
-										a.href = url;
-										a.download = `generated-image-${imageItem.id}.png`;
-										a.click();
-										URL.revokeObjectURL(url);
-									}}
-								>
-									Download
-								</button>
-								<button class="btn-sm btn-danger" onclick={() => deleteImage(imageItem.id)}> Delete </button>
+							<div class="flex flex-col gap-2">
+								<div class="text-xs text-gray-400">
+									<div>Model: {imageItem.model}</div>
+									<div>Provider: {imageItem.provider}</div>
+									<div>
+										Time: {imageItem.generationTimeMs ? formatGenerationTime(imageItem.generationTimeMs) : "Unknown"}
+									</div>
+								</div>
+								<div class="flex gap-2">
+									<button
+										class="btn-sm"
+										onclick={() => {
+											const url = URL.createObjectURL(imageItem.blob!);
+											const a = document.createElement("a");
+											a.href = url;
+											a.download = `generated-image-${imageItem.id}.png`;
+											a.click();
+											URL.revokeObjectURL(url);
+										}}
+									>
+										Download
+									</button>
+									<button class="btn-sm btn-danger" onclick={() => deleteImage(imageItem.id)}> Delete </button>
+								</div>
 							</div>
 						</div>
 					{/if}
