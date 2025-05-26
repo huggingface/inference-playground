@@ -71,7 +71,7 @@ class Models {
 		this.custom = this.custom.filter(m => m._id !== uuid);
 		conversations.active.forEach(c => {
 			if (c.model._id !== uuid) return;
-			c.update({ modelId: randomPick(models.trending)?.id });
+			c.update({ data: { modelId: randomPick(models.trending)?.id } });
 		});
 	}
 }

@@ -12,13 +12,31 @@
 	let provider: InferenceProviderMapping["provider"] = $state(data.models[0]!.inferenceProviderMapping[0]!.provider);
 	let prompt = $state("");
 
-	const images = $state<(Blob | "loading")[]>([]);
+	interface ImageItem {
+		id: string;
+		blob?: Blob;
+		isLoading: boolean;
+		prompt: string;
+	}
+
+	const images = $state<ImageItem[]>([]);
+
+	function generateUniqueId(): string {
+		return `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+	}
 
 	async function generateImage() {
 		if (!prompt.trim()) return;
 
-		const loadingIndex = images.length;
-		images.push("loading");
+		const imageId = generateUniqueId();
+		const currentPrompt = prompt.trim();
+
+		// Add loading item
+		images.push({
+			id: imageId,
+			isLoading: true,
+			prompt: currentPrompt,
+		});
 
 		try {
 			const client = new InferenceClient(token.value);
@@ -27,19 +45,32 @@
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				provider: provider as any,
 				model: model.id,
-				inputs: prompt,
+				inputs: currentPrompt,
 				parameters: { num_inference_steps: 4 },
 			})) as unknown as Blob;
 
-			images[loadingIndex] = image;
+			// Find the image item by ID and update it
+			const imageItem = images.find(img => img.id === imageId);
+			if (imageItem) {
+				imageItem.blob = image;
+				imageItem.isLoading = false;
+			}
 		} catch (error) {
-			// Remove the loading placeholder on error
-			images.splice(loadingIndex, 1);
+			// Remove the failed image item
+			const index = images.findIndex(img => img.id === imageId);
+			if (index !== -1) {
+				images.splice(index, 1);
+			}
 			console.error("Image generation failed:", error);
 		}
 	}
 
-	$inspect(images);
+	function deleteImage(imageId: string) {
+		const index = images.findIndex(img => img.id === imageId);
+		if (index !== -1) {
+			images.splice(index, 1);
+		}
+	}
 </script>
 
 <div class="grid h-lvh grid-cols-12 dark:text-white">
@@ -73,38 +104,39 @@
 			</div>
 		{:else}
 			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{#each images as image, index (index)}
-					{#if image === "loading"}
-						<LoadingAnimation />
-					{:else}
+				{#each images as imageItem (imageItem.id)}
+					{#if imageItem.isLoading}
+						<div class="flex flex-col gap-2">
+							<div class="grid aspect-square place-items-center rounded border border-dashed border-neutral-500">
+								<LoadingAnimation />
+							</div>
+							<div class="flex gap-2">
+								<span class="text-sm text-gray-500">Generating: {imageItem.prompt}</span>
+								<button class="btn-sm btn-danger ml-auto" onclick={() => deleteImage(imageItem.id)}> Cancel </button>
+							</div>
+						</div>
+					{:else if imageItem.blob}
 						<div class="flex flex-col gap-2">
 							<img
-								src={URL.createObjectURL(image)}
-								alt="Generated image {index + 1}"
+								src={URL.createObjectURL(imageItem.blob)}
+								alt="Generated image: {imageItem.prompt}"
 								class="w-full rounded-lg shadow-md"
 							/>
 							<div class="flex gap-2">
 								<button
-									class="btn btn-sm"
+									class="btn-sm"
 									onclick={() => {
-										const url = URL.createObjectURL(image);
+										const url = URL.createObjectURL(imageItem.blob!);
 										const a = document.createElement("a");
 										a.href = url;
-										a.download = `generated-image-${index + 1}.png`;
+										a.download = `generated-image-${imageItem.id}.png`;
 										a.click();
 										URL.revokeObjectURL(url);
 									}}
 								>
 									Download
 								</button>
-								<button
-									class="btn btn-sm btn-danger"
-									onclick={() => {
-										images.splice(index, 1);
-									}}
-								>
-									Delete
-								</button>
+								<button class="btn-sm btn-danger" onclick={() => deleteImage(imageItem.id)}> Delete </button>
 							</div>
 						</div>
 					{/if}
