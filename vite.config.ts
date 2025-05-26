@@ -16,7 +16,8 @@ export default defineConfig({
 		allowedHosts: isDev ? true : undefined,
 		proxy: {
 			"/api/sb-image": {
-				target: "https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=1&pid=0&tags=sort:random",
+				target:
+					"https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=1&pid=0&tags=clair_obscur%3a_expedition_33+sort%3arandom",
 				changeOrigin: true,
 				rewrite: () => "",
 				selfHandleResponse: true,

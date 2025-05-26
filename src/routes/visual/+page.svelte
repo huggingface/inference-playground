@@ -100,13 +100,13 @@
 			id: imageId,
 			isLoading: true,
 			prompt: currentPrompt,
-			model: "Mock Model (Safebooru)",
+			model: "Mock Model",
 			provider: "mock",
 			startTime,
 		});
 
 		try {
-			// Random delay between 1-4 seconds
+			// Random delay
 			const min = 1000;
 			const max = 4000;
 			const delay = Math.random() * (max - min) + min;
@@ -190,10 +190,7 @@
 				<p>No images generated yet. Click "Generate" to create an image.</p>
 			</div>
 		{:else}
-			<div 
-				class="masonry-grid gap-4"
-				style="--columns: {columns};"
-			>
+			<div class="masonry-grid gap-4" style="--columns: {columns};">
 				{#each images as imageItem (imageItem.id)}
 					{#if imageItem.isLoading}
 						<div class="masonry-item flex flex-col gap-2">
@@ -268,7 +265,7 @@
 			grid-auto-rows: min-content;
 			align-items: start;
 		}
-		
+
 		.masonry-item {
 			break-inside: avoid;
 		}
@@ -282,7 +279,7 @@
 				columns: var(--columns);
 				column-gap: 1rem;
 			}
-			
+
 			.masonry-item {
 				display: inline-block;
 				width: 100%;
