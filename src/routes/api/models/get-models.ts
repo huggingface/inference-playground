@@ -34,6 +34,7 @@ export async function getModelsForTag({ tag, fetch }: GetModelsForTagArgs): Prom
 	const url = new URL("https://huggingface.co/api/models");
 	url.searchParams.append("inference_provider", "all");
 	url.searchParams.append("limit", "100");
+	url.searchParams.append("pipeline_tag", tag);
 	["inferenceProviderMapping", "config", "library_name", "pipeline_tag", "tags", "mask_token", "trendingScore"].forEach(
 		s => url.searchParams.append("expand[]", s)
 	);
@@ -43,6 +44,7 @@ export async function getModelsForTag({ tag, fetch }: GetModelsForTagArgs): Prom
 	}
 
 	const res = await fetch(url, requestInit);
+	console.log(url.href);
 
 	if (!res.ok) {
 		cache[tag] = new CacheEntry({ ok: false });
