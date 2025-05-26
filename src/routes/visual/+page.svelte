@@ -11,6 +11,7 @@
 	let model: Model = $state(data.models[0]!);
 	let provider: InferenceProviderMapping["provider"] = $state(data.models[0]!.inferenceProviderMapping[0]!.provider);
 	let prompt = $state("");
+	let columns = $state(3);
 
 	interface ImageItem {
 		id: string;
@@ -167,6 +168,17 @@
 				<textarea class="w-full border" bind:value={prompt}></textarea>
 			</label>
 		</div>
+		<div class="flex flex-col">
+			<label for="columns">Columns</label>
+			<select class="border" id="columns" bind:value={columns}>
+				<option value={1}>1 Column</option>
+				<option value={2}>2 Columns</option>
+				<option value={3}>3 Columns</option>
+				<option value={4}>4 Columns</option>
+				<option value={5}>5 Columns</option>
+				<option value={6}>6 Columns</option>
+			</select>
+		</div>
 		<button class="btn" onclick={generateImage}>Generate</button>
 		<button class="btn btn-secondary" onclick={mockGenerateImage}>Mock Generate</button>
 	</div>
@@ -178,10 +190,13 @@
 				<p>No images generated yet. Click "Generate" to create an image.</p>
 			</div>
 		{:else}
-			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+			<div 
+				class="masonry-grid gap-4"
+				style="--columns: {columns};"
+			>
 				{#each images as imageItem (imageItem.id)}
 					{#if imageItem.isLoading}
-						<div class="flex flex-col gap-2">
+						<div class="masonry-item flex flex-col gap-2">
 							<div class="grid aspect-square place-items-center rounded border border-dashed border-neutral-500">
 								<LoadingAnimation />
 							</div>
@@ -198,7 +213,7 @@
 							</div>
 						</div>
 					{:else if imageItem.blob}
-						<div class="flex flex-col gap-2">
+						<div class="masonry-item flex flex-col gap-2">
 							<img
 								src={URL.createObjectURL(imageItem.blob)}
 								alt="Generated image: {imageItem.prompt}"
@@ -236,3 +251,44 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	.masonry-grid {
+		display: grid;
+		grid-template-columns: repeat(var(--columns), 1fr);
+		grid-template-rows: masonry;
+		align-items: start;
+	}
+
+	/* Fallback for browsers that don't support masonry yet */
+	@supports not (grid-template-rows: masonry) {
+		.masonry-grid {
+			display: grid;
+			grid-template-columns: repeat(var(--columns), 1fr);
+			grid-auto-rows: min-content;
+			align-items: start;
+		}
+		
+		.masonry-item {
+			break-inside: avoid;
+		}
+	}
+
+	/* Alternative fallback using columns for better masonry effect */
+	@supports not (grid-template-rows: masonry) {
+		@media (min-width: 768px) {
+			.masonry-grid {
+				display: block;
+				columns: var(--columns);
+				column-gap: 1rem;
+			}
+			
+			.masonry-item {
+				display: inline-block;
+				width: 100%;
+				margin-bottom: 1rem;
+				break-inside: avoid;
+			}
+		}
+	}
+</style>
