@@ -94,7 +94,7 @@
 		</div>
 	</button>
 
-	<div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+	<div {...select.content} class="rounded-lg border bg-gray-100 shadow-xl dark:border-gray-700 dark:bg-gray-800">
 		{#each providers as { provider, providerId } (provider + providerId)}
 			<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
 				<div
