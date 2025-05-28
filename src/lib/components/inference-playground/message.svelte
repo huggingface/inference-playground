@@ -96,7 +96,7 @@
 		</div>
 		<div class="flex w-full gap-4">
 			<textarea
-				value={message?.content}
+				value={message!.content}
 				onchange={e => {
 					const el = e.target as HTMLTextAreaElement;
 					const content = el?.value;
