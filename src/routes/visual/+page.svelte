@@ -11,7 +11,7 @@
 	import IconRefresh from "~icons/tabler/refresh";
 	import IconTrash from "~icons/tabler/trash";
 	import IconX from "~icons/tabler/x";
-	import IconZoomIn from "~icons/tabler/zoom-in";
+	import IconMaximize from "~icons/carbon/maximize";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import LoadingAnimation from "./loading-animation.svelte";
 	import { Splitter } from "$lib/spells/splitter.svelte.js";
@@ -25,6 +25,7 @@
 	let columns = $state(3);
 	let expandedImage: ImageItem | null = $state(null);
 	let autosized = new TextareaAutosize();
+	let dialogElement: HTMLDialogElement;
 
 	interface ImageItem {
 		id: string;
@@ -53,10 +54,12 @@
 
 	function expandImage(imageItem: ImageItem) {
 		expandedImage = imageItem;
+		dialogElement?.showModal();
 	}
 
 	function closeExpandedImage() {
 		expandedImage = null;
+		dialogElement?.close();
 	}
 
 	function reuseSettings(imageItem: ImageItem) {
@@ -345,13 +348,31 @@
 									alt="Generated image: {imageItem.prompt}"
 									class="block h-auto w-full"
 								/>
-								<div
-									class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black text-white opacity-0 transition-all duration-300 group-hover:opacity-100"
-									aria-hidden="true"
-								>
-									<IconZoomIn class="h-6 w-6" />
+								<!-- Hover content -->
+								<div class="absolute inset-0 flex flex-col items-center justify-center">
+									<!-- Progressive radial blur layers -->
+									<div
+										class="absolute h-24 w-48 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100"
+										style="mask: radial-gradient(ellipse, black 0%, black 30%, transparent 70%); -webkit-mask: radial-gradient(ellipse, black 0%, black 30%, transparent 70%);"
+									></div>
+									<div
+										class="absolute h-20 w-40 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100"
+										style="mask: radial-gradient(ellipse, black 20%, black 50%, transparent 80%); -webkit-mask: radial-gradient(ellipse, black 20%, black 50%, transparent 80%);"
+									></div>
+									<div
+										class="absolute h-16 w-32 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100"
+										style="mask: radial-gradient(ellipse, black 40%, black 60%, transparent 90%); -webkit-mask: radial-gradient(ellipse, black 40%, black 60%, transparent 90%);"
+									></div>
+
+									<div
+										class="relative z-10 flex flex-col items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+									>
+										<IconMaximize class="mb-1 h-5 w-5 text-white drop-shadow-sm" />
+										<span class="text-xs font-medium text-white drop-shadow-sm"> Click to expand </span>
+									</div>
 								</div>
 							</button>
+
 							<div class="space-y-3 p-4">
 								<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
 									<div>Model: {imageItem.model}</div>
@@ -419,54 +440,33 @@
 	</main>
 </div>
 
-<!-- Image Expansion Modal -->
-{#if expandedImage && expandedImage.blob}
-	<div
-		class="bg-opacity-75 fixed inset-0 z-50 flex items-center justify-center bg-black p-4"
+<!-- Image Expansion Dialog -->
+<dialog
+	bind:this={dialogElement}
+	class="backdrop:bg-opacity-75 m-auto max-h-[90vh] max-w-[90vw] overflow-hidden rounded-xl bg-white p-0 shadow-2xl backdrop:bg-black dark:bg-gray-800"
+	aria-labelledby="expanded-image-title"
+	onclick={e => {
+		// Close dialog when clicking on backdrop
+		if (e.target === dialogElement) {
+			closeExpandedImage();
+		}
+	}}
+>
+	<button
+		class="fixed top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
 		onclick={closeExpandedImage}
-		onkeydown={e => {
-			if (e.key === "Escape") {
-				closeExpandedImage();
-			}
-		}}
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="expanded-image-title"
-		tabindex="-1"
+		aria-label="Close expanded image"
 	>
-		<div
-			class="relative max-h-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-800"
-			role="document"
-		>
-			<button
-				class="bg-opacity-50 hover:bg-opacity-75 absolute top-4 right-4 z-10 rounded-full bg-black p-2 text-white transition-colors"
-				onclick={closeExpandedImage}
-				aria-label="Close expanded image"
-			>
-				<IconX class="h-6 w-6" />
-			</button>
-			<img
-				src={URL.createObjectURL(expandedImage.blob)}
-				alt="Expanded view: {expandedImage.prompt}"
-				class="max-h-[80vh] max-w-full object-contain"
-			/>
-			<div class="border-t border-gray-200 p-6 dark:border-gray-700">
-				<h3 id="expanded-image-title" class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
-					{expandedImage.prompt}
-				</h3>
-				<div class="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
-					<span>Model: {expandedImage.model}</span>
-					<span>Provider: {expandedImage.provider}</span>
-					<span
-						>Time: {expandedImage.generationTimeMs
-							? formatGenerationTime(expandedImage.generationTimeMs)
-							: "Unknown"}</span
-					>
-				</div>
-			</div>
-		</div>
-	</div>
-{/if}
+		<IconX class="h-6 w-6" />
+	</button>
+	{#if expandedImage && expandedImage.blob}
+		<img
+			src={URL.createObjectURL(expandedImage.blob)}
+			alt="Expanded view: {expandedImage.prompt}"
+			class="max-h-[70vh] max-w-full object-contain"
+		/>
+	{/if}
+</dialog>
 
 <style>
 	.sidebar {
@@ -475,18 +475,6 @@
 
 	.sidebar-header {
 		background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
-	}
-
-	.resize-handle {
-		transition: background-color 0.2s;
-	}
-
-	.resize-handle.resizing {
-		background-color: rgb(59 130 246);
-	}
-
-	:global(.dark) .resize-handle.resizing {
-		background-color: rgb(96 165 250);
 	}
 
 	.masonry-grid {
@@ -524,5 +512,14 @@
 				break-inside: avoid;
 			}
 		}
+	}
+
+	/* Dialog styles */
+	dialog {
+		border: none;
+	}
+
+	dialog::backdrop {
+		background: rgba(0, 0, 0, 0.75);
 	}
 </style>
