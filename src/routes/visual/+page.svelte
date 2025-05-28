@@ -1,18 +1,21 @@
 <script lang="ts">
-	import { Synced } from "$lib/spells/synced.svelte.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import type { InferenceProviderMapping, MaybeGetter, Model } from "$lib/types.js";
+	import type { InferenceProviderMapping, Model } from "$lib/types.js";
 	import ProviderSelect from "$lib/ui/provider-select.svelte";
-	import { clamp } from "$lib/utils/number.js";
 	import { InferenceClient } from "@huggingface/inference";
-	import { untrack } from "svelte";
-	import { type Attachment } from "svelte/attachments";
-	import type { HTMLAttributes } from "svelte/elements";
-	import { on } from "svelte/events";
+	import IconBolt from "~icons/tabler/bolt";
+	import IconDownload from "~icons/tabler/download";
+	import IconHeart from "~icons/tabler/heart";
 	import IconPhoto from "~icons/tabler/photo";
+	import IconRefresh from "~icons/tabler/refresh";
+	import IconTrash from "~icons/tabler/trash";
+	import IconX from "~icons/tabler/x";
+	import IconZoomIn from "~icons/tabler/zoom-in";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import LoadingAnimation from "./loading-animation.svelte";
+	import { Splitter } from "$lib/spells/splitter.svelte.js";
+	import Tooltip from "$lib/components/tooltip.svelte";
 
 	let { data }: { data: ApiModelsResponse } = $props();
 
@@ -125,7 +128,7 @@
 	}
 
 	async function mockGenerateImage() {
-		if (!prompt.trim()) return;
+		// if (!prompt.trim()) return;
 
 		const imageId = generateUniqueId();
 		const currentPrompt = prompt.trim();
@@ -183,108 +186,10 @@
 		}
 	}
 
-	type SplitterProps = {
-		min?: number;
-		max?: number;
-		value?: MaybeGetter<number>;
-		onValueChange?: (v: number) => void;
-	};
-	class Splitter {
-		isResizing = $state(false);
-		min: number;
-		max: number;
-		#value: Synced<number>;
-
-		// prettier-ignore
-		get value() { return this.#value.current }
-		// prettier-ignore
-		set value(v) { this.#value.current = v }
-
-		constructor(props?: SplitterProps) {
-			this.min = props?.min ?? 0;
-			this.max = props?.max ?? Infinity;
-			this.#value = new Synced({
-				value: props?.value,
-				onChange: props?.onValueChange,
-				defaultValue: 0,
-			});
-		}
-
-		#createOverlay = () => {
-			const overlay = document.createElement("div");
-
-			// Apply styles to make it cover the document, be invisible, and have a resize cursor
-			overlay.style.position = "fixed";
-			overlay.style.top = "0";
-			overlay.style.left = "0";
-			overlay.style.width = "100%";
-			overlay.style.height = "100%";
-			overlay.style.backgroundColor = "transparent"; // Invisible
-			overlay.style.zIndex = "9999"; // On top of most things
-			overlay.style.cursor = "col-resize"; // Your desired resize cursor
-			overlay.style.pointerEvents = "auto"; // Ensure it receives pointer events
-			overlay.style.userSelect = "none";
-
-			// Append the overlay to the document body
-			document.body.appendChild(overlay);
-
-			this.#removeOverlay = () => {
-				overlay.remove();
-				this.#removeOverlay = undefined;
-			};
-		};
-
-		#removeOverlay: (() => void) | undefined = undefined;
-
-		get separator() {
-			const obj = {
-				role: "separator",
-				tabindex: 0,
-				onkeydown: e => {
-					const step = 20;
-					if (e.key === "ArrowLeft") {
-						e.preventDefault();
-						this.value = clamp(this.min, this.value - step, this.max);
-					} else if (e.key === "ArrowRight") {
-						e.preventDefault();
-						this.value = clamp(this.min, this.value - step, this.max);
-					}
-				},
-				onmousedown: () => {
-					this.isResizing = true;
-					this.#createOverlay();
-				},
-			} satisfies HTMLAttributes<HTMLDivElement>;
-
-			Object.defineProperty(obj, "attach", {
-				enumerable: false,
-				get: () => {
-					return () => {
-						const callbacks: Array<() => void> = untrack(() => [
-							on(document, "mousemove", e => {
-								if (!this.isResizing) return;
-								this.value = clamp(this.min, e.clientX, this.max);
-							}),
-							on(document, "mouseup", _ => {
-								this.isResizing = false;
-								this.#removeOverlay?.();
-							}),
-						]);
-
-						return () => {
-							callbacks.forEach(c => c());
-							this.#removeOverlay?.();
-						};
-					};
-				},
-			});
-			return obj as typeof obj & { attach: Attachment };
-		}
-	}
 	const splitter = new Splitter({
 		min: 240,
-		max: 400,
-		value: 240,
+		value: 400,
+		max: 1200,
 	});
 </script>
 
@@ -357,24 +262,17 @@
 			<button
 				class="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-xl"
 				onclick={generateImage}
+				aria-label="Generate image using AI"
 			>
-				<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-				</svg>
+				<IconBolt class="mr-2 h-4 w-4" />
 				Generate
 			</button>
 			<button
 				class="flex w-full items-center justify-center rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
 				onclick={mockGenerateImage}
+				aria-label="Generate mock image for testing"
 			>
-				<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-					></path>
-				</svg>
+				<IconHeart class="mr-2 h-4 w-4" />
 				Mock Generate
 			</button>
 		</div>
@@ -388,10 +286,11 @@
 		]}
 		{...splitter.separator}
 		{@attach splitter.separator.attach}
+		aria-label="Resize sidebar"
 	></div>
 
 	<!-- Main content -->
-	<div class="flex-1 overflow-auto bg-gray-50 p-6 dark:bg-gray-900">
+	<main class="flex-1 overflow-auto bg-gray-50 p-6 dark:bg-gray-900">
 		{#if images.length === 0}
 			<div class="flex h-full items-center justify-center text-gray-500">
 				<div class="text-center">
@@ -401,14 +300,16 @@
 				</div>
 			</div>
 		{:else}
-			<div class="masonry-grid gap-6" style="--columns: {columns};">
+			<div class="masonry-grid gap-6" style="--columns: {columns};" role="grid" aria-label="Generated images">
 				{#each images as imageItem (imageItem.id)}
 					{#if imageItem.isLoading}
-						<div
+						<article
 							class="masonry-item overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
+							aria-label="Generating image: {imageItem.prompt}"
 						>
 							<div
 								class="flex aspect-square items-center justify-center rounded-t-xl border-2 border-dashed border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"
+								aria-label="Loading image"
 							>
 								<LoadingAnimation />
 							</div>
@@ -423,17 +324,22 @@
 									<button
 										class="flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
 										onclick={() => deleteImage(imageItem.id)}
+										aria-label="Cancel image generation"
 									>
 										Cancel
 									</button>
 								</div>
 							</div>
-						</div>
+						</article>
 					{:else if imageItem.blob}
-						<div
+						<article
 							class="masonry-item overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
 						>
-							<div class="group relative cursor-pointer" onclick={() => expandImage(imageItem)}>
+							<button
+								class="group relative w-full cursor-pointer border-0 bg-transparent p-0"
+								onclick={() => expandImage(imageItem)}
+								aria-label="Expand image: {imageItem.prompt}"
+							>
 								<img
 									src={URL.createObjectURL(imageItem.blob)}
 									alt="Generated image: {imageItem.prompt}"
@@ -441,17 +347,11 @@
 								/>
 								<div
 									class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center bg-black text-white opacity-0 transition-all duration-300 group-hover:opacity-100"
+									aria-hidden="true"
 								>
-									<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-										></path>
-									</svg>
+									<IconZoomIn class="h-6 w-6" />
 								</div>
-							</div>
+							</button>
 							<div class="space-y-3 p-4">
 								<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
 									<div>Model: {imageItem.model}</div>
@@ -460,64 +360,63 @@
 										Time: {imageItem.generationTimeMs ? formatGenerationTime(imageItem.generationTimeMs) : "Unknown"}
 									</div>
 								</div>
-								<div class="flex justify-end gap-2">
-									<button
-										class="flex items-center justify-center rounded-lg bg-gray-200 px-2 px-4 py-1 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-										onclick={() => reuseSettings(imageItem)}
-										title="Reuse these settings"
-									>
-										<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-											></path>
-										</svg>
-									</button>
-									<button
-										class="flex items-center justify-center rounded-lg bg-gray-200 px-2 px-4 py-1 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-										onclick={() => {
-											const url = URL.createObjectURL(imageItem.blob!);
-											const a = document.createElement("a");
-											a.href = url;
-											a.download = `generated-image-${imageItem.id}.png`;
-											a.click();
-											URL.revokeObjectURL(url);
-										}}
-										title="Download image"
-									>
-										<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-											></path>
-										</svg>
-									</button>
-									<button
-										class="flex items-center justify-center rounded-lg bg-red-600 px-2 px-4 py-1 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
-										onclick={() => deleteImage(imageItem.id)}
-										title="Delete image"
-									>
-										<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-											></path>
-										</svg>
-									</button>
+								<div class="flex justify-end gap-2" role="group" aria-label="Image actions">
+									<Tooltip>
+										{#snippet trigger(tooltip)}
+											<button
+												class="flex items-center justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+												onclick={() => reuseSettings(imageItem)}
+												aria-label="Reuse settings from this image"
+												{...tooltip.trigger}
+											>
+												<IconRefresh class="h-4 w-4" />
+											</button>
+										{/snippet}
+										Reuse these settings
+									</Tooltip>
+
+									<Tooltip>
+										{#snippet trigger(tooltip)}
+											<button
+												class="flex items-center justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+												onclick={() => {
+													const url = URL.createObjectURL(imageItem.blob!);
+													const a = document.createElement("a");
+													a.href = url;
+													a.download = `generated-image-${imageItem.id}.png`;
+													a.click();
+													URL.revokeObjectURL(url);
+												}}
+												{...tooltip.trigger}
+												aria-label="Download image"
+											>
+												<IconDownload class="h-4 w-4" />
+											</button>
+										{/snippet}
+										Download image
+									</Tooltip>
+
+									<Tooltip>
+										{#snippet trigger(tooltip)}
+											<button
+												class="flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
+												onclick={() => deleteImage(imageItem.id)}
+												{...tooltip.trigger}
+												aria-label="Delete image"
+											>
+												<IconTrash class="h-4 w-4" />
+											</button>
+										{/snippet}
+										Delete image
+									</Tooltip>
 								</div>
 							</div>
-						</div>
+						</article>
 					{/if}
 				{/each}
 			</div>
 		{/if}
-	</div>
+	</main>
 </div>
 
 <!-- Image Expansion Modal -->
@@ -525,18 +424,26 @@
 	<div
 		class="bg-opacity-75 fixed inset-0 z-50 flex items-center justify-center bg-black p-4"
 		onclick={closeExpandedImage}
+		onkeydown={e => {
+			if (e.key === "Escape") {
+				closeExpandedImage();
+			}
+		}}
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="expanded-image-title"
+		tabindex="-1"
 	>
 		<div
 			class="relative max-h-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-800"
-			onclick={e => e.stopPropagation()}
+			role="document"
 		>
 			<button
 				class="bg-opacity-50 hover:bg-opacity-75 absolute top-4 right-4 z-10 rounded-full bg-black p-2 text-white transition-colors"
 				onclick={closeExpandedImage}
+				aria-label="Close expanded image"
 			>
-				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-				</svg>
+				<IconX class="h-6 w-6" />
 			</button>
 			<img
 				src={URL.createObjectURL(expandedImage.blob)}
@@ -544,7 +451,9 @@
 				class="max-h-[80vh] max-w-full object-contain"
 			/>
 			<div class="border-t border-gray-200 p-6 dark:border-gray-700">
-				<h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{expandedImage.prompt}</h3>
+				<h3 id="expanded-image-title" class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+					{expandedImage.prompt}
+				</h3>
 				<div class="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
 					<span>Model: {expandedImage.model}</span>
 					<span>Provider: {expandedImage.provider}</span>
@@ -561,8 +470,6 @@
 
 <style>
 	.sidebar {
-		min-width: 250px;
-		max-width: 600px;
 		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 	}
 

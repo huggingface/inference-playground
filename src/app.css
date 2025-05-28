@@ -28,6 +28,17 @@
 	--text-2xs: 0.625rem;
 	--text-3xs: 0.5rem;
 
+	--color-hf-100: #ffee98;
+	--color-hf-200: #ffeb8f;
+	--color-hf-300: #ffe477;
+	--color-hf-400: #ffdb53;
+	--color-hf-500: #ffd026;
+	--color-hf-600: #f5bf00;
+	--color-hf-700: #c89b00;
+	--color-hf-800: #a37e00;
+	--color-hf-900: #8b6c00;
+	--color-hf-950: #836500;
+
 	--animate-fade-in: fade-in 0.15s ease;
 	@keyframes fade-in {
 		0% {
