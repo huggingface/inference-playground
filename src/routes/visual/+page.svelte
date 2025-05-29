@@ -16,6 +16,8 @@
 	import LoadingAnimation from "./loading-animation.svelte";
 	import { Splitter } from "$lib/spells/splitter.svelte.js";
 	import Tooltip from "$lib/components/tooltip.svelte";
+	import { masonry } from "$lib/attachments/masonry.js";
+	import { onMount } from "svelte";
 
 	let { data }: { data: ApiModelsResponse } = $props();
 
@@ -194,6 +196,10 @@
 		value: 400,
 		max: 1200,
 	});
+
+	onMount(() => {
+		[...new Array(8)].forEach(_ => mockGenerateImage());
+	});
 </script>
 
 <svelte:window
@@ -303,11 +309,17 @@
 				</div>
 			</div>
 		{:else}
-			<div class="masonry-grid gap-6" style="--columns: {columns};" role="grid" aria-label="Generated images">
+			<div
+				class="grid grid-cols-[repeat(var(--columns),_1fr)] grid-rows-[masonry] items-start gap-6"
+				style="--columns: {columns};"
+				role="grid"
+				aria-label="Generated images"
+				{@attach masonry}
+			>
 				{#each images as imageItem (imageItem.id)}
 					{#if imageItem.isLoading}
 						<article
-							class="masonry-item overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
+							class="overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
 							aria-label="Generating image: {imageItem.prompt}"
 						>
 							<div
@@ -336,7 +348,7 @@
 						</article>
 					{:else if imageItem.blob}
 						<article
-							class="masonry-item overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
+							class="overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
 						>
 							<button
 								class="group relative w-full cursor-pointer border-0 bg-transparent p-0"
@@ -475,43 +487,6 @@
 
 	.sidebar-header {
 		background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
-	}
-
-	.masonry-grid {
-		display: grid;
-		grid-template-columns: repeat(var(--columns), 1fr);
-		grid-template-rows: masonry;
-		align-items: start;
-	}
-
-	@supports not (grid-template-rows: masonry) {
-		.masonry-grid {
-			display: grid;
-			grid-template-columns: repeat(var(--columns), 1fr);
-			grid-auto-rows: min-content;
-			align-items: start;
-		}
-
-		.masonry-item {
-			break-inside: avoid;
-		}
-	}
-
-	@supports not (grid-template-rows: masonry) {
-		@media (min-width: 768px) {
-			.masonry-grid {
-				display: block;
-				columns: var(--columns);
-				column-gap: 1.5rem;
-			}
-
-			.masonry-item {
-				display: inline-block;
-				width: 100%;
-				margin-bottom: 1.5rem;
-				break-inside: avoid;
-			}
-		}
 	}
 
 	/* Dialog styles */
