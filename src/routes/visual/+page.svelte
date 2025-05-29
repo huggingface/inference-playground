@@ -276,15 +276,14 @@
 
 		<div class="sidebar-footer space-y-2 border-t border-gray-200 p-4 dark:border-gray-700">
 			<button
-				class="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-xl"
+				class="btn-depth flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-base font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
 				onclick={generateImage}
-				aria-label="Generate image using AI"
 			>
 				<IconSparkles class="mr-2 h-4 w-4" />
 				Generate
 			</button>
 			<button
-				class="flex w-full items-center justify-center rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+				class="btn-depth btn-depth-gray flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-sm text-sm font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
 				onclick={mockGenerateImage}
 				aria-label="Generate mock image for testing"
 			>

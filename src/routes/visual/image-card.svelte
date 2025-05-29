@@ -83,7 +83,7 @@
 		<div class="absolute right-1.5 bottom-1.5 flex justify-end gap-2">
 			{#if image.isLoading}
 				<button
-					class="flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
+					class="btn-depth btn-depth-red flex items-center justify-center"
 					onclick={onDelete}
 					aria-label="Cancel image generation"
 				>
@@ -93,7 +93,7 @@
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
-							class="flex items-center justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+							class="btn-depth btn-depth-gray flex items-center justify-center"
 							onclick={onReuse}
 							aria-label="Reuse settings from this image"
 							{...tooltip.trigger}
@@ -107,7 +107,7 @@
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
-							class="flex items-center justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+							class="btn-depth btn-depth-gray flex items-center justify-center"
 							onclick={() => {
 								const url = URL.createObjectURL(image.blob!);
 								const a = document.createElement("a");
@@ -128,7 +128,7 @@
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
-							class="flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
+							class="btn-depth btn-depth-red flex items-center justify-center"
 							onclick={onDelete}
 							{...tooltip.trigger}
 							aria-label="Delete image"

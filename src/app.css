@@ -135,3 +135,96 @@ body.dark {
 		}
 	}
 }
+
+.btn-depth {
+	--bg-from: var(--color-blue-600);
+	--bg-to: var(--color-blue-500);
+	--bg-to-hover: var(--color-blue-400);
+	--bg-to-active: var(--color-blue-700);
+	--border-color: var(--color-blue-600);
+
+	border-radius: var(--radius-lg, 0.5rem);
+	border-style: var(--tw-border-style);
+	border-width: 1px;
+	border-color: var(--border-color);
+	background: linear-gradient(to top, var(--bg-from), var(--bg-to));
+	padding-inline: calc(var(--spacing, 0.25rem) * 4);
+	padding-block: calc(var(--spacing, 0.25rem) * 2);
+	line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));
+	--tw-font-weight: var(--font-weight-medium, 500);
+	font-weight: var(--font-weight-medium, 500);
+	color: var(--color-white, #fff);
+	--tw-shadow: var(--ds-shadow-border-medium);
+	box-shadow:
+		var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+		var(--tw-shadow);
+	transition-property: all;
+	transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(0.4, 0, 0.2, 1)));
+	transition-duration: var(--tw-duration, var(--default-transition-duration, 0.15s));
+	display: flex;
+
+	position: relative;
+	z-index: 0;
+	box-shadow:
+		inset 0 1px 0 oklch(1 0 0/0.2),
+		inset 0 -1px 0 oklch(0 0 0/0.2),
+		0 1px 2px oklch(0 0 0/0.2);
+	color: oklch(1 0 0);
+	text-shadow: 0 1px rgb(0 11 15/40%);
+	will-change: transform;
+	transition: 0.125s ease;
+}
+
+.btn-depth > svg {
+	filter: drop-shadow(0 1px rgb(0 11 15/40%));
+}
+
+.btn-depth::before {
+	content: "";
+	position: absolute;
+	inset: 0px;
+	background: linear-gradient(to top, var(--bg-from), var(--bg-to-hover));
+	border-radius: inherit;
+	opacity: 0;
+	transition: opacity 0.125s ease;
+	z-index: -1;
+}
+
+.btn-depth:hover::before {
+	opacity: 1;
+}
+
+.btn-depth::after {
+	content: "";
+	position: absolute;
+	inset: 0px;
+	background: linear-gradient(to top, var(--bg-from), var(--bg-to-active));
+	border-radius: inherit;
+	opacity: 0;
+	transition: opacity 0.125s ease;
+	z-index: -1;
+}
+
+.btn-depth:active {
+	scale: 0.99;
+}
+
+.btn-depth:active::after {
+	opacity: 1;
+}
+
+.btn-depth-gray {
+	--bg-from: var(--color-gray-700);
+	--bg-to: var(--color-gray-600);
+	--bg-to-hover: var(--color-gray-500);
+	--bg-to-active: var(--color-gray-600);
+	--border-color: var(--color-gray-800);
+}
+
+.btn-depth-red {
+	--bg-from: var(--color-red-600);
+	--bg-to: var(--color-red-500);
+	--bg-to-hover: var(--color-red-400);
+	--bg-to-active: var(--color-red-700);
+	--border-color: var(--color-red-600);
+}
