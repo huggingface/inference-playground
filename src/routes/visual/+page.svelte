@@ -3,14 +3,15 @@
 	import { Splitter } from "$lib/spells/splitter.svelte.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import type { InferenceProviderMapping, Model } from "$lib/types.js";
+	import { PipelineTag, type InferenceProviderMapping, type Model } from "$lib/types.js";
 	import ProviderSelect from "$lib/ui/provider-select.svelte";
 	import { InferenceClient } from "@huggingface/inference";
-	import { PersistedState, useDebounce } from "runed";
+	import { PersistedState, useDebounce, watch } from "runed";
 	import { onMount } from "svelte";
 	import IconHeart from "~icons/lucide/heart";
-	import IconPhoto from "~icons/lucide/image";
+	import { default as IconImage, default as IconPhoto } from "~icons/lucide/image";
 	import IconSparkles from "~icons/lucide/sparkles";
+	import IconVideo from "~icons/lucide/video";
 	import IconX from "~icons/lucide/x";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import ImageCard from "./image-card.svelte";
@@ -19,6 +20,15 @@
 	let { data }: { data: ApiModelsResponse } = $props();
 
 	let model: Model = $state(data.models[0]!);
+	let filterTag = $state<PipelineTag>(PipelineTag.TextToImage);
+	const filteredModels = $derived(data.models.filter(m => m.pipeline_tag === filterTag));
+	watch(
+		() => $state.snapshot(filteredModels),
+		() => {
+			if (!filteredModels.includes(model)) model = filteredModels[0]!;
+		}
+	);
+
 	let provider: InferenceProviderMapping["provider"] = $state(data.models[0]!.inferenceProviderMapping[0]!.provider);
 	let prompt = $state("");
 	let columns = $state(3);
@@ -228,17 +238,58 @@
 				class="space-y-4 rounded-sm outline-2 outline-offset-8 outline-transparent outline-dashed"
 				bind:this={inputContainer}
 			>
-				<div class="space-y-2">
-					<label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Model</label>
-					<select
-						class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-						id="model"
-						bind:value={model}
+				<div class="flex items-end gap-2">
+					<div class="space-y-2">
+						<label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Model</label>
+						<select
+							class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+							id="model"
+							bind:value={model}
+						>
+							{#each data.models
+								.toSorted((a, b) => a.id.localeCompare(b.id))
+								.filter(m => m.pipeline_tag === filterTag) as model (model)}
+								<option value={model}>{model.id}</option>
+							{/each}
+						</select>
+					</div>
+
+					<div
+						class="relative flex h-9.5 rounded-lg border border-gray-200/20 bg-gray-800 p-0.5 shadow-lg dark:border-gray-700/30"
 					>
-						{#each data.models.toSorted((a, b) => a.id.localeCompare(b.id)) as model (model)}
-							<option value={model}>{model.id}</option>
-						{/each}
-					</select>
+						<!-- Sliding background indicator -->
+						<div
+							class="absolute top-0.5 h-8 rounded-md bg-gray-700 shadow-md transition-all duration-150 ease-out"
+							style="width: calc(50% - 4px); transform: translateX({filterTag === PipelineTag.TextToImage
+								? '0'
+								: 'calc(100% + 4px)'})"
+						></div>
+
+						{#snippet radio(tag: PipelineTag, Icon: typeof IconImage)}
+							<label
+								class="group relative z-10 flex flex-1 cursor-pointer items-center justify-center rounded-lg px-4 py-2 transition-all duration-300 ease-out"
+								class:text-white={filterTag === tag}
+								class:text-gray-400={filterTag !== tag}
+								class:hover:text-gray-200={filterTag !== tag}
+							>
+								<!-- Icon -->
+								<Icon class="h-4 w-4 transition-all duration-150 ease-out " />
+
+								<!-- Hidden radio input -->
+								<input
+									type="radio"
+									value={tag}
+									name="model-type"
+									aria-label={tag}
+									class="absolute inset-0 cursor-pointer opacity-0"
+									bind:group={filterTag}
+								/>
+							</label>
+						{/snippet}
+
+						{@render radio(PipelineTag.TextToImage, IconImage)}
+						{@render radio(PipelineTag.TextToVideo, IconVideo)}
+					</div>
 				</div>
 
 				<div class="space-y-2">
