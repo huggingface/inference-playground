@@ -64,7 +64,7 @@ export class Splitter {
 			role: "separator",
 			tabindex: 0,
 			onkeydown: e => {
-				const step = 20;
+				const step = 40;
 				if (e.key === "ArrowLeft") {
 					e.preventDefault();
 					this.value = clamp(this.min, this.value - step, this.max);

@@ -18,6 +18,7 @@
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { masonry } from "$lib/attachments/masonry.js";
 	import { onMount } from "svelte";
+	import { PersistedState, useDebounce } from "runed";
 
 	let { data }: { data: ApiModelsResponse } = $props();
 
@@ -191,9 +192,16 @@
 		}
 	}
 
+	const splitterSize = new PersistedState("sidebar-width", 400);
+	const updateSplitterSize = useDebounce((v: number) => {
+		splitterSize.current = v;
+	});
 	const splitter = new Splitter({
 		min: 240,
-		value: 400,
+		value: splitterSize.current,
+		onValueChange(v) {
+			updateSplitterSize(v);
+		},
 		max: 1200,
 	});
 
@@ -221,7 +229,7 @@
 			<p class="text-sm text-gray-600 dark:text-gray-400">Configure your settings</p>
 		</div>
 
-		<div class="sidebar-content flex-1 space-y-4 overflow-y-auto p-4">
+		<div class="sidebar-content flex-1 space-y-4 p-4">
 			<div class="space-y-2">
 				<label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Model</label>
 				<select
@@ -290,7 +298,7 @@
 	<!-- Resize Handle -->
 	<div
 		class={[
-			"w-1 cursor-col-resize transition-colors hover:bg-blue-500 dark:hover:bg-blue-400",
+			"relative z-10 w-1 cursor-col-resize outline-hidden transition-colors hover:bg-blue-500 focus-visible:ring-2 dark:hover:bg-blue-400",
 			splitter.isResizing ? "bg-blue-500 dark:bg-blue-400" : "bg-gray-300 dark:bg-gray-700",
 		]}
 		{...splitter.separator}
