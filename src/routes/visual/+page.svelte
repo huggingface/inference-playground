@@ -1,24 +1,20 @@
 <script lang="ts">
+	import { masonry } from "$lib/attachments/masonry.js";
+	import { Splitter } from "$lib/spells/splitter.svelte.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import type { InferenceProviderMapping, Model } from "$lib/types.js";
 	import ProviderSelect from "$lib/ui/provider-select.svelte";
 	import { InferenceClient } from "@huggingface/inference";
-	import IconBolt from "~icons/lucide/bolt";
-	import IconDownload from "~icons/lucide/download";
+	import { PersistedState, useDebounce } from "runed";
+	import { onMount } from "svelte";
 	import IconHeart from "~icons/lucide/heart";
 	import IconPhoto from "~icons/lucide/image";
-	import IconRefresh from "~icons/lucide/refresh-cw";
-	import IconTrash from "~icons/lucide/trash";
+	import IconSparkles from "~icons/lucide/sparkles";
 	import IconX from "~icons/lucide/x";
-	import IconMaximize from "~icons/lucide/maximize";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
-	import LoadingAnimation from "./loading-animation.svelte";
-	import { Splitter } from "$lib/spells/splitter.svelte.js";
-	import Tooltip from "$lib/components/tooltip.svelte";
-	import { masonry } from "$lib/attachments/masonry.js";
-	import { onMount } from "svelte";
-	import { PersistedState, useDebounce } from "runed";
+	import ImageCard from "./image-card.svelte";
+	import type { ImageItem } from "./types.js";
 
 	let { data }: { data: ApiModelsResponse } = $props();
 
@@ -30,29 +26,10 @@
 	let autosized = new TextareaAutosize();
 	let dialogElement: HTMLDialogElement;
 
-	interface ImageItem {
-		id: string;
-		blob?: Blob;
-		isLoading: boolean;
-		prompt: string;
-		model?: string;
-		provider?: string;
-		generationTimeMs?: number;
-		startTime?: number;
-	}
-
 	const images = $state<ImageItem[]>([]);
 
 	function generateUniqueId(): string {
 		return `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-	}
-
-	function formatGenerationTime(ms: number): string {
-		if (ms < 1000) {
-			return `${Math.round(ms)}ms`;
-		} else {
-			return `${(ms / 1000).toFixed(1)}s`;
-		}
 	}
 
 	function expandImage(imageItem: ImageItem) {
@@ -81,6 +58,21 @@
 				}
 			}
 		}
+
+		if (!inputContainer) return;
+
+		const green = getComputedStyle(document.documentElement).getPropertyValue("--color-blue-600");
+
+		inputContainer?.animate(
+			[
+				{ outlineColor: green, offset: 0 },
+				{ outlineColor: green, offset: 0.8 },
+				{ outlineColor: "transparent", offset: 1 },
+			],
+			{
+				duration: 1200,
+			}
+		);
 	}
 
 	async function generateImage() {
@@ -208,6 +200,8 @@
 	onMount(() => {
 		[...new Array(8)].forEach(_ => mockGenerateImage());
 	});
+
+	let inputContainer = $state<HTMLElement>();
 </script>
 
 <svelte:window
@@ -229,50 +223,55 @@
 			<p class="text-sm text-gray-600 dark:text-gray-400">Configure your settings</p>
 		</div>
 
-		<div class="sidebar-content flex-1 space-y-4 p-4">
-			<div class="space-y-2">
-				<label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Model</label>
-				<select
-					class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-					id="model"
-					bind:value={model}
-				>
-					{#each data.models.toSorted((a, b) => a.id.localeCompare(b.id)) as model (model)}
-						<option value={model}>{model.id}</option>
-					{/each}
-				</select>
+		<div class="sidebar-content flex-1 p-4">
+			<div
+				class="space-y-4 rounded-sm outline-2 outline-offset-8 outline-transparent outline-dashed"
+				bind:this={inputContainer}
+			>
+				<div class="space-y-2">
+					<label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Model</label>
+					<select
+						class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+						id="model"
+						bind:value={model}
+					>
+						{#each data.models.toSorted((a, b) => a.id.localeCompare(b.id)) as model (model)}
+							<option value={model}>{model.id}</option>
+						{/each}
+					</select>
+				</div>
+
+				<div class="space-y-2">
+					<ProviderSelect {model} bind:provider />
+				</div>
+
+				<label class="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+					<p>Prompt</p>
+					<textarea
+						class="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+						bind:value={prompt}
+						placeholder="Describe the image you want to generate..."
+						rows="4"
+						{@attach autosized.attachment}
+					></textarea>
+				</label>
+
+				<label for="columns" class="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+					<p>Columns</p>
+					<select
+						class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+						id="columns"
+						bind:value={columns}
+					>
+						<option value={1}>1 Column</option>
+						<option value={2}>2 Columns</option>
+						<option value={3}>3 Columns</option>
+						<option value={4}>4 Columns</option>
+						<option value={5}>5 Columns</option>
+						<option value={6}>6 Columns</option>
+					</select>
+				</label>
 			</div>
-
-			<div class="space-y-2">
-				<ProviderSelect {model} bind:provider />
-			</div>
-
-			<label class="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-				<p>Prompt</p>
-				<textarea
-					class="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-					bind:value={prompt}
-					placeholder="Describe the image you want to generate..."
-					rows="4"
-					{@attach autosized.attachment}
-				></textarea>
-			</label>
-
-			<label for="columns" class="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-				<p>Columns</p>
-				<select
-					class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-					id="columns"
-					bind:value={columns}
-				>
-					<option value={1}>1 Column</option>
-					<option value={2}>2 Columns</option>
-					<option value={3}>3 Columns</option>
-					<option value={4}>4 Columns</option>
-					<option value={5}>5 Columns</option>
-					<option value={6}>6 Columns</option>
-				</select>
-			</label>
 		</div>
 
 		<div class="sidebar-footer space-y-2 border-t border-gray-200 p-4 dark:border-gray-700">
@@ -281,7 +280,7 @@
 				onclick={generateImage}
 				aria-label="Generate image using AI"
 			>
-				<IconBolt class="mr-2 h-4 w-4" />
+				<IconSparkles class="mr-2 h-4 w-4" />
 				Generate
 			</button>
 			<button
@@ -324,138 +323,13 @@
 				aria-label="Generated images"
 				{@attach masonry}
 			>
-				{#each images as imageItem (imageItem.id)}
-					{#if imageItem.isLoading}
-						<article
-							class="overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
-							aria-label="Generating image: {imageItem.prompt}"
-						>
-							<div
-								class="flex aspect-square items-center justify-center rounded-t-xl border-2 border-dashed border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"
-								aria-label="Loading image"
-							>
-								<LoadingAnimation />
-							</div>
-							<div class="space-y-3 p-4">
-								<div class="text-sm font-medium text-gray-600 dark:text-gray-400">Generating: {imageItem.prompt}</div>
-								<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-									<div>Model: {imageItem.model}</div>
-									<div>Provider: {imageItem.provider}</div>
-									<div>Time: ...</div>
-								</div>
-								<div class="flex justify-end gap-2">
-									<button
-										class="flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
-										onclick={() => deleteImage(imageItem.id)}
-										aria-label="Cancel image generation"
-									>
-										Cancel
-									</button>
-								</div>
-							</div>
-						</article>
-					{:else if imageItem.blob}
-						<article
-							class="overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
-						>
-							<button
-								class="group relative w-full cursor-pointer border-0 bg-transparent p-0"
-								onclick={() => expandImage(imageItem)}
-								aria-label="Expand image: {imageItem.prompt}"
-							>
-								<img
-									src={URL.createObjectURL(imageItem.blob)}
-									alt="Generated image: {imageItem.prompt}"
-									class="block h-auto w-full"
-								/>
-								<!-- Hover content -->
-								<div class="absolute inset-0 flex flex-col items-center justify-center">
-									<!-- Progressive radial blur layers -->
-									<div
-										class="absolute h-24 w-48 opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover:opacity-100"
-										style="mask: radial-gradient(ellipse, black 0%, black 30%, transparent 70%); -webkit-mask: radial-gradient(ellipse, black 0%, black 30%, transparent 70%);"
-									></div>
-									<div
-										class="absolute h-20 w-40 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100"
-										style="mask: radial-gradient(ellipse, black 20%, black 50%, transparent 80%); -webkit-mask: radial-gradient(ellipse, black 20%, black 50%, transparent 80%);"
-									></div>
-									<div
-										class="absolute h-16 w-32 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100"
-										style="mask: radial-gradient(ellipse, black 40%, black 60%, transparent 90%); -webkit-mask: radial-gradient(ellipse, black 40%, black 60%, transparent 90%);"
-									></div>
-
-									<div
-										class="relative z-10 flex flex-col items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-									>
-										<IconMaximize class="mb-1 h-5 w-5 text-white drop-shadow drop-shadow-black/35" />
-										<span class="text-xs font-medium text-white text-shadow-black/35 text-shadow-md">
-											Click to expand
-										</span>
-									</div>
-								</div>
-							</button>
-
-							<div class="space-y-3 p-4">
-								<div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-									<div>Model: {imageItem.model}</div>
-									<div>Provider: {imageItem.provider}</div>
-									<div>
-										Time: {imageItem.generationTimeMs ? formatGenerationTime(imageItem.generationTimeMs) : "Unknown"}
-									</div>
-								</div>
-								<div class="flex justify-end gap-2" role="group" aria-label="Image actions">
-									<Tooltip>
-										{#snippet trigger(tooltip)}
-											<button
-												class="flex items-center justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-												onclick={() => reuseSettings(imageItem)}
-												aria-label="Reuse settings from this image"
-												{...tooltip.trigger}
-											>
-												<IconRefresh class="h-4 w-4" />
-											</button>
-										{/snippet}
-										Reuse these settings
-									</Tooltip>
-
-									<Tooltip>
-										{#snippet trigger(tooltip)}
-											<button
-												class="flex items-center justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-												onclick={() => {
-													const url = URL.createObjectURL(imageItem.blob!);
-													const a = document.createElement("a");
-													a.href = url;
-													a.download = `generated-image-${imageItem.id}.png`;
-													a.click();
-													URL.revokeObjectURL(url);
-												}}
-												{...tooltip.trigger}
-												aria-label="Download image"
-											>
-												<IconDownload class="h-4 w-4" />
-											</button>
-										{/snippet}
-										Download image
-									</Tooltip>
-
-									<Tooltip>
-										{#snippet trigger(tooltip)}
-											<button
-												class="flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700"
-												onclick={() => deleteImage(imageItem.id)}
-												{...tooltip.trigger}
-												aria-label="Delete image"
-											>
-												<IconTrash class="h-4 w-4" />
-											</button>
-										{/snippet}
-										Delete image
-									</Tooltip>
-								</div>
-							</div>
-						</article>
-					{/if}
+				{#each images as image (image.id)}
+					<ImageCard
+						{image}
+						onDelete={() => deleteImage(image.id)}
+						onReuse={() => reuseSettings(image)}
+						onExpand={() => expandImage(image)}
+					/>
 				{/each}
 			</div>
 		{/if}
