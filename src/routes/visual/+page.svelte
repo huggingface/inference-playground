@@ -4,14 +4,14 @@
 	import type { InferenceProviderMapping, Model } from "$lib/types.js";
 	import ProviderSelect from "$lib/ui/provider-select.svelte";
 	import { InferenceClient } from "@huggingface/inference";
-	import IconBolt from "~icons/tabler/bolt";
-	import IconDownload from "~icons/tabler/download";
-	import IconHeart from "~icons/tabler/heart";
-	import IconPhoto from "~icons/tabler/photo";
-	import IconRefresh from "~icons/tabler/refresh";
-	import IconTrash from "~icons/tabler/trash";
-	import IconX from "~icons/tabler/x";
-	import IconMaximize from "~icons/carbon/maximize";
+	import IconBolt from "~icons/lucide/bolt";
+	import IconDownload from "~icons/lucide/download";
+	import IconHeart from "~icons/lucide/heart";
+	import IconPhoto from "~icons/lucide/image";
+	import IconRefresh from "~icons/lucide/refresh-cw";
+	import IconTrash from "~icons/lucide/trash";
+	import IconX from "~icons/lucide/x";
+	import IconMaximize from "~icons/lucide/maximize";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import LoadingAnimation from "./loading-animation.svelte";
 	import { Splitter } from "$lib/spells/splitter.svelte.js";
@@ -387,8 +387,10 @@
 									<div
 										class="relative z-10 flex flex-col items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100"
 									>
-										<IconMaximize class="mb-1 h-5 w-5 text-white drop-shadow-sm" />
-										<span class="text-xs font-medium text-white drop-shadow-sm"> Click to expand </span>
+										<IconMaximize class="mb-1 h-5 w-5 text-white drop-shadow drop-shadow-black/35" />
+										<span class="text-xs font-medium text-white text-shadow-black/35 text-shadow-md">
+											Click to expand
+										</span>
 									</div>
 								</div>
 							</button>
