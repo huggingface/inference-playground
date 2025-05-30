@@ -356,7 +356,7 @@
 	></div>
 
 	<!-- Main content -->
-	<main class="flex-1 overflow-auto bg-gray-50 p-6 dark:bg-gray-900">
+	<main class="dark:bg-lemon-punch-3 flex-1 overflow-auto bg-gray-50 p-6">
 		{#if images.length === 0}
 			<div class="flex h-full items-center justify-center text-gray-500">
 				<div class="text-center">

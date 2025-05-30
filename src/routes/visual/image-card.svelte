@@ -26,7 +26,10 @@
 </script>
 
 <article
-	class="flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl dark:bg-gray-800"
+	class="border-gradient dark:bg-california-950/20 flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+	style="
+	--border-gradient-before: linear-gradient(180deg, var(--color-bright-sun-900) 0%, var(--color-california-900) 100%)
+	"
 >
 	{#if image.isLoading || !image.blob}
 		<div
