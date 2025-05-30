@@ -70,16 +70,16 @@
 
 <div class="flex flex-col gap-2">
 	<!--
-	<label class="flex items-baseline gap-2 text-sm font-medium text-gray-900 dark:text-white">
-		Providers<span class="text-xs font-normal text-gray-400"></span>
+	<label class="flex items-baseline gap-2 text-sm font-medium text-stone-900 dark:text-white">
+		Providers<span class="text-xs font-normal text-stone-400"></span>
 	</label>
 	-->
 
 	<button
 		{...select.trigger}
 		class={cn(
-			"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
-			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
+			"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-stone-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
+			"hover:brightness-95 dark:border-stone-700 dark:bg-stone-800 dark:hover:brightness-110",
 			classes
 		)}
 	>
@@ -88,17 +88,17 @@
 			{formatName(provider ?? "") ?? "loading"}
 		</div>
 		<div
-			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
+			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-stone-100 text-xs dark:bg-stone-600"
 		>
 			<IconCaret />
 		</div>
 	</button>
 
-	<div {...select.content} class="rounded-lg border bg-gray-100 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+	<div {...select.content} class="rounded-lg border bg-stone-100 shadow-xl dark:border-stone-700 dark:bg-stone-800">
 		{#each providers as { provider, providerId } (provider + providerId)}
 			<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
 				<div
-					class="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
+					class="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[highlighted]:bg-stone-200 dark:group-data-[highlighted]:bg-stone-700"
 				>
 					<IconProvider {provider} />
 					{formatName(provider)}

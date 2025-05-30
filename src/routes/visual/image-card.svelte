@@ -26,14 +26,14 @@
 </script>
 
 <article
-	class="border-gradient dark:bg-california-950/20 flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+	class="border-gradient dark:bg-lemon-punch-3 flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
 	style="
-	--border-gradient-before: linear-gradient(180deg, var(--color-bright-sun-900) 0%, var(--color-california-900) 100%)
+	--border-gradient-before: linear-gradient(180deg, var(--color-lemon-punch-9) 0%, var(--color-mandarin-peel-9) 100%)
 	"
 >
 	{#if image.isLoading || !image.blob}
 		<div
-			class="flex aspect-square items-center justify-center rounded-t-xl border-2 border-dashed border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"
+			class="flex aspect-square items-center justify-center rounded-t-xl bg-stone-100 dark:bg-stone-950"
 			aria-label="Loading image"
 		>
 			<LoadingAnimation />
@@ -71,14 +71,14 @@
 		</button>
 	{/if}
 	<div class="relative">
-		<div class="space-y-1 p-3 text-xs text-gray-500 dark:text-gray-400">
+		<div class="space-y-1 p-3 text-xs text-stone-500 dark:text-stone-400">
 			{#if image.prompt}
-				<div>Prompt: <span class="text-gray-200">{image.prompt}</span></div>
+				<div>Prompt: <span class="text-stone-200">{image.prompt}</span></div>
 			{/if}
-			<div>Model: <span class="text-gray-200">{image.model}</span></div>
-			<div>Provider: <span class="text-gray-200">{image.provider}</span></div>
+			<div>Model: <span class="text-stone-200">{image.model}</span></div>
+			<div>Provider: <span class="text-stone-200">{image.provider}</span></div>
 			<div>
-				Time: <span class="text-gray-200">
+				Time: <span class="text-stone-200">
 					{image.generationTimeMs ? formatGenerationTime(image.generationTimeMs) : "..."}
 				</span>
 			</div>
@@ -96,7 +96,7 @@
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
-							class="btn-depth btn-depth-gray flex items-center justify-center"
+							class="btn-depth btn-depth-stone flex items-center justify-center"
 							onclick={onReuse}
 							aria-label="Reuse settings from this image"
 							{...tooltip.trigger}
@@ -110,7 +110,7 @@
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
-							class="btn-depth btn-depth-gray flex items-center justify-center"
+							class="btn-depth btn-depth-stone flex items-center justify-center"
 							onclick={() => {
 								const url = URL.createObjectURL(image.blob!);
 								const a = document.createElement("a");

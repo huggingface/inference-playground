@@ -47,6 +47,25 @@
 	--color-lemon-punch-17: oklch(0.9362648815336893 0.1747506522354832 92.57964255604236);
 	--color-lemon-punch-18: oklch(0.995088410945454 0.1747506522354832 92.57964255604236);
 
+	--color-mandarin-peel-1: oklch(0.01405984187971887 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-2: oklch(0.07288337129148359 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-3: oklch(0.1317069007032483 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-4: oklch(0.190530430115013 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-5: oklch(0.2493539595267777 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-6: oklch(0.30817748893854247 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-7: oklch(0.36700101835030713 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-8: oklch(0.4258245477620719 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-9: oklch(0.4846480771738365 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-10: oklch(0.5434716065856012 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-11: oklch(0.602295135997366 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-12: oklch(0.6611186654091306 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-13: oklch(0.7199421948208953 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-14: oklch(0.7787657242326601 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-15: oklch(0.8375892536444249 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-16: oklch(0.8964127830561895 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-17: oklch(0.9552363124679542 0.1726501951311444 66.56527686213349);
+	--color-mandarin-peel-18: oklch(1 0.1726501951311444 66.56527686213349);
+
 	--animate-fade-in: fade-in 0.15s ease;
 	@keyframes fade-in {
 		0% {
@@ -175,11 +194,11 @@ body.dark {
 }
 
 .btn-depth {
-	--bg-from: var(--color-blue-600);
-	--bg-to: var(--color-blue-500);
-	--bg-to-hover: var(--color-blue-400);
-	--bg-to-active: var(--color-blue-700);
-	--border-color: var(--color-blue-600);
+	--bg-from: var(--color-mandarin-peel-12);
+	--bg-to: var(--color-mandarin-peel-13);
+	--bg-to-hover: var(--color-mandarin-peel-15);
+	--bg-to-active: var(--color-mandarin-peel-14);
+	--border-color: var(--color-mandarin-peel-8);
 
 	border-radius: var(--radius-lg, 0.5rem);
 	border-style: var(--tw-border-style);
@@ -249,6 +268,22 @@ body.dark {
 
 .btn-depth:active::after {
 	opacity: 1;
+}
+
+.btn-depth-neutral {
+	--bg-from: var(--color-neutral-700);
+	--bg-to: var(--color-neutral-600);
+	--bg-to-hover: var(--color-neutral-500);
+	--bg-to-active: var(--color-neutral-600);
+	--border-color: var(--color-neutral-800);
+}
+
+.btn-depth-stone {
+	--bg-from: var(--color-stone-700);
+	--bg-to: var(--color-stone-600);
+	--bg-to-hover: var(--color-stone-500);
+	--bg-to-active: var(--color-stone-600);
+	--border-color: var(--color-stone-800);
 }
 
 .btn-depth-gray {

@@ -71,12 +71,12 @@
 
 		if (!inputContainer) return;
 
-		const green = getComputedStyle(document.documentElement).getPropertyValue("--color-blue-600");
+		const color = getComputedStyle(document.documentElement).getPropertyValue("--color-mandarin-peel-10");
 
 		inputContainer?.animate(
 			[
-				{ outlineColor: green, offset: 0 },
-				{ outlineColor: green, offset: 0.8 },
+				{ outlineColor: color, offset: 0 },
+				{ outlineColor: color, offset: 0.8 },
 				{ outlineColor: "transparent", offset: 1 },
 			],
 			{
@@ -225,12 +225,12 @@
 <div class="flex h-lvh dark:text-white">
 	<!-- Sidebar -->
 	<div
-		class="sidebar flex h-full flex-col border-r border-gray-300 bg-gradient-to-b from-gray-50 to-gray-100 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800"
+		class="sidebar dark:from-lemon-punch-2 dark:to-lemon-punch-3 flex h-full flex-col border-r border-stone-300 bg-gradient-to-b from-stone-50 to-stone-100 dark:border-stone-700"
 		style="min-width: {splitter.value}px;width: {splitter.value}px;"
 	>
-		<div class="sidebar-header border-b border-gray-200 p-4 dark:border-gray-700">
-			<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Image Generation</h2>
-			<p class="text-sm text-gray-600 dark:text-gray-400">Configure your settings</p>
+		<div class="sidebar-header border-b border-stone-200 p-4 dark:border-stone-700">
+			<h2 class="text-lg font-semibold text-stone-800 dark:text-stone-200">Image Generation</h2>
+			<p class="text-sm text-stone-600 dark:text-stone-400">Configure your settings</p>
 		</div>
 
 		<div class="sidebar-content flex-1 p-4">
@@ -240,9 +240,9 @@
 			>
 				<div class="flex items-end gap-2">
 					<div class="space-y-2">
-						<label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Model</label>
+						<label for="model" class="block text-sm font-medium text-stone-700 dark:text-stone-300">Model</label>
 						<select
-							class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+							class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 							id="model"
 							bind:value={model}
 						>
@@ -255,11 +255,11 @@
 					</div>
 
 					<div
-						class="relative flex h-9.5 rounded-lg border border-gray-200/20 bg-gray-800 p-0.5 shadow-lg dark:border-gray-700/30"
+						class="relative flex h-9.5 rounded-lg border border-stone-200/20 bg-stone-800 p-0.5 shadow-lg dark:border-stone-700/30"
 					>
 						<!-- Sliding background indicator -->
 						<div
-							class="absolute top-0.5 h-8 rounded-md bg-gray-700 shadow-md transition-all duration-150 ease-out"
+							class="absolute top-0.5 h-8 rounded-md bg-stone-700 shadow-md transition-all duration-150 ease-out"
 							style="width: calc(50% - 4px); transform: translateX({filterTag === PipelineTag.TextToImage
 								? '0'
 								: 'calc(100% + 4px)'})"
@@ -269,8 +269,8 @@
 							<label
 								class="group relative z-10 flex flex-1 cursor-pointer items-center justify-center rounded-lg px-4 py-2 transition-all duration-300 ease-out"
 								class:text-white={filterTag === tag}
-								class:text-gray-400={filterTag !== tag}
-								class:hover:text-gray-200={filterTag !== tag}
+								class:text-stone-400={filterTag !== tag}
+								class:hover:text-stone-200={filterTag !== tag}
 							>
 								<!-- Icon -->
 								<Icon class="h-4 w-4 transition-all duration-150 ease-out " />
@@ -296,10 +296,10 @@
 					<ProviderSelect {model} bind:provider />
 				</div>
 
-				<label class="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+				<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 					<p>Prompt</p>
 					<textarea
-						class="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+						class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 						bind:value={prompt}
 						placeholder="Describe the image you want to generate..."
 						rows="4"
@@ -307,10 +307,10 @@
 					></textarea>
 				</label>
 
-				<label for="columns" class="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+				<label for="columns" class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 					<p>Columns</p>
 					<select
-						class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+						class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 						id="columns"
 						bind:value={columns}
 					>
@@ -325,7 +325,7 @@
 			</div>
 		</div>
 
-		<div class="sidebar-footer space-y-2 border-t border-gray-200 p-4 dark:border-gray-700">
+		<div class="sidebar-footer space-y-2 border-t border-stone-200 p-4 dark:border-stone-700">
 			<button
 				class="btn-depth flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-base font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
 				onclick={generateImage}
@@ -334,7 +334,7 @@
 				Generate
 			</button>
 			<button
-				class="btn-depth btn-depth-gray flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-sm text-sm font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+				class="btn-depth btn-depth-stone flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-sm font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
 				onclick={mockGenerateImage}
 				aria-label="Generate mock image for testing"
 			>
@@ -347,8 +347,8 @@
 	<!-- Resize Handle -->
 	<div
 		class={[
-			"relative z-10 w-1 cursor-col-resize outline-hidden transition-colors hover:bg-blue-500 focus-visible:ring-2 dark:hover:bg-blue-400",
-			splitter.isResizing ? "bg-blue-500 dark:bg-blue-400" : "bg-gray-300 dark:bg-gray-700",
+			"dark:hover:bg-mandarin-peel-12 relative z-10 w-1 cursor-col-resize outline-hidden transition-colors hover:bg-blue-500 focus-visible:ring-2",
+			splitter.isResizing ? "dark:bg-mandarin-peel-12 bg-blue-500" : "bg-stone-300 dark:bg-stone-700",
 		]}
 		{...splitter.separator}
 		{@attach splitter.separator.attach}
@@ -356,11 +356,11 @@
 	></div>
 
 	<!-- Main content -->
-	<main class="dark:bg-lemon-punch-3 flex-1 overflow-auto bg-gray-50 p-6">
+	<main class="dark:bg-mandarin-peel-2 flex-1 overflow-auto bg-stone-50 p-6">
 		{#if images.length === 0}
-			<div class="flex h-full items-center justify-center text-gray-500">
+			<div class="flex h-full items-center justify-center text-stone-500">
 				<div class="text-center">
-					<IconPhoto class="mx-auto mb-4 h-16 w-16 text-gray-400" />
+					<IconPhoto class="mx-auto mb-4 h-16 w-16 text-stone-400" />
 					<p class="text-lg font-medium">No images generated yet</p>
 					<p class="text-sm">Click "Generate" to create your first image</p>
 				</div>
@@ -389,7 +389,7 @@
 <!-- Image Expansion Dialog -->
 <dialog
 	bind:this={dialogElement}
-	class="backdrop:bg-opacity-75 m-auto max-h-[90vh] max-w-[90vw] overflow-hidden rounded-xl bg-white p-0 shadow-2xl backdrop:bg-black dark:bg-gray-800"
+	class="backdrop:bg-opacity-75 m-auto max-h-[90vh] max-w-[90vw] overflow-hidden rounded-xl bg-white p-0 shadow-2xl backdrop:bg-black dark:bg-stone-800"
 	aria-labelledby="expanded-image-title"
 	onclick={e => {
 		// Close dialog when clicking on backdrop
@@ -399,7 +399,7 @@
 	}}
 >
 	<button
-		class="fixed top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+		class="fixed top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-stone-400 hover:bg-stone-200 hover:text-stone-900 dark:hover:bg-stone-600 dark:hover:text-white"
 		onclick={closeExpandedImage}
 		aria-label="Close expanded image"
 	>
@@ -415,12 +415,14 @@
 </dialog>
 
 <style>
+	@reference "../../app.css";
+
 	.sidebar {
 		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 	}
 
 	.sidebar-header {
-		background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+		background: linear-gradient(135deg, var(--color-lemon-punch-3), var(--color-lemon-punch-5));
 	}
 
 	/* Dialog styles */
