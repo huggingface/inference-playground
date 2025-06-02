@@ -474,3 +474,78 @@ export {
 	type FrameExtractionResult,
 	type ImageFormat,
 };
+
+import chroma from "chroma-js";
+
+interface AdjustBgColorOptions {
+	/** The text color that will be displayed on the background */
+	textColor: string | chroma.Color;
+	/** The background color to adjust */
+	backgroundColor: string | chroma.Color;
+	/** Target APCA contrast ratio (positive for light text on dark bg, negative for dark text on light bg) */
+	targetContrast: number;
+	/** Maximum number of adjustment iterations */
+	maxIterations?: number;
+	/** Tolerance for contrast matching */
+	tolerance?: number;
+	/** Whether to adjust lightness (true) or saturation (false) */
+	adjustLightness?: boolean;
+}
+
+/**
+ * Adjusts a background color to meet APCA contrast requirements against a text color
+ */
+export function adjustBgColorForAPCAContrast(options: AdjustBgColorOptions): chroma.Color {
+	const {
+		textColor,
+		backgroundColor,
+		targetContrast,
+		maxIterations = 50,
+		tolerance = 1,
+		adjustLightness = true,
+	} = options;
+
+	let adjustedBgColor = chroma(backgroundColor);
+	const txtColor = chroma(textColor);
+
+	let currentContrast = chroma.contrastAPCA(txtColor, adjustedBgColor);
+	let iterations = 0;
+
+	if (Math.abs(currentContrast - targetContrast) <= tolerance) {
+		return adjustedBgColor;
+	}
+
+	while (Math.abs(currentContrast - targetContrast) > tolerance && iterations < maxIterations) {
+		const [h, s, l] = adjustedBgColor.hsl();
+		let newLightness: number;
+
+		if (adjustLightness) {
+			// For APCA: more negative = better contrast for light text
+			// So if we want more negative contrast, make bg darker
+			if (targetContrast < currentContrast) {
+				// Want more negative (better contrast for light text) - make bg darker
+				newLightness = Math.max(0, l - 0.05);
+			} else {
+				// Want less negative - make bg lighter
+				newLightness = Math.min(1, l + 0.05);
+			}
+
+			adjustedBgColor = chroma.hsl(h, s, newLightness);
+		}
+
+		const newContrast = chroma.contrastAPCA(txtColor, adjustedBgColor);
+
+		// Check if we're getting closer to target
+		const oldDistance = Math.abs(currentContrast - targetContrast);
+		const newDistance = Math.abs(newContrast - targetContrast);
+
+		if (newDistance >= oldDistance) {
+			break;
+		}
+
+		currentContrast = newContrast;
+		iterations++;
+	}
+
+	return adjustedBgColor;
+}

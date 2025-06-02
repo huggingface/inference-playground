@@ -6,5 +6,5 @@
 - [ ] Link back to normal playground
 - [ ] Save images locally
 - [x] Improve styling
-- [ ] Adjust color contrast for a11y purposes
+- [x] Adjust color contrast for a11y purposes
 - [ ] AbortController for cancelling requests

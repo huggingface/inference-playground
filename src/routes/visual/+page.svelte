@@ -329,9 +329,8 @@
 	});
 
 	onMount(() => {
-		// [...new Array(4)].forEach(_ => mockGenerateImage());
-		// [...new Array(4)].forEach(_ => mockGenerateVideo());
-		[...new Array(1)].forEach(_ => mockGenerateVideo());
+		[...new Array(2)].forEach(_ => mockGenerateImage());
+		mockGenerateVideo();
 	});
 
 	let inputContainer = $state<HTMLElement>();

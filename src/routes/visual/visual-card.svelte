@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Tooltip from "$lib/components/tooltip.svelte";
+	import { isDark } from "$lib/spells/is-dark.svelte";
 	import { keys } from "$lib/utils/object.svelte";
 	import chroma from "chroma-js";
 	import { Vibrant } from "node-vibrant/browser";
@@ -9,7 +10,7 @@
 	import IconTrash from "~icons/lucide/trash";
 	import LoadingAnimation from "./loading-animation.svelte";
 	import type { VisualItem } from "./types.js";
-	import { extractVideoFrameWithRetry } from "./utils.js";
+	import { adjustBgColorForAPCAContrast, extractVideoFrameWithRetry } from "./utils.js";
 
 	interface Props {
 		item: VisualItem;
@@ -39,7 +40,7 @@
 		if (item.type === "video") {
 			extractVideoFrameWithRetry(
 				item.blob,
-				{ percentage: 25, format: "image/jpeg", quality: 0.8, maxWidth: 1920, timeout: 20000, debug: true },
+				{ percentage: 25, format: "image/jpeg", quality: 0.8, maxWidth: 1920, timeout: 20000, debug: false },
 				2
 			).then(frame => {
 				if (!frame.blob) return;
@@ -59,22 +60,22 @@
 		}
 	});
 
-	const btnStyles = $derived(`
-		--bg-from: ${chroma(palette?.Vibrant?.hex ?? "black")
-			.darken(0.5)
-			.hex()};
-		--bg-to: ${palette?.Vibrant?.hex};
-		--bg-to-hover: ${chroma(palette?.Vibrant?.hex ?? "black")
-			.brighten(0.5)
-			.hex()};
-		--bg-to-active: ${chroma(palette?.Vibrant?.hex ?? "black")
-			.darken(0.75)
-			.hex()};
-;
-		--border-color: ${chroma(palette?.Vibrant?.hex ?? "black")
-			.darken(0.25)
-			.hex()}
-`);
+	const btnStyles = $derived.by(() => {
+		const adjustedBgColor = adjustBgColorForAPCAContrast({
+			textColor: isDark() ? "#ffffff" : "#000000",
+			backgroundColor: palette?.Vibrant?.hex ?? "black",
+			targetContrast: isDark() ? -90 : 90,
+			tolerance: 2,
+		});
+
+		return `
+    --bg-from: ${chroma(adjustedBgColor).darken(0.5).hex()};
+    --bg-to: ${adjustedBgColor.hex()};
+    --bg-to-hover: ${chroma(adjustedBgColor).brighten(0.5).hex()};
+    --bg-to-active: ${chroma(adjustedBgColor).darken(0.75).hex()};
+    --border-color: ${chroma(adjustedBgColor).darken(0.25).hex()};
+  `;
+	});
 
 	const borderGradient = $derived(
 		`linear-gradient(to bottom, ${palette?.Vibrant?.hex} 0%, ${palette?.Muted?.hex} 100%)`
