@@ -255,11 +255,11 @@
 					</div>
 
 					<div
-						class="relative flex h-9.5 rounded-lg border border-stone-200/20 bg-stone-800 p-0.5 shadow-lg dark:border-stone-700/30"
+						class="relative flex h-9.25 rounded-lg border border-stone-200/20 bg-stone-800 p-0.5 shadow-lg dark:border-stone-600"
 					>
 						<!-- Sliding background indicator -->
 						<div
-							class="absolute top-0.5 h-8 rounded-md bg-stone-700 shadow-md transition-all duration-150 ease-out"
+							class="absolute top-0.5 h-7.75 rounded-md bg-stone-700 shadow-md transition-all duration-150 ease-out"
 							style="width: calc(50% - 4px); transform: translateX({filterTag === PipelineTag.TextToImage
 								? '0'
 								: 'calc(100% + 4px)'})"

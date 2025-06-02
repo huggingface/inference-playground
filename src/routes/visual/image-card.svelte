@@ -113,7 +113,7 @@
 					{#snippet trigger(tooltip)}
 						<div
 							aria-hidden="true"
-							class="h-4 w-4 rounded border"
+							class="h-4 w-4 rounded border border-stone-600"
 							style:background={palette?.[swatch]?.hex}
 							{...tooltip.trigger}
 						></div>
