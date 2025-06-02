@@ -14,8 +14,7 @@
 	import IconVideo from "~icons/lucide/video";
 	import IconX from "~icons/lucide/x";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
-	import ImageCard from "./image-card.svelte";
-	import VideoCard from "./video-card.svelte";
+	import VisualCard from "./visual-card.svelte";
 	import type { ImageItem, VideoItem, VisualItem } from "./types.js";
 
 	let { data }: { data: ApiModelsResponse } = $props();
@@ -268,30 +267,19 @@
 
 		try {
 			// Random delay for video generation (longer than images)
-			const min = 3000;
-			const max = 8000;
+			const min = 1000;
+			const max = 3000;
 			const delay = Math.random() * (max - min) + min;
 			await new Promise(resolve => setTimeout(resolve, delay));
 
-			// Create a simple mock video blob (you can replace this with actual video data)
-			const canvas = document.createElement("canvas");
-			canvas.width = 512;
-			canvas.height = 512;
-			const ctx = canvas.getContext("2d")!;
+			// Fetch the placeholder video
+			const response = await fetch("/src/routes/visual/placeholder.mp4");
 
-			// Create a simple animated pattern
-			ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 50%)`;
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.fillStyle = "white";
-			ctx.font = "24px Arial";
-			ctx.textAlign = "center";
-			ctx.fillText("Mock Video", canvas.width / 2, canvas.height / 2);
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
 
-			// Convert canvas to blob (this is just a placeholder - in reality you'd have actual video data)
-			const videoBlob = await new Promise<Blob>(resolve => {
-				canvas.toBlob(blob => resolve(blob!), "image/png");
-			});
-
+			const videoBlob = await response.blob();
 			const endTime = Date.now();
 			const generationTimeMs = endTime - startTime;
 
@@ -341,8 +329,9 @@
 	});
 
 	onMount(() => {
-		[...new Array(4)].forEach(_ => mockGenerateImage());
-		[...new Array(4)].forEach(_ => mockGenerateVideo());
+		// [...new Array(4)].forEach(_ => mockGenerateImage());
+		// [...new Array(4)].forEach(_ => mockGenerateVideo());
+		[...new Array(1)].forEach(_ => mockGenerateVideo());
 	});
 
 	let inputContainer = $state<HTMLElement>();
@@ -511,21 +500,12 @@
 				{@attach masonry}
 			>
 				{#each items as item (item.id)}
-					{#if item.type === "image"}
-						<ImageCard
-							image={item}
-							onDelete={() => deleteItem(item.id)}
-							onReuse={() => reuseSettings(item)}
-							onExpand={() => expandItem(item)}
-						/>
-					{:else if item.type === "video"}
-						<VideoCard
-							video={item}
-							onDelete={() => deleteItem(item.id)}
-							onReuse={() => reuseSettings(item)}
-							onExpand={() => expandItem(item)}
-						/>
-					{/if}
+					<VisualCard
+						{item}
+						onDelete={() => deleteItem(item.id)}
+						onReuse={() => reuseSettings(item)}
+						onExpand={() => expandItem(item)}
+					/>
 				{/each}
 			</div>
 		{/if}
