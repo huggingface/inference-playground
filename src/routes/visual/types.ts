@@ -1,4 +1,5 @@
-export interface ImageItem {
+export interface VisualItem {
+	type: "video" | "image";
 	id: string;
 	blob?: Blob;
 	isLoading: boolean;
@@ -7,4 +8,12 @@ export interface ImageItem {
 	provider?: string;
 	generationTimeMs?: number;
 	startTime?: number;
+}
+
+export interface ImageItem extends VisualItem {
+	type: "image";
+}
+
+export interface VideoItem extends VisualItem {
+	type: "video";
 }
