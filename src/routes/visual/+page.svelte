@@ -225,7 +225,7 @@
 <div class="flex h-lvh dark:text-white">
 	<!-- Sidebar -->
 	<div
-		class="sidebar dark:from-lemon-punch-2 dark:to-lemon-punch-3 flex h-full flex-col border-r border-stone-300 bg-gradient-to-b from-stone-50 to-stone-100 dark:border-stone-700"
+		class="sidebar dark:from-lemon-punch-1 dark:to-lemon-punch-2 flex h-full flex-col bg-gradient-to-b from-stone-50 to-stone-100 dark:border-stone-700"
 		style="min-width: {splitter.value}px;width: {splitter.value}px;"
 	>
 		<div class="sidebar-header border-b border-stone-200 p-4 dark:border-stone-700">
@@ -239,7 +239,7 @@
 				bind:this={inputContainer}
 			>
 				<div class="flex items-end gap-2">
-					<div class="space-y-2">
+					<div class="flex-1 space-y-2">
 						<label for="model" class="block text-sm font-medium text-stone-700 dark:text-stone-300">Model</label>
 						<select
 							class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
@@ -348,7 +348,7 @@
 	<div
 		class={[
 			"dark:hover:bg-mandarin-peel-12 relative z-10 w-1 cursor-col-resize outline-hidden transition-colors hover:bg-blue-500 focus-visible:ring-2",
-			splitter.isResizing ? "dark:bg-mandarin-peel-12 bg-blue-500" : "bg-stone-300 dark:bg-stone-700",
+			splitter.isResizing ? "dark:bg-mandarin-peel-12 bg-blue-500" : "bg-stone-300 dark:bg-stone-800",
 		]}
 		{...splitter.separator}
 		{@attach splitter.separator.attach}
@@ -356,7 +356,7 @@
 	></div>
 
 	<!-- Main content -->
-	<main class="dark:bg-mandarin-peel-2 flex-1 overflow-auto bg-stone-50 p-6">
+	<main class="dark:bg-mandarin-peel-1 flex-1 overflow-auto bg-stone-50 p-6">
 		{#if images.length === 0}
 			<div class="flex h-full items-center justify-center text-stone-500">
 				<div class="text-center">
