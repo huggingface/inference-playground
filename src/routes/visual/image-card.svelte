@@ -26,9 +26,12 @@
 </script>
 
 <article
-	class="border-gradient dark:bg-lemon-punch-3 flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+	class="border-gradient dark:bg-pasilla-3 shadow-lemon-punch-4 flex flex-col overflow-hidden bg-white shadow-lg transition-shadow duration-300"
 	style="
-	--border-gradient-before: linear-gradient(180deg, var(--color-lemon-punch-9) 0%, var(--color-mandarin-peel-9) 100%)
+	--border-gradient-before: linear-gradient(180deg, var(--color-lemon-punch-7) 0%, var(--color-mandarin-peel-7) 100%);
+	/* For border-gradient util */
+	--border-radius: 0.75rem;
+	border-radius: var(--border-radius);
 	"
 >
 	{#if image.isLoading || !image.blob}
@@ -70,78 +73,106 @@
 			</div>
 		</button>
 	{/if}
-	<div class="relative">
-		<div class="space-y-1 p-3 text-xs text-stone-500 dark:text-stone-400">
-			{#if image.prompt}
-				<div>Prompt: <span class="text-stone-200">{image.prompt}</span></div>
-			{/if}
-			<div>Model: <span class="text-stone-200">{image.model}</span></div>
-			<div>Provider: <span class="text-stone-200">{image.provider}</span></div>
-			<div>
-				Time: <span class="text-stone-200">
-					{image.generationTimeMs ? formatGenerationTime(image.generationTimeMs) : "..."}
-				</span>
+	<div class="@container relative">
+		<div class="flex flex-col gap-2 p-3">
+			<h2 class="text-lg font-semibold">{image.prompt || "N/A"}</h2>
+			<div class="grid grid-cols-2 gap-1">
+				<div class="flex flex-col text-stone-500 dark:text-stone-400">
+					Model <span class="font-semibold text-stone-200">{image.model}</span>
+				</div>
+				<div class="flex flex-col text-stone-500 dark:text-stone-400">
+					Provider <span class="font-semibold text-stone-200">{image.provider}</span>
+				</div>
+				<div class="flex flex-col text-stone-500 dark:text-stone-400">
+					Time
+					<span class="font-mono font-semibold text-stone-200">
+						{image.generationTimeMs ? formatGenerationTime(image.generationTimeMs) : "..."}
+					</span>
+				</div>
 			</div>
-		</div>
-		<div class="absolute right-1.5 bottom-1.5 flex justify-end gap-2">
-			{#if image.isLoading}
-				<button
-					class="btn-depth btn-depth-red flex items-center justify-center"
-					onclick={onDelete}
-					aria-label="Cancel image generation"
-				>
-					Cancel
-				</button>
-			{:else}
-				<Tooltip>
-					{#snippet trigger(tooltip)}
-						<button
-							class="btn-depth btn-depth-stone flex items-center justify-center"
-							onclick={onReuse}
-							aria-label="Reuse settings from this image"
-							{...tooltip.trigger}
-						>
-							<IconRefresh class="h-4 w-4" />
-						</button>
-					{/snippet}
-					Reuse these settings
-				</Tooltip>
+			<div class="col-span-2 mt-2 flex gap-1 @lg:gap-1">
+				{#if image.isLoading}
+					<button
+						class="btn-depth btn-depth-red flex items-center justify-center"
+						onclick={onDelete}
+						aria-label="Cancel image generation"
+					>
+						Cancel
+					</button>
+				{:else}
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								class="btn-depth btn-depth-stone flex flex-1 items-center justify-center @md:hidden"
+								onclick={onReuse}
+								aria-label="Re-use settings from this image"
+								{...tooltip.trigger}
+							>
+								<IconRefresh class="h-3.5 w-3.5" />
+							</button>
+						{/snippet}
+						Re-use image settings
+					</Tooltip>
 
-				<Tooltip>
-					{#snippet trigger(tooltip)}
-						<button
-							class="btn-depth btn-depth-stone flex items-center justify-center"
-							onclick={() => {
-								const url = URL.createObjectURL(image.blob!);
-								const a = document.createElement("a");
-								a.href = url;
-								a.download = `generated-image-${image.id}.png`;
-								a.click();
-								URL.revokeObjectURL(url);
-							}}
-							{...tooltip.trigger}
-							aria-label="Download image"
-						>
-							<IconDownload class="h-4 w-4" />
-						</button>
-					{/snippet}
-					Download image
-				</Tooltip>
+					<button
+						class="btn-depth btn-depth-stone hidden flex-1 items-center justify-center gap-2 text-sm @md:flex"
+						onclick={onReuse}
+						aria-label="Re-use settings from this image"
+					>
+						<IconRefresh class="h-3.5 w-3.5" />
+						Re-use settings
+					</button>
 
-				<Tooltip>
-					{#snippet trigger(tooltip)}
-						<button
-							class="btn-depth btn-depth-red flex items-center justify-center"
-							onclick={onDelete}
-							{...tooltip.trigger}
-							aria-label="Delete image"
-						>
-							<IconTrash class="h-4 w-4" />
-						</button>
-					{/snippet}
-					Delete image
-				</Tooltip>
-			{/if}
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								class="btn-depth btn-depth-stone flex flex-1 items-center justify-center @md:hidden"
+								onclick={() => {
+									const url = URL.createObjectURL(image.blob!);
+									const a = document.createElement("a");
+									a.href = url;
+									a.download = `generated-image-${image.id}.png`;
+									a.click();
+									URL.revokeObjectURL(url);
+								}}
+								{...tooltip.trigger}
+							>
+								<IconDownload class="h-3.5 w-3.5" />
+							</button>
+						{/snippet}
+						Download image
+					</Tooltip>
+
+					<button
+						class="btn-depth btn-depth-stone hidden flex-1 items-center justify-center gap-2 text-sm @md:flex"
+						onclick={() => {
+							const url = URL.createObjectURL(image.blob!);
+							const a = document.createElement("a");
+							a.href = url;
+							a.download = `generated-image-${image.id}.png`;
+							a.click();
+							URL.revokeObjectURL(url);
+						}}
+					>
+						<IconDownload class="h-3.5 w-3.5" />
+						Download
+					</button>
+
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								class="btn-depth btn-depth-red flex items-center justify-center"
+								onclick={onDelete}
+								{...tooltip.trigger}
+								aria-label="Delete image"
+							>
+								<IconTrash class="h-3.5 w-3.5" />
+							</button>
+						{/snippet}
+						Delete image
+					</Tooltip>
+				{/if}
+			</div>
 		</div>
 	</div>
 </article>
