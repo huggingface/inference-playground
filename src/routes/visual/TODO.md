@@ -1,8 +1,10 @@
 # TODO
 
-- [ ] Video
+- [x] Video
+- [ ] Generation parameters
 - [ ] Combobox for models
 - [ ] Link back to normal playground
 - [ ] Save images locally
-- [ ] Improve styling
+- [x] Improve styling
+- [ ] Adjust color contrast for a11y purposes
 - [ ] AbortController for cancelling requests

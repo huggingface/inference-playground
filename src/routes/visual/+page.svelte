@@ -15,7 +15,8 @@
 	import IconX from "~icons/lucide/x";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import ImageCard from "./image-card.svelte";
-	import type { ImageItem } from "./types.js";
+	import VideoCard from "./video-card.svelte";
+	import type { ImageItem, VideoItem, VisualItem } from "./types.js";
 
 	let { data }: { data: ApiModelsResponse } = $props();
 
@@ -32,37 +33,37 @@
 	let provider: InferenceProviderMapping["provider"] = $state(data.models[0]!.inferenceProviderMapping[0]!.provider);
 	let prompt = $state("");
 	let columns = $state(3);
-	let expandedImage: ImageItem | null = $state(null);
+	let expandedItem: VisualItem | null = $state(null);
 	let autosized = new TextareaAutosize();
 	let dialogElement: HTMLDialogElement;
 
-	const images = $state<ImageItem[]>([]);
+	const items = $state<VisualItem[]>([]);
 
 	function generateUniqueId(): string {
-		return `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 	}
 
-	function expandImage(imageItem: ImageItem) {
-		expandedImage = imageItem;
+	function expandItem(item: VisualItem) {
+		expandedItem = item;
 		dialogElement?.showModal();
 	}
 
-	function closeExpandedImage() {
-		expandedImage = null;
+	function closeExpandedItem() {
+		expandedItem = null;
 		dialogElement?.close();
 	}
 
-	function reuseSettings(imageItem: ImageItem) {
-		if (imageItem.prompt) {
-			prompt = imageItem.prompt;
+	function reuseSettings(item: VisualItem) {
+		if (item.prompt) {
+			prompt = item.prompt;
 		}
-		if (imageItem.model && imageItem.provider) {
+		if (item.model && item.provider) {
 			// Find the model by ID
-			const foundModel = data.models.find(m => m.id === imageItem.model);
+			const foundModel = data.models.find(m => m.id === item.model);
 			if (foundModel) {
 				model = foundModel;
 				// Find the provider in the model's mappings
-				const foundProvider = foundModel.inferenceProviderMapping.find(p => p.provider === imageItem.provider);
+				const foundProvider = foundModel.inferenceProviderMapping.find(p => p.provider === item.provider);
 				if (foundProvider) {
 					provider = foundProvider.provider;
 				}
@@ -88,21 +89,23 @@
 	async function generateImage() {
 		if (!prompt.trim()) return;
 
-		const imageId = generateUniqueId();
+		const itemId = generateUniqueId();
 		const currentPrompt = prompt.trim();
 		const currentModel = model.id;
 		const currentProvider = provider;
 		const startTime = Date.now();
 
 		// Add loading item
-		images.push({
-			id: imageId,
+		const newItem: ImageItem = {
+			type: "image",
+			id: itemId,
 			isLoading: true,
 			prompt: currentPrompt,
 			model: currentModel,
 			provider: currentProvider,
 			startTime,
-		});
+		};
+		items.push(newItem);
 
 		try {
 			const client = new InferenceClient(token.value);
@@ -118,39 +121,98 @@
 			const endTime = Date.now();
 			const generationTimeMs = endTime - startTime;
 
-			// Find the image item by ID and update it
-			const imageItem = images.find(img => img.id === imageId);
-			if (imageItem) {
-				imageItem.blob = image;
-				imageItem.isLoading = false;
-				imageItem.generationTimeMs = generationTimeMs;
+			// Find the item by ID and update it
+			const item = items.find(item => item.id === itemId);
+			if (item) {
+				item.blob = image;
+				item.isLoading = false;
+				item.generationTimeMs = generationTimeMs;
 			}
 		} catch (error) {
-			// Remove the failed image item
-			const index = images.findIndex(img => img.id === imageId);
+			// Remove the failed item
+			const index = items.findIndex(item => item.id === itemId);
 			if (index !== -1) {
-				images.splice(index, 1);
+				items.splice(index, 1);
 			}
 			console.error("Image generation failed:", error);
 		}
 	}
 
-	async function mockGenerateImage() {
-		// if (!prompt.trim()) return;
+	async function generateVideo() {
+		if (!prompt.trim()) return;
 
-		const imageId = generateUniqueId();
+		const itemId = generateUniqueId();
+		const currentPrompt = prompt.trim();
+		const currentModel = model.id;
+		const currentProvider = provider;
+		const startTime = Date.now();
+
+		// Add loading item
+		const newItem: VideoItem = {
+			type: "video",
+			id: itemId,
+			isLoading: true,
+			prompt: currentPrompt,
+			model: currentModel,
+			provider: currentProvider,
+			startTime,
+		};
+		items.push(newItem);
+
+		try {
+			const client = new InferenceClient(token.value);
+
+			const video = (await client.textToVideo({
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				provider: provider as any,
+				model: model.id,
+				inputs: currentPrompt,
+			})) as unknown as Blob;
+
+			const endTime = Date.now();
+			const generationTimeMs = endTime - startTime;
+
+			// Find the item by ID and update it
+			const item = items.find(item => item.id === itemId);
+			if (item) {
+				item.blob = video;
+				item.isLoading = false;
+				item.generationTimeMs = generationTimeMs;
+			}
+		} catch (error) {
+			// Remove the failed item
+			const index = items.findIndex(item => item.id === itemId);
+			if (index !== -1) {
+				items.splice(index, 1);
+			}
+			console.error("Video generation failed:", error);
+		}
+	}
+
+	async function generate() {
+		if (filterTag === PipelineTag.TextToImage) {
+			await generateImage();
+		} else if (filterTag === PipelineTag.TextToVideo) {
+			await generateVideo();
+		}
+	}
+
+	async function mockGenerateImage() {
+		const itemId = generateUniqueId();
 		const currentPrompt = prompt.trim();
 		const startTime = Date.now();
 
 		// Add loading item
-		images.push({
-			id: imageId,
+		const newItem: ImageItem = {
+			type: "image",
+			id: itemId,
 			isLoading: true,
 			prompt: currentPrompt,
 			model: "Mock Model",
 			provider: "mock",
 			startTime,
-		});
+		};
+		items.push(newItem);
 
 		try {
 			// Random delay
@@ -170,27 +232,98 @@
 			const endTime = Date.now();
 			const generationTimeMs = endTime - startTime;
 
-			// Find the image item by ID and update it
-			const imageItem = images.find(img => img.id === imageId);
-			if (imageItem) {
-				imageItem.blob = imageBlob;
-				imageItem.isLoading = false;
-				imageItem.generationTimeMs = generationTimeMs;
+			// Find the item by ID and update it
+			const item = items.find(item => item.id === itemId);
+			if (item) {
+				item.blob = imageBlob;
+				item.isLoading = false;
+				item.generationTimeMs = generationTimeMs;
 			}
 		} catch (error) {
-			// Remove the failed image item
-			const index = images.findIndex(img => img.id === imageId);
+			// Remove the failed item
+			const index = items.findIndex(item => item.id === itemId);
 			if (index !== -1) {
-				images.splice(index, 1);
+				items.splice(index, 1);
 			}
 			console.error("Mock image generation failed:", error);
 		}
 	}
 
-	function deleteImage(imageId: string) {
-		const index = images.findIndex(img => img.id === imageId);
+	async function mockGenerateVideo() {
+		const itemId = generateUniqueId();
+		const currentPrompt = prompt.trim();
+		const startTime = Date.now();
+
+		// Add loading item
+		const newItem: VideoItem = {
+			type: "video",
+			id: itemId,
+			isLoading: true,
+			prompt: currentPrompt,
+			model: "Mock Video Model",
+			provider: "mock",
+			startTime,
+		};
+		items.push(newItem);
+
+		try {
+			// Random delay for video generation (longer than images)
+			const min = 3000;
+			const max = 8000;
+			const delay = Math.random() * (max - min) + min;
+			await new Promise(resolve => setTimeout(resolve, delay));
+
+			// Create a simple mock video blob (you can replace this with actual video data)
+			const canvas = document.createElement("canvas");
+			canvas.width = 512;
+			canvas.height = 512;
+			const ctx = canvas.getContext("2d")!;
+
+			// Create a simple animated pattern
+			ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 50%)`;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = "white";
+			ctx.font = "24px Arial";
+			ctx.textAlign = "center";
+			ctx.fillText("Mock Video", canvas.width / 2, canvas.height / 2);
+
+			// Convert canvas to blob (this is just a placeholder - in reality you'd have actual video data)
+			const videoBlob = await new Promise<Blob>(resolve => {
+				canvas.toBlob(blob => resolve(blob!), "image/png");
+			});
+
+			const endTime = Date.now();
+			const generationTimeMs = endTime - startTime;
+
+			// Find the item by ID and update it
+			const item = items.find(item => item.id === itemId);
+			if (item) {
+				item.blob = videoBlob;
+				item.isLoading = false;
+				item.generationTimeMs = generationTimeMs;
+			}
+		} catch (error) {
+			// Remove the failed item
+			const index = items.findIndex(item => item.id === itemId);
+			if (index !== -1) {
+				items.splice(index, 1);
+			}
+			console.error("Mock video generation failed:", error);
+		}
+	}
+
+	async function mockGenerate() {
+		if (filterTag === PipelineTag.TextToImage) {
+			await mockGenerateImage();
+		} else if (filterTag === PipelineTag.TextToVideo) {
+			await mockGenerateVideo();
+		}
+	}
+
+	function deleteItem(itemId: string) {
+		const index = items.findIndex(item => item.id === itemId);
 		if (index !== -1) {
-			images.splice(index, 1);
+			items.splice(index, 1);
 		}
 	}
 
@@ -208,16 +341,20 @@
 	});
 
 	onMount(() => {
-		[...new Array(8)].forEach(_ => mockGenerateImage());
+		[...new Array(4)].forEach(_ => mockGenerateImage());
+		[...new Array(4)].forEach(_ => mockGenerateVideo());
 	});
 
 	let inputContainer = $state<HTMLElement>();
+
+	const contentType = $derived(filterTag === PipelineTag.TextToImage ? "image" : "video");
+	const contentTypeCapitalized = $derived(contentType.charAt(0).toUpperCase() + contentType.slice(1));
 </script>
 
 <svelte:window
 	onkeydown={e => {
-		if (e.key === "Escape" && expandedImage) {
-			closeExpandedImage();
+		if (e.key === "Escape" && expandedItem) {
+			closeExpandedItem();
 		}
 	}}
 />
@@ -229,7 +366,7 @@
 		style="min-width: {splitter.value}px;width: {splitter.value}px;"
 	>
 		<div class="sidebar-header border-b border-stone-200 p-4 dark:border-stone-700">
-			<h2 class="text-lg font-semibold text-stone-800 dark:text-stone-200">Image Generation</h2>
+			<h2 class="text-lg font-semibold text-stone-800 dark:text-stone-200">{contentTypeCapitalized} Generation</h2>
 			<p class="text-sm text-stone-600 dark:text-stone-400">Configure your settings</p>
 		</div>
 
@@ -301,7 +438,7 @@
 					<textarea
 						class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 						bind:value={prompt}
-						placeholder="Describe the image you want to generate..."
+						placeholder="Describe the {contentType} you want to generate..."
 						rows="4"
 						{@attach autosized.attachment}
 					></textarea>
@@ -328,15 +465,15 @@
 		<div class="sidebar-footer space-y-2 border-t border-stone-200 p-4 dark:border-stone-700">
 			<button
 				class="btn-depth flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-base font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-				onclick={generateImage}
+				onclick={generate}
 			>
 				<IconSparkles class="mr-2 h-4 w-4" />
-				Generate
+				Generate {contentTypeCapitalized}
 			</button>
 			<button
 				class="btn-depth btn-depth-stone flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-sm font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-				onclick={mockGenerateImage}
-				aria-label="Generate mock image for testing"
+				onclick={mockGenerate}
+				aria-label="Generate mock {contentType} for testing"
 			>
 				<IconHeart class="mr-2 h-4 w-4" />
 				Mock Generate
@@ -357,12 +494,12 @@
 
 	<!-- Main content -->
 	<main class="dark:bg-mandarin-peel-1 flex-1 overflow-auto bg-stone-50 p-6">
-		{#if images.length === 0}
+		{#if items.length === 0}
 			<div class="flex h-full items-center justify-center text-stone-500">
 				<div class="text-center">
 					<IconPhoto class="mx-auto mb-4 h-16 w-16 text-stone-400" />
-					<p class="text-lg font-medium">No images generated yet</p>
-					<p class="text-sm">Click "Generate" to create your first image</p>
+					<p class="text-lg font-medium">No {contentType}s generated yet</p>
+					<p class="text-sm">Click "Generate" to create your first {contentType}</p>
 				</div>
 			</div>
 		{:else}
@@ -370,47 +507,69 @@
 				class="grid grid-cols-[repeat(var(--columns),_1fr)] grid-rows-[masonry] items-start gap-6"
 				style="--columns: {columns};"
 				role="grid"
-				aria-label="Generated images"
+				aria-label="Generated {contentType}s"
 				{@attach masonry}
 			>
-				{#each images as image (image.id)}
-					<ImageCard
-						{image}
-						onDelete={() => deleteImage(image.id)}
-						onReuse={() => reuseSettings(image)}
-						onExpand={() => expandImage(image)}
-					/>
+				{#each items as item (item.id)}
+					{#if item.type === "image"}
+						<ImageCard
+							image={item}
+							onDelete={() => deleteItem(item.id)}
+							onReuse={() => reuseSettings(item)}
+							onExpand={() => expandItem(item)}
+						/>
+					{:else if item.type === "video"}
+						<VideoCard
+							video={item}
+							onDelete={() => deleteItem(item.id)}
+							onReuse={() => reuseSettings(item)}
+							onExpand={() => expandItem(item)}
+						/>
+					{/if}
 				{/each}
 			</div>
 		{/if}
 	</main>
 </div>
 
-<!-- Image Expansion Dialog -->
+<!-- Item Expansion Dialog -->
 <dialog
 	bind:this={dialogElement}
 	class="backdrop:bg-opacity-75 m-auto max-h-[90vh] max-w-[90vw] overflow-hidden rounded-xl bg-white p-0 shadow-2xl backdrop:bg-black dark:bg-stone-800"
-	aria-labelledby="expanded-image-title"
+	aria-labelledby="expanded-item-title"
 	onclick={e => {
 		// Close dialog when clicking on backdrop
 		if (e.target === dialogElement) {
-			closeExpandedImage();
+			closeExpandedItem();
 		}
 	}}
 >
 	<button
 		class="fixed top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-stone-400 hover:bg-stone-200 hover:text-stone-900 dark:hover:bg-stone-600 dark:hover:text-white"
-		onclick={closeExpandedImage}
-		aria-label="Close expanded image"
+		onclick={closeExpandedItem}
+		aria-label="Close expanded {expandedItem?.type || 'item'}"
 	>
 		<IconX class="h-6 w-6" />
 	</button>
-	{#if expandedImage && expandedImage.blob}
-		<img
-			src={URL.createObjectURL(expandedImage.blob)}
-			alt="Expanded view: {expandedImage.prompt}"
-			class="max-h-[70vh] max-w-full object-contain"
-		/>
+	{#if expandedItem && expandedItem.blob}
+		{#if expandedItem.type === "image"}
+			<img
+				src={URL.createObjectURL(expandedItem.blob)}
+				alt="Expanded view: {expandedItem.prompt}"
+				class="max-h-[70vh] max-w-full object-contain"
+			/>
+		{:else if expandedItem.type === "video"}
+			<video
+				src={URL.createObjectURL(expandedItem.blob)}
+				controls
+				autoplay
+				loop
+				muted
+				class="max-h-[70vh] max-w-full object-contain"
+			>
+				<track kind="captions" />
+			</video>
+		{/if}
 	{/if}
 </dialog>
 
