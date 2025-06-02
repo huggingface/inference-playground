@@ -1,11 +1,14 @@
 <script lang="ts">
 	import Tooltip from "$lib/components/tooltip.svelte";
+	import { Vibrant } from "node-vibrant/browser";
 	import IconDownload from "~icons/lucide/download";
 	import IconMaximize from "~icons/lucide/maximize";
 	import IconRefresh from "~icons/lucide/refresh-cw";
 	import IconTrash from "~icons/lucide/trash";
 	import LoadingAnimation from "./loading-animation.svelte";
 	import type { ImageItem } from "./types.js";
+	import chroma from "chroma-js";
+	import { keys } from "$lib/utils/object.svelte";
 
 	interface Props {
 		image: ImageItem;
@@ -23,15 +26,45 @@
 			return `${(ms / 1000).toFixed(1)}s`;
 		}
 	}
+
+	type Palette = Awaited<ReturnType<Vibrant["getPalette"]>>;
+
+	let palette = $state<Palette>();
+	$effect(() => {
+		if (!image.blob) return;
+		Vibrant.from(URL.createObjectURL(image.blob))
+			.getPalette()
+			.then(p => {
+				palette = p;
+			});
+	});
+
+	const btnStyles = $derived(`
+		--bg-from: ${chroma(palette?.Vibrant?.hex ?? "black")
+			.darken(0.5)
+			.hex()};
+		--bg-to: ${palette?.Vibrant?.hex};
+		--bg-to-hover: ${chroma(palette?.Vibrant?.hex ?? "black")
+			.brighten(0.5)
+			.hex()};
+		--bg-to-active: ${chroma(palette?.Vibrant?.hex ?? "black")
+			.darken(0.75)
+			.hex()};
+;
+		--border-color: ${chroma(palette?.Vibrant?.hex ?? "black")
+			.darken(0.25)
+			.hex()}
+`);
 </script>
 
 <article
-	class="border-gradient dark:bg-pasilla-3 shadow-lemon-punch-4 flex flex-col overflow-hidden bg-white shadow-lg transition-shadow duration-300"
+	class="border-gradient dark:bg-pasilla-3 flex flex-col overflow-hidden bg-white shadow-lg transition-shadow duration-300"
 	style="
-	--border-gradient-before: linear-gradient(180deg, var(--color-lemon-punch-7) 0%, var(--color-mandarin-peel-7) 100%);
+	--border-gradient-before: linear-gradient(to bottom, {palette?.Vibrant?.hex} 0%, {palette?.Muted?.hex} 100%);
 	/* For border-gradient util */
 	--border-radius: 0.75rem;
 	border-radius: var(--border-radius);
+	/* --tw-shadow-color: red; */
 	"
 >
 	{#if image.isLoading || !image.blob}
@@ -74,6 +107,21 @@
 		</button>
 	{/if}
 	<div class="@container relative">
+		<div class="absolute top-2 right-2 flex gap-1">
+			{#each keys(palette ?? {}) as swatch}
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<div
+							aria-hidden="true"
+							class="h-4 w-4 rounded border"
+							style:background={palette?.[swatch]?.hex}
+							{...tooltip.trigger}
+						></div>
+					{/snippet}
+					{swatch}
+				</Tooltip>
+			{/each}
+		</div>
 		<div class="flex flex-col gap-2 p-3">
 			<h2 class="text-lg font-semibold">{image.prompt || "N/A"}</h2>
 			<div class="grid grid-cols-2 gap-1">
@@ -107,6 +155,7 @@
 								onclick={onReuse}
 								aria-label="Re-use settings from this image"
 								{...tooltip.trigger}
+								style={btnStyles}
 							>
 								<IconRefresh class="h-3.5 w-3.5" />
 							</button>
@@ -118,6 +167,7 @@
 						class="btn-depth btn-depth-stone hidden flex-1 items-center justify-center gap-2 text-sm @md:flex"
 						onclick={onReuse}
 						aria-label="Re-use settings from this image"
+						style={btnStyles}
 					>
 						<IconRefresh class="h-3.5 w-3.5" />
 						Re-use settings
@@ -136,6 +186,7 @@
 									URL.revokeObjectURL(url);
 								}}
 								{...tooltip.trigger}
+								style={btnStyles}
 							>
 								<IconDownload class="h-3.5 w-3.5" />
 							</button>
@@ -153,6 +204,7 @@
 							a.click();
 							URL.revokeObjectURL(url);
 						}}
+						style={btnStyles}
 					>
 						<IconDownload class="h-3.5 w-3.5" />
 						Download
@@ -161,7 +213,7 @@
 					<Tooltip>
 						{#snippet trigger(tooltip)}
 							<button
-								class="btn-depth btn-depth-red flex items-center justify-center"
+								class="btn-depth btn-depth-stone flex items-center justify-center"
 								onclick={onDelete}
 								{...tooltip.trigger}
 								aria-label="Delete image"
