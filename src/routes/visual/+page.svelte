@@ -89,128 +89,85 @@
 		);
 	}
 
-	async function generateImage() {
-		if (!prompt.trim()) return;
-
-		const currentPrompt = prompt.trim();
-		const startTime = Date.now();
-
-		// Add loading item
-		const item: GeneratingItem = {
-			id: crypto.randomUUID(),
-			type: VisualEntityType.Image,
-			config: {
-				prompt: currentPrompt,
-				model: model.id,
-				provider,
-			},
-		};
-		visualItems.generating = [...visualItems.generating, item];
-
-		try {
-			const client = new InferenceClient(token.value);
-
-			const image = (await client.textToImage({
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				provider: provider as any,
-				model: model.id,
-				inputs: currentPrompt,
-				parameters: { num_inference_steps: 4 },
-			})) as unknown as Blob;
-
-			const endTime = Date.now();
-			const generationTimeMs = endTime - startTime;
-
-			const storageKey = await blobs.upload(image);
-			await visualItems.create({
-				...item,
-				storageKey,
-				generationTimeMs,
-			});
-		} catch (error) {
-			console.error("Image generation failed:", error);
-		} finally {
-			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
-		}
-	}
-
-	async function generateVideo() {
-		if (!prompt.trim()) return;
-
-		const currentPrompt = prompt.trim();
-		const startTime = Date.now();
-
-		// Add loading item
-		const item: GeneratingItem = {
-			id: crypto.randomUUID(),
-			type: VisualEntityType.Video,
-			config: {
-				prompt: currentPrompt,
-				model: model.id,
-				provider,
-			},
-		};
-		visualItems.generating = [...visualItems.generating, item];
-
-		try {
-			const client = new InferenceClient(token.value);
-
-			const video = (await client.textToVideo({
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				provider: provider as any,
-				model: model.id,
-				inputs: currentPrompt,
-			})) as unknown as Blob;
-
-			const endTime = Date.now();
-			const generationTimeMs = endTime - startTime;
-
-			const storageKey = await blobs.upload(video);
-			await visualItems.create({
-				...item,
-				storageKey,
-				generationTimeMs,
-			});
-		} catch (error) {
-			console.error("Video generation failed:", error);
-		} finally {
-			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
-		}
-	}
-
 	async function generate() {
-		if (filterTag === PipelineTag.TextToImage) {
-			await generateImage();
-		} else if (filterTag === PipelineTag.TextToVideo) {
-			await generateVideo();
-		}
-	}
+		if (!prompt.trim()) return;
 
-	async function mockGenerateImage() {
 		const currentPrompt = prompt.trim();
 		const startTime = Date.now();
+		const isVideo = filterTag === PipelineTag.TextToVideo;
 
 		// Add loading item
 		const item: GeneratingItem = {
 			id: crypto.randomUUID(),
-			type: VisualEntityType.Image,
+			type: isVideo ? VisualEntityType.Video : VisualEntityType.Image,
 			config: {
 				prompt: currentPrompt,
-				model: "Mock Model",
+				model: model.id,
+				provider,
+			},
+		};
+		visualItems.generating = [...visualItems.generating, item];
+
+		try {
+			const client = new InferenceClient(token.value);
+
+			const blob = isVideo
+				? ((await client.textToVideo({
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						provider: provider as any,
+						model: model.id,
+						inputs: currentPrompt,
+					})) as unknown as Blob)
+				: ((await client.textToImage({
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						provider: provider as any,
+						model: model.id,
+						inputs: currentPrompt,
+						parameters: { num_inference_steps: 4 },
+					})) as unknown as Blob);
+
+			const endTime = Date.now();
+			const generationTimeMs = endTime - startTime;
+
+			const storageKey = await blobs.upload(blob);
+			await visualItems.create({
+				...item,
+				storageKey,
+				generationTimeMs,
+			});
+		} catch (error) {
+			console.error(`${isVideo ? "Video" : "Image"} generation failed:`, error);
+		} finally {
+			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
+		}
+	}
+
+	async function mockGenerate() {
+		const currentPrompt = prompt.trim();
+		const startTime = Date.now();
+		const isVideo = filterTag === PipelineTag.TextToVideo;
+
+		// Add loading item
+		const item: GeneratingItem = {
+			id: crypto.randomUUID(),
+			type: isVideo ? VisualEntityType.Video : VisualEntityType.Image,
+			config: {
+				prompt: currentPrompt,
+				model: isVideo ? "Mock Video Model" : "Mock Model",
 				provider: "mock",
 			},
 		};
 		visualItems.generating = [...visualItems.generating, item];
 
 		try {
-			// Random delay
+			// Random delay (longer for videos)
 			const min = 1000;
-			const max = 4000;
+			const max = isVideo ? 3000 : 4000;
 			const delay = Math.random() * (max - min) + min;
 			await new Promise(resolve => setTimeout(resolve, delay));
 
-			// Fetch image blob directly from proxy
-			const response = await fetch("/api/sb-image");
+			// Fetch appropriate mock content
+			const response = await fetch(isVideo ? "/src/routes/visual/placeholder.mp4" : "/api/sb-image");
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -227,67 +184,9 @@
 				generationTimeMs,
 			});
 		} catch (error) {
-			console.error("Mock image generation failed:", error);
-		} finally {
-			visualItems.generating = visualItems.generating.filter(_item => {
-				console.log({ item, _item });
-				return item !== _item;
-			});
-		}
-	}
-
-	async function mockGenerateVideo() {
-		const currentPrompt = prompt.trim();
-		const startTime = Date.now();
-
-		// Add loading item
-		const item: GeneratingItem = {
-			id: crypto.randomUUID(),
-			type: VisualEntityType.Video,
-			config: {
-				prompt: currentPrompt,
-				model: "Mock Video Model",
-				provider: "mock",
-			},
-		};
-		visualItems.generating = [...visualItems.generating, item];
-
-		try {
-			// Random delay for video generation (longer than images)
-			const min = 1000;
-			const max = 3000;
-			const delay = Math.random() * (max - min) + min;
-			await new Promise(resolve => setTimeout(resolve, delay));
-
-			// Fetch the placeholder video
-			const response = await fetch("/src/routes/visual/placeholder.mp4");
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
-			const videoBlob = await response.blob();
-			const endTime = Date.now();
-			const generationTimeMs = endTime - startTime;
-
-			const storageKey = await blobs.upload(videoBlob);
-			await visualItems.create({
-				...item,
-				storageKey,
-				generationTimeMs,
-			});
-		} catch (error) {
-			console.error("Mock video generation failed:", error);
+			console.error(`Mock ${isVideo ? "video" : "image"} generation failed:`, error);
 		} finally {
 			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
-		}
-	}
-
-	async function mockGenerate() {
-		if (filterTag === PipelineTag.TextToImage) {
-			await mockGenerateImage();
-		} else if (filterTag === PipelineTag.TextToVideo) {
-			await mockGenerateVideo();
 		}
 	}
 
