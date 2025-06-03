@@ -89,7 +89,7 @@
 		);
 	}
 
-	async function generate() {
+	async function generateContent(isMock: boolean = false) {
 		if (!prompt.trim()) return;
 
 		const currentPrompt = prompt.trim();
@@ -102,78 +102,48 @@
 			type: isVideo ? VisualEntityType.Video : VisualEntityType.Image,
 			config: {
 				prompt: currentPrompt,
-				model: model.id,
-				provider,
+				model: isMock ? (isVideo ? "Mock Video Model" : "Mock Model") : model.id,
+				provider: isMock ? "mock" : provider,
 			},
 		};
 		visualItems.generating = [...visualItems.generating, item];
 
 		try {
-			const client = new InferenceClient(token.value);
+			let blob: Blob;
 
-			const blob = isVideo
-				? ((await client.textToVideo({
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						provider: provider as any,
-						model: model.id,
-						inputs: currentPrompt,
-					})) as unknown as Blob)
-				: ((await client.textToImage({
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						provider: provider as any,
-						model: model.id,
-						inputs: currentPrompt,
-						parameters: { num_inference_steps: 4 },
-					})) as unknown as Blob);
+			if (isMock) {
+				// Mock generation with delay
+				const min = 1000;
+				const max = isVideo ? 3000 : 4000;
+				const delay = Math.random() * (max - min) + min;
+				await new Promise(resolve => setTimeout(resolve, delay));
 
-			const endTime = Date.now();
-			const generationTimeMs = endTime - startTime;
+				// Fetch appropriate mock content
+				const response = await fetch(isVideo ? "/src/routes/visual/placeholder.mp4" : "/api/sb-image");
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				blob = await response.blob();
+			} else {
+				// Real generation using Hugging Face API
+				const client = new InferenceClient(token.value);
 
-			const storageKey = await blobs.upload(blob);
-			await visualItems.create({
-				...item,
-				storageKey,
-				generationTimeMs,
-			});
-		} catch (error) {
-			console.error(`${isVideo ? "Video" : "Image"} generation failed:`, error);
-		} finally {
-			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
-		}
-	}
-
-	async function mockGenerate() {
-		const currentPrompt = prompt.trim();
-		const startTime = Date.now();
-		const isVideo = filterTag === PipelineTag.TextToVideo;
-
-		// Add loading item
-		const item: GeneratingItem = {
-			id: crypto.randomUUID(),
-			type: isVideo ? VisualEntityType.Video : VisualEntityType.Image,
-			config: {
-				prompt: currentPrompt,
-				model: isVideo ? "Mock Video Model" : "Mock Model",
-				provider: "mock",
-			},
-		};
-		visualItems.generating = [...visualItems.generating, item];
-
-		try {
-			// Random delay (longer for videos)
-			const min = 1000;
-			const max = isVideo ? 3000 : 4000;
-			const delay = Math.random() * (max - min) + min;
-			await new Promise(resolve => setTimeout(resolve, delay));
-
-			// Fetch appropriate mock content
-			const response = await fetch(isVideo ? "/src/routes/visual/placeholder.mp4" : "/api/sb-image");
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
+				blob = isVideo
+					? ((await client.textToVideo({
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							provider: provider as any,
+							model: model.id,
+							inputs: currentPrompt,
+						})) as unknown as Blob)
+					: ((await client.textToImage({
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							provider: provider as any,
+							model: model.id,
+							inputs: currentPrompt,
+							parameters: { num_inference_steps: 4 },
+						})) as unknown as Blob);
 			}
 
-			const blob = await response.blob();
 			const endTime = Date.now();
 			const generationTimeMs = endTime - startTime;
 
@@ -184,7 +154,8 @@
 				generationTimeMs,
 			});
 		} catch (error) {
-			console.error(`Mock ${isVideo ? "video" : "image"} generation failed:`, error);
+			const prefix = isMock ? "Mock " : "";
+			console.error(`${prefix}${isVideo ? "video" : "image"} generation failed:`, error);
 		} finally {
 			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
 		}
@@ -323,14 +294,14 @@
 		<div class="sidebar-footer space-y-2 border-t border-stone-200 p-4 dark:border-stone-700">
 			<button
 				class="btn-depth flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-base font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-				onclick={generate}
+				onclick={() => generateContent(false)}
 			>
 				<IconSparkles class="mr-2 h-4 w-4" />
 				Generate {contentTypeCapitalized}
 			</button>
 			<button
 				class="btn-depth btn-depth-stone flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-sm font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-				onclick={mockGenerate}
+				onclick={() => generateContent(true)}
 				aria-label="Generate mock {contentType} for testing"
 			>
 				<IconHeart class="mr-2 h-4 w-4" />
