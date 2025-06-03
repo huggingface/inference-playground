@@ -99,7 +99,10 @@ class VisualItems {
 
 	get all() {
 		this.#sub();
-		return [...this.#items, ...this.generating];
+		return [
+			...this.generating,
+			...this.#items.toSorted((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime()),
+		];
 	}
 
 	create(args: Partial<VisualItemEntityMembers>) {
