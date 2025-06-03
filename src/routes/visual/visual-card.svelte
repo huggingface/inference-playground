@@ -9,11 +9,11 @@
 	import IconRefresh from "~icons/lucide/refresh-cw";
 	import IconTrash from "~icons/lucide/trash";
 	import LoadingAnimation from "./loading-animation.svelte";
-	import type { VisualItem } from "./types.js";
 	import { adjustBgColorForAPCAContrast, extractVideoFrameWithRetry } from "./utils.js";
+	import { isVisualItem, type GeneratingItem, type VisualItem } from "./state.svelte";
 
 	interface Props {
-		item: VisualItem;
+		item: VisualItem | GeneratingItem;
 		onDelete?: () => void;
 		onReuse?: () => void;
 		onExpand?: () => void;
@@ -35,9 +35,9 @@
 
 	// Extract colors from first frame of video or from image
 	$effect(() => {
-		if (!item.blob) return;
+		if (!isVisualItem(item)) return;
 
-		if (item.type === "video") {
+		if (item.data.type === "video" && item.blob) {
 			extractVideoFrameWithRetry(
 				item.blob,
 				{ percentage: 25, format: "image/jpeg", quality: 0.8, maxWidth: 1920, timeout: 20000, debug: false },
@@ -50,9 +50,9 @@
 						palette = p;
 					});
 			});
-		} else {
+		} else if (item.src) {
 			// For images, extract colors directly
-			Vibrant.from(URL.createObjectURL(item.blob))
+			Vibrant.from(item.src)
 				.getPalette()
 				.then(p => {
 					palette = p;
@@ -94,7 +94,7 @@
 	border-radius: var(--border-radius);
 	"
 >
-	{#if item.isLoading || !item.blob}
+	{#if !isVisualItem(item)}
 		<div
 			class="flex {aspectClass} items-center justify-center rounded-t-xl bg-stone-100 dark:bg-stone-950"
 			aria-label="Loading {item.type}"
@@ -105,12 +105,12 @@
 		<button
 			class="group relative w-full cursor-pointer border-0 bg-transparent p-0"
 			onclick={onExpand}
-			aria-label="Expand {item.type}: {item.prompt}"
+			aria-label="Expand {item.type}: {item.config?.prompt}"
 		>
 			{#if item.type === "image"}
-				<img src={URL.createObjectURL(item.blob)} alt="Generated image: {item.prompt}" class="block h-auto w-full" />
+				<img src={item.src} alt="Generated image: {item.config?.prompt}" class="block h-auto w-full" />
 			{:else}
-				<video src={URL.createObjectURL(item.blob)} class="block h-auto w-full" muted loop autoplay playsinline>
+				<video src={item.src} class="block h-auto w-full" muted loop autoplay playsinline>
 					<track kind="captions" />
 				</video>
 			{/if}
@@ -140,41 +140,60 @@
 		</button>
 	{/if}
 	<div class="@container relative">
-		{#if item.type === "image"}
-			<div class="absolute top-2 right-2 flex gap-1">
-				{#each keys(palette ?? {}) as swatch}
-					<Tooltip>
-						{#snippet trigger(tooltip)}
-							<div
-								aria-hidden="true"
-								class="h-4 w-4 rounded border border-stone-600"
-								style:background={palette?.[swatch]?.hex}
-								{...tooltip.trigger}
-							></div>
-						{/snippet}
-						{swatch}
-					</Tooltip>
-				{/each}
-			</div>
-		{/if}
+		<div class="absolute top-2 right-2 flex gap-1">
+			{#each keys(palette ?? {}) as swatch}
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<div
+							aria-hidden="true"
+							class="h-4 w-4 rounded border border-stone-600"
+							style:background={palette?.[swatch]?.hex}
+							{...tooltip.trigger}
+						></div>
+					{/snippet}
+					{swatch}
+				</Tooltip>
+			{/each}
+		</div>
 		<div class="flex flex-col gap-2 p-3">
-			<h2 class="text-lg font-semibold">{item.prompt || "N/A"}</h2>
+			<h2 class="text-lg font-semibold">{item.config?.prompt || "N/A"}</h2>
 			<div class="grid grid-cols-2 gap-1">
 				<div class="flex flex-col text-stone-500 dark:text-stone-400">
-					Model <span class="font-semibold text-stone-200">{item.model}</span>
+					Model <span class="font-semibold text-stone-200">{item.config?.model}</span>
 				</div>
 				<div class="flex flex-col text-stone-500 dark:text-stone-400">
-					Provider <span class="font-semibold text-stone-200">{item.provider}</span>
+					Provider <span class="font-semibold text-stone-200">{item.config?.provider}</span>
 				</div>
 				<div class="flex flex-col text-stone-500 dark:text-stone-400">
 					Time
-					<span class="font-mono font-semibold text-stone-200">
-						{item.generationTimeMs ? formatGenerationTime(item.generationTimeMs) : "..."}
-					</span>
+					{#if isVisualItem(item)}
+						<span class="font-mono font-semibold text-stone-200">
+							{item.data.generationTimeMs ? formatGenerationTime(item.data.generationTimeMs) : "..."}
+						</span>
+					{:else}
+						<span
+							class="font-mono font-semibold text-stone-200"
+							{@attach node => {
+								const t0 = performance.now();
+								function counter() {
+									const delta = performance.now() - t0;
+									const secs = delta / 1000;
+									node.innerText = `${secs.toFixed(2)}s`;
+									frame = requestAnimationFrame(counter);
+								}
+
+								let frame = requestAnimationFrame(counter);
+
+								return () => {
+									cancelAnimationFrame(frame);
+								};
+							}}
+						></span>
+					{/if}
 				</div>
 			</div>
 			<div class="col-span-2 mt-2 flex gap-1 @lg:gap-1">
-				{#if item.isLoading}
+				{#if !isVisualItem(item)}
 					<button
 						class="btn-depth btn-depth-red flex items-center justify-center"
 						onclick={onDelete}

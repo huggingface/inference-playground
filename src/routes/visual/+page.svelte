@@ -14,8 +14,15 @@
 	import IconVideo from "~icons/lucide/video";
 	import IconX from "~icons/lucide/x";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
+	import {
+		blobs,
+		isVisualItem,
+		VisualEntityType,
+		visualItems,
+		type GeneratingItem,
+		type VisualItem,
+	} from "./state.svelte.js";
 	import VisualCard from "./visual-card.svelte";
-	import type { ImageItem, VideoItem, VisualItem } from "./types.js";
 
 	let { data }: { data: ApiModelsResponse } = $props();
 
@@ -36,13 +43,8 @@
 	let autosized = new TextareaAutosize();
 	let dialogElement: HTMLDialogElement;
 
-	const items = $state<VisualItem[]>([]);
-
-	function generateUniqueId(): string {
-		return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-	}
-
-	function expandItem(item: VisualItem) {
+	function expandItem(item: VisualItem | GeneratingItem) {
+		if (!isVisualItem(item)) return;
 		expandedItem = item;
 		dialogElement?.showModal();
 	}
@@ -52,17 +54,20 @@
 		dialogElement?.close();
 	}
 
-	function reuseSettings(item: VisualItem) {
-		if (item.prompt) {
-			prompt = item.prompt;
+	function reuseSettings(item: VisualItem | GeneratingItem) {
+		const config = item.config;
+		if (!config) return;
+
+		if (config.prompt) {
+			prompt = config.prompt;
 		}
-		if (item.model && item.provider) {
+		if (config.model && config.provider) {
 			// Find the model by ID
-			const foundModel = data.models.find(m => m.id === item.model);
+			const foundModel = data.models.find(m => m.id === config.model);
 			if (foundModel) {
 				model = foundModel;
 				// Find the provider in the model's mappings
-				const foundProvider = foundModel.inferenceProviderMapping.find(p => p.provider === item.provider);
+				const foundProvider = foundModel.inferenceProviderMapping.find(p => p.provider === config.provider);
 				if (foundProvider) {
 					provider = foundProvider.provider;
 				}
@@ -88,23 +93,20 @@
 	async function generateImage() {
 		if (!prompt.trim()) return;
 
-		const itemId = generateUniqueId();
 		const currentPrompt = prompt.trim();
-		const currentModel = model.id;
-		const currentProvider = provider;
 		const startTime = Date.now();
 
 		// Add loading item
-		const newItem: ImageItem = {
-			type: "image",
-			id: itemId,
-			isLoading: true,
-			prompt: currentPrompt,
-			model: currentModel,
-			provider: currentProvider,
-			startTime,
+		const item: GeneratingItem = {
+			id: crypto.randomUUID(),
+			type: VisualEntityType.Image,
+			config: {
+				prompt: currentPrompt,
+				model: model.id,
+				provider,
+			},
 		};
-		items.push(newItem);
+		visualItems.generating = [...visualItems.generating, item];
 
 		try {
 			const client = new InferenceClient(token.value);
@@ -120,98 +122,93 @@
 			const endTime = Date.now();
 			const generationTimeMs = endTime - startTime;
 
-			// Find the item by ID and update it
-			const item = items.find(item => item.id === itemId);
-			if (item) {
-				item.blob = image;
-				item.isLoading = false;
-				item.generationTimeMs = generationTimeMs;
-			}
+			const storageKey = await blobs.upload(image);
+			await visualItems.create({
+				...item,
+				storageKey,
+				generationTimeMs,
+			});
 		} catch (error) {
-			// Remove the failed item
-			const index = items.findIndex(item => item.id === itemId);
-			if (index !== -1) {
-				items.splice(index, 1);
-			}
 			console.error("Image generation failed:", error);
+		} finally {
+			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
 		}
 	}
 
-	async function generateVideo() {
-		if (!prompt.trim()) return;
-
-		const itemId = generateUniqueId();
-		const currentPrompt = prompt.trim();
-		const currentModel = model.id;
-		const currentProvider = provider;
-		const startTime = Date.now();
-
-		// Add loading item
-		const newItem: VideoItem = {
-			type: "video",
-			id: itemId,
-			isLoading: true,
-			prompt: currentPrompt,
-			model: currentModel,
-			provider: currentProvider,
-			startTime,
-		};
-		items.push(newItem);
-
-		try {
-			const client = new InferenceClient(token.value);
-
-			const video = (await client.textToVideo({
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				provider: provider as any,
-				model: model.id,
-				inputs: currentPrompt,
-			})) as unknown as Blob;
-
-			const endTime = Date.now();
-			const generationTimeMs = endTime - startTime;
-
-			// Find the item by ID and update it
-			const item = items.find(item => item.id === itemId);
-			if (item) {
-				item.blob = video;
-				item.isLoading = false;
-				item.generationTimeMs = generationTimeMs;
-			}
-		} catch (error) {
-			// Remove the failed item
-			const index = items.findIndex(item => item.id === itemId);
-			if (index !== -1) {
-				items.splice(index, 1);
-			}
-			console.error("Video generation failed:", error);
-		}
-	}
+	// async function generateVideo() {
+	// 	if (!prompt.trim()) return;
+	//
+	// 	const itemId = generateUniqueId();
+	// 	const currentPrompt = prompt.trim();
+	// 	const currentModel = model.id;
+	// 	const currentProvider = provider;
+	// 	const startTime = Date.now();
+	//
+	// 	// Add loading item
+	// 	const newItem: VideoItem = {
+	// 		type: "video",
+	// 		id: itemId,
+	// 		isLoading: true,
+	// 		prompt: currentPrompt,
+	// 		model: currentModel,
+	// 		provider: currentProvider,
+	// 		startTime,
+	// 	};
+	// 	items.push(newItem);
+	//
+	// 	try {
+	// 		const client = new InferenceClient(token.value);
+	//
+	// 		const video = (await client.textToVideo({
+	// 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// 			provider: provider as any,
+	// 			model: model.id,
+	// 			inputs: currentPrompt,
+	// 		})) as unknown as Blob;
+	//
+	// 		const endTime = Date.now();
+	// 		const generationTimeMs = endTime - startTime;
+	//
+	// 		// Find the item by ID and update it
+	// 		const item = items.find(item => item.id === itemId);
+	// 		if (item) {
+	// 			item.blob = video;
+	// 			item.isLoading = false;
+	// 			item.generationTimeMs = generationTimeMs;
+	// 		}
+	// 	} catch (error) {
+	// 		// Remove the failed item
+	// 		const index = items.findIndex(item => item.id === itemId);
+	// 		if (index !== -1) {
+	// 			items.splice(index, 1);
+	// 		}
+	// 		console.error("Video generation failed:", error);
+	// 	}
+	// }
 
 	async function generate() {
 		if (filterTag === PipelineTag.TextToImage) {
 			await generateImage();
 		} else if (filterTag === PipelineTag.TextToVideo) {
-			await generateVideo();
+			// await generateVideo();
 		}
 	}
 
 	async function mockGenerateImage() {
-		const itemId = generateUniqueId();
 		const currentPrompt = prompt.trim();
 		const startTime = Date.now();
 
 		// Add loading item
-		const newItem: ImageItem = {
-			type: "image",
-			id: itemId,
-			isLoading: true,
-			prompt: currentPrompt,
-			model: "Mock Model",
-			provider: "mock",
-			startTime,
+		const item: GeneratingItem = {
+			id: crypto.randomUUID(),
+			type: VisualEntityType.Image,
+			config: {
+				prompt: currentPrompt,
+				model: "Mock Model",
+				provider: "mock",
+			},
 		};
-		items.push(newItem);
+		visualItems.generating = [...visualItems.generating, item];
 
 		try {
 			// Random delay
@@ -227,91 +224,83 @@
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-			const imageBlob = await response.blob();
+			const blob = await response.blob();
 			const endTime = Date.now();
 			const generationTimeMs = endTime - startTime;
 
-			// Find the item by ID and update it
-			const item = items.find(item => item.id === itemId);
-			if (item) {
-				item.blob = imageBlob;
-				item.isLoading = false;
-				item.generationTimeMs = generationTimeMs;
-			}
+			const storageKey = await blobs.upload(blob);
+			await visualItems.create({
+				...item,
+				storageKey,
+				generationTimeMs,
+			});
 		} catch (error) {
-			// Remove the failed item
-			const index = items.findIndex(item => item.id === itemId);
-			if (index !== -1) {
-				items.splice(index, 1);
-			}
 			console.error("Mock image generation failed:", error);
+		} finally {
+			visualItems.generating = visualItems.generating.filter(_item => {
+				console.log({ item, _item });
+				return item !== _item;
+			});
 		}
 	}
 
-	async function mockGenerateVideo() {
-		const itemId = generateUniqueId();
-		const currentPrompt = prompt.trim();
-		const startTime = Date.now();
-
-		// Add loading item
-		const newItem: VideoItem = {
-			type: "video",
-			id: itemId,
-			isLoading: true,
-			prompt: currentPrompt,
-			model: "Mock Video Model",
-			provider: "mock",
-			startTime,
-		};
-		items.push(newItem);
-
-		try {
-			// Random delay for video generation (longer than images)
-			const min = 1000;
-			const max = 3000;
-			const delay = Math.random() * (max - min) + min;
-			await new Promise(resolve => setTimeout(resolve, delay));
-
-			// Fetch the placeholder video
-			const response = await fetch("/src/routes/visual/placeholder.mp4");
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
-			const videoBlob = await response.blob();
-			const endTime = Date.now();
-			const generationTimeMs = endTime - startTime;
-
-			// Find the item by ID and update it
-			const item = items.find(item => item.id === itemId);
-			if (item) {
-				item.blob = videoBlob;
-				item.isLoading = false;
-				item.generationTimeMs = generationTimeMs;
-			}
-		} catch (error) {
-			// Remove the failed item
-			const index = items.findIndex(item => item.id === itemId);
-			if (index !== -1) {
-				items.splice(index, 1);
-			}
-			console.error("Mock video generation failed:", error);
-		}
-	}
+	// async function mockGenerateVideo() {
+	// 	const itemId = generateUniqueId();
+	// 	const currentPrompt = prompt.trim();
+	// 	const startTime = Date.now();
+	//
+	// 	// Add loading item
+	// 	const newItem: VideoItem = {
+	// 		type: "video",
+	// 		id: itemId,
+	// 		isLoading: true,
+	// 		prompt: currentPrompt,
+	// 		model: "Mock Video Model",
+	// 		provider: "mock",
+	// 		startTime,
+	// 	};
+	// 	items.push(newItem);
+	//
+	// 	try {
+	// 		// Random delay for video generation (longer than images)
+	// 		const min = 1000;
+	// 		const max = 3000;
+	// 		const delay = Math.random() * (max - min) + min;
+	// 		await new Promise(resolve => setTimeout(resolve, delay));
+	//
+	// 		// Fetch the placeholder video
+	// 		const response = await fetch("/src/routes/visual/placeholder.mp4");
+	//
+	// 		if (!response.ok) {
+	// 			throw new Error(`HTTP error! status: ${response.status}`);
+	// 		}
+	//
+	// 		const videoBlob = await response.blob();
+	// 		const endTime = Date.now();
+	// 		const generationTimeMs = endTime - startTime;
+	//
+	// 		// Find the item by ID and update it
+	// 		const item = items.find(item => item.id === itemId);
+	// 		if (item) {
+	// 			item.blob = videoBlob;
+	// 			item.isLoading = false;
+	// 			item.generationTimeMs = generationTimeMs;
+	// 		}
+	// 	} catch (error) {
+	// 		// Remove the failed item
+	// 		const index = items.findIndex(item => item.id === itemId);
+	// 		if (index !== -1) {
+	// 			items.splice(index, 1);
+	// 		}
+	// 		console.error("Mock video generation failed:", error);
+	// 	}
+	// }
 
 	async function mockGenerate() {
 		if (filterTag === PipelineTag.TextToImage) {
 			await mockGenerateImage();
 		} else if (filterTag === PipelineTag.TextToVideo) {
-			await mockGenerateVideo();
-		}
-	}
-
-	function deleteItem(itemId: string) {
-		const index = items.findIndex(item => item.id === itemId);
-		if (index !== -1) {
-			items.splice(index, 1);
+			// await mockGenerateVideo();
 		}
 	}
 
@@ -326,11 +315,6 @@
 			updateSplitterSize(v);
 		},
 		max: 1200,
-	});
-
-	onMount(() => {
-		[...new Array(2)].forEach(_ => mockGenerateImage());
-		mockGenerateVideo();
 	});
 
 	let inputContainer = $state<HTMLElement>();
@@ -482,7 +466,7 @@
 
 	<!-- Main content -->
 	<main class="dark:bg-mandarin-peel-1 flex-1 overflow-auto bg-stone-50 p-6">
-		{#if items.length === 0}
+		{#if visualItems.all.length === 0}
 			<div class="flex h-full items-center justify-center text-stone-500">
 				<div class="text-center">
 					<IconPhoto class="mx-auto mb-4 h-16 w-16 text-stone-400" />
@@ -498,10 +482,10 @@
 				aria-label="Generated {contentType}s"
 				{@attach masonry}
 			>
-				{#each items as item (item.id)}
+				{#each visualItems.all as item (item.id)}
 					<VisualCard
 						{item}
-						onDelete={() => deleteItem(item.id)}
+						onDelete={() => visualItems.delete(item)}
 						onReuse={() => reuseSettings(item)}
 						onExpand={() => expandItem(item)}
 					/>
@@ -526,26 +510,19 @@
 	<button
 		class="fixed top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-stone-400 hover:bg-stone-200 hover:text-stone-900 dark:hover:bg-stone-600 dark:hover:text-white"
 		onclick={closeExpandedItem}
-		aria-label="Close expanded {expandedItem?.type || 'item'}"
+		aria-label="Close expanded {expandedItem?.data.type || 'item'}"
 	>
 		<IconX class="h-6 w-6" />
 	</button>
-	{#if expandedItem && expandedItem.blob}
-		{#if expandedItem.type === "image"}
+	{#if expandedItem && expandedItem.src}
+		{#if expandedItem.data.type === "image"}
 			<img
-				src={URL.createObjectURL(expandedItem.blob)}
-				alt="Expanded view: {expandedItem.prompt}"
+				src={expandedItem.src}
+				alt="Expanded view: {expandedItem.config?.prompt}"
 				class="max-h-[70vh] max-w-full object-contain"
 			/>
-		{:else if expandedItem.type === "video"}
-			<video
-				src={URL.createObjectURL(expandedItem.blob)}
-				controls
-				autoplay
-				loop
-				muted
-				class="max-h-[70vh] max-w-full object-contain"
-			>
+		{:else if expandedItem.data.type === "video"}
+			<video src={expandedItem.src} controls autoplay loop muted class="max-h-[70vh] max-w-full object-contain">
 				<track kind="captions" />
 			</video>
 		{/if}
