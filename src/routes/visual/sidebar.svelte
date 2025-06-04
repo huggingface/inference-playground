@@ -65,6 +65,7 @@
 	import IconVideo from "~icons/lucide/video";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import { blobs, VisualEntityType, visualItems, type GeneratingItem, type VisualItem } from "./state.svelte.js";
+	import LocalToasts from "$lib/components/local-toasts.svelte";
 
 	model = data.models[0]!;
 	provider = data.models[0]!.inferenceProviderMapping[0]!.provider;
@@ -272,21 +273,41 @@
 	</div>
 
 	<div class="sidebar-footer space-y-2 border-t border-stone-200 p-4 dark:border-stone-700">
-		<button
-			class="btn-depth flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-base font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-			onclick={() => generateContent(false)}
-		>
-			<IconSparkles class="mr-2 h-4 w-4" />
-			Generate {contentTypeCapitalized}
-		</button>
-		<button
-			class="btn-depth btn-depth-stone flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-sm font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-			onclick={() => generateContent(true)}
-			aria-label="Generate mock {contentType} for testing"
-		>
-			<IconHeart class="mr-2 h-4 w-4" />
-			Mock Generate
-		</button>
+		{#snippet generateBtn(args: { classes?: string; onGenerate: () => void; icon: typeof IconSparkles; label: string })}
+			<LocalToasts>
+				{#snippet children({ addToast, trigger })}
+					<button
+						class="btn-depth flex h-10 w-full touch-manipulation items-center justify-center rounded-md px-4 py-2 text-base font-medium tracking-wide whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50 {args.classes}"
+						onclick={() => {
+							if (!prompt) {
+								return addToast({
+									type: "assertive",
+									data: { content: "Prompt is required to generate", variant: "danger" },
+								});
+							}
+							args.onGenerate();
+						}}
+						{...trigger}
+					>
+						<args.icon class="mr-2 h-4 w-4" />
+						{args.label}
+					</button>
+				{/snippet}
+			</LocalToasts>
+		{/snippet}
+
+		{@render generateBtn({
+			onGenerate: () => generateContent(false),
+			icon: IconSparkles,
+			label: `Generate ${contentType}`,
+		})}
+
+		{@render generateBtn({
+			classes: "btn-depth-stone",
+			onGenerate: () => generateContent(true),
+			icon: IconHeart,
+			label: "Mock generate",
+		})}
 	</div>
 </div>
 
