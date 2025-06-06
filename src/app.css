@@ -155,15 +155,6 @@
 	@apply flex h-[24px] items-center justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-1.5 py-1 text-[10px] font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:ring-2 focus:ring-gray-100 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700;
 }
 
-@utility custom-outline {
-	@apply outline-hidden;
-	@apply border-blue-500 ring ring-blue-500;
-}
-
-@utility focus-outline {
-	@apply focus-visible:custom-outline;
-}
-
 @utility input {
 	@apply rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400;
 	@apply focus-outline;
@@ -220,14 +211,33 @@ body.dark {
 	color-scheme: dark;
 }
 
+@utility custom-outline {
+	outline-width: 2px;
+	outline-style: solid;
+	outline-offset: 2px;
+
+	outline-color: var(--color-blue-400);
+
+	@variant dark {
+		outline-color: var(--color-blue-500);
+	}
+}
+
+@utility focus-outline {
+	@apply focus-visible:custom-outline;
+}
+
 @layer base {
-	:focus-visible {
-		outline: 3px solid var(--color-blue-400);
-		outline-offset: 2px;
+	* {
+		outline-color: var(--color-blue-400);
 
 		@variant dark {
 			outline-color: var(--color-blue-500);
 		}
+	}
+
+	:focus-visible {
+		@apply custom-outline;
 	}
 }
 

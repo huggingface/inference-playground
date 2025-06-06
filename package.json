@@ -54,7 +54,7 @@
 		"highlight.js": "^11.10.0",
 		"jiti": "^2.4.2",
 		"jsdom": "^26.0.0",
-		"melt": "^0.30.1",
+		"melt": "/home/thomasgl/programming/melt-next/packages/melt/",
 		"openai": "^4.90.0",
 		"playwright": "^1.52.0",
 		"postcss": "^8.4.38",

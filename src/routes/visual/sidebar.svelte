@@ -52,30 +52,63 @@
 
 <script lang="ts">
 	import { page } from "$app/state";
+	import LocalToasts from "$lib/components/local-toasts.svelte";
 	import { Splitter } from "$lib/spells/splitter.svelte.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { PipelineTag, type InferenceProviderMapping, type Model } from "$lib/types.js";
 	import ProviderSelect from "$lib/ui/provider-select.svelte";
+	import fuzzysearch from "$lib/utils/search.js";
 	import { InferenceClient } from "@huggingface/inference";
+	import { Combobox } from "melt/builders";
 	import { PersistedState, useDebounce, watch } from "runed";
 	import IconHeart from "~icons/lucide/heart";
-	import { default as IconImage } from "~icons/lucide/image";
+	import IconImage from "~icons/lucide/image";
+	import IconChevronDown from "~icons/lucide/chevron-down";
 	import IconSparkles from "~icons/lucide/sparkles";
 	import IconVideo from "~icons/lucide/video";
+	import IconCheck from "~icons/lucide/check";
 	import type { ApiModelsResponse } from "../api/models/+server.js";
 	import { blobs, VisualEntityType, visualItems, type GeneratingItem, type VisualItem } from "./state.svelte.js";
-	import LocalToasts from "$lib/components/local-toasts.svelte";
 
 	model = data.models[0]!;
 	provider = data.models[0]!.inferenceProviderMapping[0]!.provider;
 
-	const filteredModels = $derived(data.models.filter(m => m.pipeline_tag === filterTag));
+	const modelCombobox = new Combobox({
+		value: () => model,
+		onValueChange: v => {
+			if (!v) return;
+			model = v;
+		},
+		onOpenChange: open => {
+			if (!open) modelCombobox.inputValue = model.id;
+		},
+		inputValue: model.id,
+		sameWidth: false,
+		floatingConfig: {
+			computePosition: { placement: "bottom-start" },
+			offset: { mainAxis: 16, crossAxis: -13 },
+		},
+	});
+
+	const filteredModels = $derived(
+		data.models.filter(m => m.pipeline_tag === filterTag).toSorted((a, b) => a.id.localeCompare(b.id))
+	);
 	watch(
 		() => $state.snapshot(filteredModels),
 		() => {
-			if (!filteredModels.includes(model)) model = filteredModels[0]!;
+			if (filteredModels.includes(model)) return;
+			model = filteredModels[0]!;
+			modelCombobox.inputValue = model.id;
 		}
+	);
+
+	const searchedModels = $derived(
+		fuzzysearch({
+			needle: modelCombobox.touched ? modelCombobox.inputValue : "",
+			haystack: filteredModels,
+			property: "id",
+		})
 	);
 
 	let columns = $state(3);
@@ -186,27 +219,56 @@
 			bind:this={inputContainer}
 		>
 			<div class="flex items-end gap-2">
-				<div class="flex-1 space-y-2">
-					<label for="model" class="block text-sm font-medium text-stone-700 dark:text-stone-300">Model</label>
-					<select
-						class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-						id="model"
-						bind:value={model}
+				<div class="flex flex-1 flex-col gap-2">
+					<label {...modelCombobox.label} class="block text-sm font-medium text-stone-700 dark:text-stone-300">
+						Model
+					</label>
+
+					<div
+						class="focus-within:custom-outline flex w-full items-center justify-between gap-0.5 rounded-lg border border-stone-300 bg-white py-2 pr-3 text-stone-900 transition-colors dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 					>
-						{#each data.models
-							.toSorted((a, b) => a.id.localeCompare(b.id))
-							.filter(m => m.pipeline_tag === filterTag) as model (model)}
-							<option value={model}>{model.id}</option>
+						<input {...modelCombobox.input} class="flex-1 pl-3 outline-none" />
+						<button
+							class="bg-pasilla-3 hover:bg-pasilla-4 active:hover:bg-pasilla-2 rounded px-2 py-1 text-xs"
+							{...modelCombobox.trigger}
+						>
+							<IconChevronDown />
+						</button>
+					</div>
+
+					<div
+						{...modelCombobox.content}
+						class={[
+							"max-h-96 flex-col rounded-lg border border-stone-600 bg-stone-100 p-2 shadow dark:bg-stone-800",
+							modelCombobox.open && "flex",
+						]}
+					>
+						{#each searchedModels as model (model)}
+							<div
+								{...modelCombobox.getOption(model)}
+								class={[
+									"relative flex scroll-m-2 items-center justify-between rounded-xl py-2 pr-2 pl-2",
+									modelCombobox.highlighted?.id === model.id && "bg-stone-700",
+									modelCombobox.value?.id === model.id && "font-semibold",
+								]}
+							>
+								<span>{model.id}</span>
+								{#if modelCombobox.value?.id === model.id}
+									<IconCheck class="text-mandarin-peel-15 font-bold" />
+								{/if}
+							</div>
+						{:else}
+							<div {...modelCombobox.getOption(model, model.id)}>{model.id}</div>
 						{/each}
-					</select>
+					</div>
 				</div>
 
 				<div
-					class="relative flex h-9.25 rounded-lg border border-stone-200/20 bg-stone-800 p-0.5 shadow-lg dark:border-stone-600"
+					class="focus-within:custom-outline relative flex h-10.5 rounded-lg border border-stone-200/20 bg-stone-800 p-0.5 shadow-lg dark:border-stone-600"
 				>
 					<!-- Sliding background indicator -->
 					<div
-						class="absolute top-0.5 h-7.75 rounded-md bg-stone-700 shadow-md transition-all duration-150 ease-out"
+						class="absolute top-0.5 h-8.75 rounded-md bg-stone-700 shadow-md transition-all duration-150 ease-out"
 						style="width: calc(50% - 4px); transform: translateX({filterTag === PipelineTag.TextToImage
 							? '0'
 							: 'calc(100% + 4px)'})"
@@ -246,7 +308,7 @@
 			<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 				<p>Prompt</p>
 				<textarea
-					class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+					class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 					bind:value={prompt}
 					placeholder="Describe the {contentType} you want to generate..."
 					rows="4"
@@ -257,7 +319,7 @@
 			<label for="columns" class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 				<p>Columns</p>
 				<select
-					class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+					class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 					id="columns"
 					bind:value={columns}
 				>
