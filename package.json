@@ -82,7 +82,8 @@
 		"dequal": "^2.0.3",
 		"node-vibrant": "^4.0.3",
 		"remult": "^3.0.2",
-		"typia": "^8.0.0"
+		"typia": "^8.0.0",
+		"vaul-svelte": "/home/thomasgl/programming/vaul-svelte/packages/vaul-svelte"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [

@@ -2,11 +2,13 @@
 	import { masonry } from "$lib/attachments/masonry.js";
 	import { default as IconPhoto } from "~icons/lucide/image";
 	import IconX from "~icons/lucide/x";
-	import Sidebar, { reuseSettings } from "./sidebar.svelte";
+	import Sidebar from "./sidebar.svelte";
+	import Settings, { reuseSettings } from "./settings.svelte";
 	import { isVisualItem, visualItems, type GeneratingItem, type VisualItem } from "./state.svelte.js";
 	import VisualCard from "./visual-card.svelte";
+	import { Drawer } from "vaul-svelte";
+	import { columns } from "./settings.svelte.js";
 
-	let columns = $state(3);
 	let expandedItem: VisualItem | null = $state(null);
 	let dialogElement: HTMLDialogElement;
 
@@ -30,8 +32,33 @@
 	}}
 />
 
-<div class="flex h-lvh dark:text-white">
-	<Sidebar />
+<div class="flex h-lvh dark:text-white" data-vaul-drawer-wrapper>
+	<div class="hidden lg:block">
+		<Sidebar />
+	</div>
+
+	<Drawer.Root shouldScaleBackground>
+		<Drawer.Trigger
+			class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border border-stone-600 bg-gradient-to-b from-stone-700 to-stone-800  px-3 py-1 text-sm opacity-50 transition-opacity hover:opacity-100 lg:hidden"
+		>
+			Open settings
+		</Drawer.Trigger>
+		<Drawer.Portal>
+			<Drawer.Overlay class="fixed inset-0 bg-black/40" />
+			<Drawer.Content
+				class="fixed inset-x-0 bottom-0 mt-24 flex max-h-[80%] min-h-[max(200px,40%)] flex-col overflow-hidden rounded-t-[10px] text-white"
+			>
+				<div
+					class="bg-pasilla-15 absolute top-3 left-1/2 h-1.5 w-12 flex-shrink-0 -translate-x-1/2 rounded-full"
+					aria-hidden="true"
+				></div>
+				<div class="flex h-full flex-1 flex-col overflow-hidden rounded-t-xl bg-red-500">
+					<!-- Drag handle -->
+					<Settings />
+				</div></Drawer.Content
+			>
+		</Drawer.Portal>
+	</Drawer.Root>
 
 	<!-- Main content -->
 	<main class="dark:bg-mandarin-peel-1 flex-1 overflow-auto bg-stone-50 p-6">
@@ -45,8 +72,8 @@
 			</div>
 		{:else}
 			<div
-				class="grid grid-cols-[repeat(var(--columns),_1fr)] grid-rows-[masonry] items-start gap-6"
-				style="--columns: {columns};"
+				class="grid grid-rows-[masonry] items-start gap-6 lg:grid-cols-[repeat(var(--columns),_1fr)]"
+				style="--columns: {columns.current};"
 				role="grid"
 				aria-label="Generated content"
 				{@attach masonry}

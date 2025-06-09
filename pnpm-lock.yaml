@@ -23,6 +23,9 @@ importers:
       typia:
         specifier: ^8.0.0
         version: 8.0.0(@samchon/openapi@3.0.0)(typescript@5.8.2)
+      vaul-svelte:
+        specifier: /home/thomasgl/programming/vaul-svelte/packages/vaul-svelte
+        version: link:../vaul-svelte/packages/vaul-svelte
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.0
