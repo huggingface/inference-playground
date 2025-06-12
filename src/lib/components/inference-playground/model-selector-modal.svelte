@@ -34,7 +34,7 @@
 			onCompute: noop,
 		},
 		sameWidth: false,
-		value: () => undefined,
+		value: () => "",
 		onValueChange(modelId) {
 			if (!modelId) return;
 			onModelSelect?.(modelId);
@@ -182,7 +182,7 @@
 			{/if}
 			<div
 				class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 data-[highlighted]:bg-blue-500/15 data-[highlighted]:text-blue-600 dark:text-gray-400 dark:data-[highlighted]:text-blue-300"
-				{...combobox.getOption("__custom__", () => {
+				{...combobox.getOption("__custom__", "custom", () => {
 					onClose?.();
 					openCustomModelConfig({
 						onSubmit: model => {

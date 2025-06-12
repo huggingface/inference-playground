@@ -2,12 +2,12 @@
 	import { masonry } from "$lib/attachments/masonry.js";
 	import { default as IconPhoto } from "~icons/lucide/image";
 	import IconX from "~icons/lucide/x";
-	import Sidebar from "./sidebar.svelte";
-	import Settings, { reuseSettings } from "./settings.svelte";
-	import { isVisualItem, visualItems, type GeneratingItem, type VisualItem } from "./state.svelte.js";
-	import VisualCard from "./visual-card.svelte";
+	import Sidebar from "./(components)/sidebar.svelte";
+	import Settings, { reuseSettings } from "./(components)/settings.svelte";
+	import { isVisualItem, visualItems, type GeneratingItem, type VisualItem } from "./(state)/visual-items.svelte.js";
+	import VisualCard from "./(components)/visual-card.svelte";
 	import { Drawer } from "vaul-svelte";
-	import { columns } from "./settings.svelte.js";
+	import { columns } from "./(state)/settings.svelte.js";
 
 	let expandedItem: VisualItem | null = $state(null);
 	let dialogElement: HTMLDialogElement;
@@ -126,16 +126,6 @@
 </dialog>
 
 <style>
-	@reference "../../app.css";
-
-	.sidebar {
-		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-	}
-
-	.sidebar-header {
-		background: linear-gradient(135deg, var(--color-lemon-punch-3), var(--color-lemon-punch-5));
-	}
-
 	/* Dialog styles */
 	dialog {
 		border: none;

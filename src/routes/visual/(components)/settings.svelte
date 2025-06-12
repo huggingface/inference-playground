@@ -67,10 +67,16 @@
 	import IconImage from "~icons/lucide/image";
 	import IconSparkles from "~icons/lucide/sparkles";
 	import IconVideo from "~icons/lucide/video";
-	import type { ApiModelsResponse } from "../api/models/+server.js";
-	import { blobs, VisualEntityType, visualItems, type GeneratingItem, type VisualItem } from "./state.svelte.js";
+	import type { ApiModelsResponse } from "../../api/models/+server.js";
+	import {
+		blobs,
+		VisualEntityType,
+		visualItems,
+		type GeneratingItem,
+		type VisualItem,
+	} from "../(state)/visual-items.svelte.js";
 	import { capitalize } from "$lib/utils/string.js";
-	import { columns } from "./settings.svelte.js";
+	import { columns } from "../(state)/settings.svelte.js";
 
 	type Props = {
 		style?: string;
@@ -149,7 +155,7 @@
 				await new Promise(resolve => setTimeout(resolve, delay));
 
 				// Fetch appropriate mock content
-				const response = await fetch(isVideo ? "/src/routes/visual/placeholder.mp4" : "/api/sb-image");
+				const response = await fetch(isVideo ? "/placeholder.mp4" : "/api/sb-image");
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`);
 				}
@@ -365,8 +371,6 @@
 </div>
 
 <style>
-	@reference "../../app.css";
-
 	.sidebar {
 		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 	}

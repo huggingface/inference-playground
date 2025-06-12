@@ -338,6 +338,7 @@ export function getInferenceSnippet(
 
 	const providerMapping = model.inferenceProviderMapping.find(p => p.provider === provider);
 	if (!providerMapping) return [];
+
 	const allSnippets = snippets.getInferenceSnippets(
 		{ ...model, inference: "" },
 		accessToken,
@@ -345,21 +346,6 @@ export function getInferenceSnippet(
 		{ ...providerMapping, hfModelId: model.id },
 		opts
 	);
-
-	if (opts?.structured_output && !structuredForbiddenProviders.includes(provider as Provider)) {
-		allSnippets.forEach(s => {
-			const modified = modifySnippet(s.content, { prop: "hi" });
-			if (s.content === modified) {
-				console.log("Failed for", s.language, "\n");
-			} else {
-				console.log("Original snippet");
-				console.log(s.content);
-				console.log("\nModified");
-				console.log(modified);
-				console.log();
-			}
-		});
-	}
 
 	return allSnippets
 		.filter(s => s.language === language)

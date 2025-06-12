@@ -36,8 +36,6 @@
 </div>
 
 <style>
-	@reference "../../app.css";
-
 	.sidebar {
 		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 	}

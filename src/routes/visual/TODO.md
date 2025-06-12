@@ -1,10 +1,9 @@
 # TODO
 
-- [-] Combobox for models
 - [ ] AbortController for cancelling requests
-- [ ] Generation parameters
 - [ ] Persist generation parameters
 - [ ] Link back to normal playground
+- [x] Combobox for models
 - [x] Save images locally
 - [x] Video
 - [x] Improve styling

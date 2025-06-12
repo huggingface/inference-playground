@@ -9,8 +9,8 @@
 	import IconRefresh from "~icons/lucide/refresh-cw";
 	import IconTrash from "~icons/lucide/trash";
 	import LoadingAnimation from "./loading-animation.svelte";
-	import { adjustBgColorForAPCAContrast, extractVideoFrameWithRetry } from "./utils.js";
-	import { isVisualItem, type GeneratingItem, type VisualItem } from "./state.svelte";
+	import { adjustBgColorForAPCAContrast, extractVideoFrameWithRetry } from "../utils.js";
+	import { isVisualItem, type GeneratingItem, type VisualItem } from "../(state)/visual-items.svelte.js";
 
 	interface Props {
 		item: VisualItem | GeneratingItem;
