@@ -7,7 +7,7 @@
 	import { isVisualItem, visualItems, type GeneratingItem, type VisualItem } from "./(state)/visual-items.svelte.js";
 	import VisualCard from "./(components)/visual-card.svelte";
 	import { Drawer } from "vaul-svelte";
-	import { columns } from "./(state)/settings.svelte.js";
+	import { settings } from "./(state)/settings.svelte.js";
 
 	let expandedItem: VisualItem | null = $state(null);
 	let dialogElement: HTMLDialogElement;
@@ -73,7 +73,7 @@
 		{:else}
 			<div
 				class="grid grid-rows-[masonry] items-start gap-6 lg:grid-cols-[repeat(var(--columns),_1fr)]"
-				style="--columns: {columns.current};"
+				style="--columns: {settings.columns};"
 				role="grid"
 				aria-label="Generated content"
 				{@attach masonry}

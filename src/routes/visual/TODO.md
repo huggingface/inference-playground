@@ -1,8 +1,8 @@
 # TODO
 
 - [ ] AbortController for cancelling requests
-- [ ] Persist generation parameters
 - [ ] Link back to normal playground
+- [x] Persist generation parameters
 - [x] Combobox for models
 - [x] Save images locally
 - [x] Video

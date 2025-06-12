@@ -1,14 +1,6 @@
 <script lang="ts" module>
 	const data = $derived(page.data as ApiModelsResponse);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- temporary hack while this is in a module
-	let model: Model = $state<ApiModelsResponse["models"][number]>(undefined as any);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- temporary hack while this is in a module
-	let provider: InferenceProviderMapping["provider"] = $state(undefined as any);
-
-	let filterTag = $state<PipelineTag>(PipelineTag.TextToImage);
-	let prompt = $state("");
-
 	let inputContainer = $state<HTMLElement>();
 
 	export function reuseSettings(item: VisualItem | GeneratingItem) {
@@ -16,20 +8,20 @@
 		if (!config) return;
 
 		if (config.prompt) {
-			prompt = config.prompt;
+			settings.prompt = config.prompt;
 		}
 		if (config.model && config.provider) {
 			// Find the model by ID
 			const foundModel = data.models.find(m => m.id === config.model);
 			if (foundModel) {
-				model = foundModel;
+				settings.model = foundModel;
 				// Find the provider in the model's mappings
 				const foundProvider = foundModel.inferenceProviderMapping.find(p => p.provider === config.provider);
 				if (foundProvider) {
-					provider = foundProvider.provider;
+					settings.provider = foundProvider.provider;
 				}
 
-				filterTag = model.pipeline_tag;
+				settings.filterTag = settings.model.pipeline_tag;
 			}
 		}
 
@@ -55,9 +47,10 @@
 	import LocalToasts from "$lib/components/local-toasts.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
-	import { PipelineTag, type InferenceProviderMapping, type Model } from "$lib/types.js";
+	import { PipelineTag } from "$lib/types.js";
 	import ProviderSelect from "$lib/ui/provider-select.svelte";
 	import fuzzysearch from "$lib/utils/search.js";
+	import { capitalize } from "$lib/utils/string.js";
 	import { InferenceClient } from "@huggingface/inference";
 	import { Combobox } from "melt/builders";
 	import { watch } from "runed";
@@ -67,7 +60,7 @@
 	import IconImage from "~icons/lucide/image";
 	import IconSparkles from "~icons/lucide/sparkles";
 	import IconVideo from "~icons/lucide/video";
-	import type { ApiModelsResponse } from "../../api/models/+server.js";
+	import { settings } from "../(state)/settings.svelte.js";
 	import {
 		blobs,
 		VisualEntityType,
@@ -75,27 +68,26 @@
 		type GeneratingItem,
 		type VisualItem,
 	} from "../(state)/visual-items.svelte.js";
-	import { capitalize } from "$lib/utils/string.js";
-	import { columns } from "../(state)/settings.svelte.js";
+	import type { ApiModelsResponse } from "../../api/models/+server.js";
 
 	type Props = {
 		style?: string;
 	};
 	const { style }: Props = $props();
 
-	model = data.models[0]!;
-	provider = data.models[0]!.inferenceProviderMapping[0]!.provider;
+	if (!settings.model) settings.model = data.models[0]!;
+	if (!settings.provider) settings.provider = data.models[0]!.inferenceProviderMapping[0]!.provider;
 
 	const modelCombobox = new Combobox({
-		value: () => model,
+		value: () => settings.model,
 		onValueChange: v => {
 			if (!v) return;
-			model = v;
+			settings.model = v;
 		},
 		onOpenChange: open => {
-			if (!open) modelCombobox.inputValue = model.id;
+			if (!open && settings.model) modelCombobox.inputValue = settings.model.id;
 		},
-		inputValue: model.id,
+		inputValue: settings.model.id,
 		sameWidth: false,
 		floatingConfig: {
 			computePosition: { placement: "bottom-start" },
@@ -104,14 +96,14 @@
 	});
 
 	const filteredModels = $derived(
-		data.models.filter(m => m.pipeline_tag === filterTag).toSorted((a, b) => a.id.localeCompare(b.id))
+		data.models.filter(m => m.pipeline_tag === settings.filterTag).toSorted((a, b) => a.id.localeCompare(b.id))
 	);
 	watch(
 		() => $state.snapshot(filteredModels),
 		() => {
-			if (filteredModels.includes(model)) return;
-			model = filteredModels[0]!;
-			modelCombobox.inputValue = model.id;
+			if (filteredModels.some(m => m.id === settings.model?.id) || !filteredModels.length) return;
+			settings.model = filteredModels[0]!;
+			modelCombobox.inputValue = settings.model.id;
 		}
 	);
 
@@ -126,11 +118,11 @@
 	let autosized = new TextareaAutosize();
 
 	async function generateContent(isMock: boolean = false) {
-		if (!prompt.trim()) return;
+		if (!settings.prompt.trim()) return;
 
-		const currentPrompt = prompt.trim();
+		const currentPrompt = settings.prompt.trim();
 		const startTime = Date.now();
-		const isVideo = filterTag === PipelineTag.TextToVideo;
+		const isVideo = settings.filterTag === PipelineTag.TextToVideo;
 
 		// Add loading item
 		const item: GeneratingItem = {
@@ -138,8 +130,8 @@
 			type: isVideo ? VisualEntityType.Video : VisualEntityType.Image,
 			config: {
 				prompt: currentPrompt,
-				model: isMock ? (isVideo ? "Mock Video Model" : "Mock Model") : model.id,
-				provider: isMock ? "mock" : provider,
+				model: isMock ? (isVideo ? "Mock Video Model" : "Mock Model") : settings.model?.id,
+				provider: isMock ? "mock" : settings.provider,
 			},
 		};
 		visualItems.generating = [...visualItems.generating, item];
@@ -167,14 +159,14 @@
 				blob = isVideo
 					? ((await client.textToVideo({
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							provider: provider as any,
-							model: model.id,
+							provider: settings.provider as any,
+							model: settings.model?.id,
 							inputs: currentPrompt,
 						})) as unknown as Blob)
 					: ((await client.textToImage({
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							provider: provider as any,
-							model: model.id,
+							provider: settings.provider as any,
+							model: settings.model?.id,
 							inputs: currentPrompt,
 							parameters: { num_inference_steps: 4 },
 						})) as unknown as Blob);
@@ -197,7 +189,7 @@
 		}
 	}
 
-	const contentType = $derived(filterTag === PipelineTag.TextToImage ? "image" : "video");
+	const contentType = $derived(settings.filterTag === PipelineTag.TextToImage ? "image" : "video");
 </script>
 
 <!-- Sidebar -->
@@ -255,7 +247,7 @@
 								{/if}
 							</div>
 						{:else}
-							<div {...modelCombobox.getOption(model, model.id)}>{model.id}</div>
+							<div>No models found</div>
 						{/each}
 					</div>
 				</div>
@@ -266,7 +258,7 @@
 					<!-- Sliding background indicator -->
 					<div
 						class="absolute top-0.5 h-8.75 rounded-md bg-stone-700 shadow-md transition-all duration-150 ease-out"
-						style="width: calc(50% - 4px); transform: translateX({filterTag === PipelineTag.TextToImage
+						style="width: calc(50% - 4px); transform: translateX({settings.filterTag === PipelineTag.TextToImage
 							? '0'
 							: 'calc(100% + 4px)'})"
 					></div>
@@ -274,9 +266,9 @@
 					{#snippet radio(tag: PipelineTag, Icon: typeof IconImage)}
 						<label
 							class="group relative z-10 flex flex-1 cursor-pointer items-center justify-center rounded-lg px-4 py-2 transition-all duration-300 ease-out"
-							class:text-white={filterTag === tag}
-							class:text-stone-400={filterTag !== tag}
-							class:hover:text-stone-200={filterTag !== tag}
+							class:text-white={settings.filterTag === tag}
+							class:text-stone-400={settings.filterTag !== tag}
+							class:hover:text-stone-200={settings.filterTag !== tag}
 						>
 							<!-- Icon -->
 							<Icon class="h-4 w-4 transition-all duration-150 ease-out " />
@@ -288,7 +280,7 @@
 								name="model-type"
 								aria-label={tag}
 								class="absolute inset-0 cursor-pointer opacity-0"
-								bind:group={filterTag}
+								bind:group={settings.filterTag}
 							/>
 						</label>
 					{/snippet}
@@ -298,15 +290,17 @@
 				</div>
 			</div>
 
-			<div class="space-y-2">
-				<ProviderSelect {model} bind:provider />
-			</div>
+			{#if settings.model && settings.provider}
+				<div class="space-y-2">
+					<ProviderSelect model={settings.model} bind:provider={settings.provider} />
+				</div>
+			{/if}
 
 			<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 				<p>Prompt</p>
 				<textarea
 					class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-					bind:value={prompt}
+					bind:value={settings.prompt}
 					placeholder="Describe the {contentType} you want to generate..."
 					rows="4"
 					{@attach autosized.attachment}
@@ -318,7 +312,7 @@
 				<select
 					class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 					id="columns"
-					bind:value={columns.current}
+					bind:value={settings.columns}
 				>
 					<option value={1}>1 Column</option>
 					<option value={2}>2 Columns</option>
