@@ -338,6 +338,7 @@ export function getInferenceSnippet(
 
 	const providerMapping = model.inferenceProviderMapping.find(p => p.provider === provider);
 	if (!providerMapping) return [];
+
 	const allSnippets = snippets.getInferenceSnippets(
 		{ ...model, inference: "" },
 		accessToken,
