@@ -9,6 +9,7 @@
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
 	import { Popover } from "melt/components";
 	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
+	import IconImage from "~icons/carbon/image";
 	import IconChatRight from "~icons/carbon/align-box-bottom-right";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
@@ -344,7 +345,14 @@
 
 					<GenerationConfig conversation={conversations.active[0]!} />
 
-					<div class="mt-auto flex items-center justify-end gap-4 whitespace-nowrap">
+					<div class="mt-auto flex flex-wrap items-center justify-end gap-4 whitespace-nowrap">
+						<a
+							href="/visual"
+							class="flex basis-full items-center justify-end gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+						>
+							<IconImage class="text-xs" />
+							Image/Video generation
+						</a>
 						<button
 							onclick={() => projects.current && showShareModal(projects.current)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"

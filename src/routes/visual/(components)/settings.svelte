@@ -61,6 +61,7 @@
 	import IconSparkles from "~icons/lucide/sparkles";
 	import IconVideo from "~icons/lucide/video";
 	import { settings } from "../(state)/settings.svelte.js";
+	import IconMessage from "~icons/lucide/message-square-text";
 	import {
 		blobs,
 		VisualEntityType,
@@ -69,6 +70,7 @@
 		type VisualItem,
 	} from "../(state)/visual-items.svelte.js";
 	import type { ApiModelsResponse } from "../../api/models/+server.js";
+	import { dev } from "$app/environment";
 
 	type Props = {
 		style?: string;
@@ -325,6 +327,13 @@
 		</div>
 	</div>
 
+	<a
+		href="/"
+		class="flex items-center justify-end gap-1 px-4 py-2 text-sm text-stone-500 underline decoration-stone-300 hover:text-stone-800 dark:text-stone-400 dark:decoration-stone-600 dark:hover:text-stone-200"
+	>
+		<IconMessage class="text-xs" />
+		Text generation
+	</a>
 	<div class="sidebar-footer space-y-2 border-t border-stone-200 p-4 dark:border-stone-700">
 		{#snippet generateBtn(args: { classes?: string; onGenerate: () => void; icon: typeof IconSparkles; label: string })}
 			<LocalToasts>
@@ -355,12 +364,14 @@
 			label: `Generate ${contentType}`,
 		})}
 
-		{@render generateBtn({
-			classes: "btn-depth-stone",
-			onGenerate: () => generateContent(true),
-			icon: IconHeart,
-			label: "Mock generate",
-		})}
+		{#if dev}
+			{@render generateBtn({
+				classes: "btn-depth-stone",
+				onGenerate: () => generateContent(true),
+				icon: IconHeart,
+				label: "Mock generate",
+			})}
+		{/if}
 	</div>
 </div>
 

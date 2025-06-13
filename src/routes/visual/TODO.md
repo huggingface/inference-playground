@@ -1,7 +1,7 @@
 # TODO
 
 - [ ] AbortController for cancelling requests
-- [ ] Link back to normal playground
+- [x] Link back to normal playground
 - [x] Persist generation parameters
 - [x] Combobox for models
 - [x] Save images locally
