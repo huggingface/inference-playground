@@ -83,7 +83,7 @@
 		"node-vibrant": "^4.0.3",
 		"remult": "^3.0.2",
 		"typia": "^8.0.0",
-		"vaul-svelte": "/home/thomasgl/programming/vaul-svelte/packages/vaul-svelte"
+		"vaul-svelte": "https://pkg.vc/-/@melt-ui/vaul-svelte@9195c05"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
