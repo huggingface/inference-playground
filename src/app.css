@@ -227,6 +227,9 @@ body.dark {
 	@apply focus-visible:custom-outline;
 }
 
+@custom-variant hover-nd (&:where(:hover:enabled));
+@custom-variant active-nd (&:where(:active:enabled));
+
 @layer base {
 	* {
 		outline-color: var(--color-blue-400);
@@ -297,7 +300,7 @@ body.dark {
 	z-index: -1;
 }
 
-.btn-depth:hover::before {
+.btn-depth:hover::before:not(:disabled) {
 	opacity: 1;
 }
 
@@ -312,11 +315,11 @@ body.dark {
 	z-index: -1;
 }
 
-.btn-depth:active {
+.btn-depth:active:not(:disabled) {
 	scale: 0.99;
 }
 
-.btn-depth:active::after {
+.btn-depth:active::after:not(:disabled) {
 	opacity: 1;
 }
 

@@ -8,6 +8,8 @@
 	import VisualCard from "./(components)/visual-card.svelte";
 	import { Drawer } from "vaul-svelte";
 	import { settings } from "./(state)/settings.svelte.js";
+	import HFTokenModal from "$lib/components/inference-playground/hf-token-modal.svelte";
+	import { token } from "$lib/state/token.svelte.js";
 
 	let expandedItem: VisualItem | null = $state(null);
 	let dialogElement: HTMLDialogElement;
@@ -22,6 +24,18 @@
 		expandedItem = null;
 		dialogElement?.close();
 	}
+
+	function handleTokenSubmit(e: Event) {
+		const form = e.target as HTMLFormElement;
+		const formData = new FormData(form);
+		const submittedHfToken = (formData.get("hf-token") as string).trim() ?? "";
+		const RE_HF_TOKEN = /\bhf_[a-zA-Z0-9]{34}\b/;
+		if (RE_HF_TOKEN.test(submittedHfToken)) {
+			token.value = submittedHfToken;
+		} else {
+			alert("Please provide a valid HF token.");
+		}
+	}
 </script>
 
 <svelte:window
@@ -31,6 +45,14 @@
 		}
 	}}
 />
+
+{#if token.showModal}
+	<HFTokenModal
+		bind:storeLocallyHfToken={token.writeToLocalStorage}
+		on:close={() => (token.showModal = false)}
+		on:submit={handleTokenSubmit}
+	/>
+{/if}
 
 <div class="flex h-lvh dark:text-white" data-vaul-drawer-wrapper>
 	<div class="hidden lg:block">
