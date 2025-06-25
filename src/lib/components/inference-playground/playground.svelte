@@ -195,44 +195,6 @@
 					{!viewCode ? "View Code" : "Hide Code"}
 				</button>
 				<div class="flex">
-					<button
-						onclick={() => {
-							viewCode = false;
-							conversations.genOrStop();
-						}}
-						type="button"
-						class={[
-							"flex h-[39px]  items-center justify-center gap-2 rounded-l-lg px-3.5 py-2.5 text-sm font-medium text-white focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
-							multiple ? "rounded-l-lg" : "rounded-lg",
-							loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
-							!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
-						]}
-					>
-						{#if loading}
-							<div class="flex flex-none items-center gap-[3px]">
-								<span class="mr-2">
-									{#if conversations.active.some(c => c.data.streaming)}
-										Stop
-									{:else}
-										Cancel
-									{/if}
-								</span>
-								{#each { length: 3 } as _, i}
-									<div
-										class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-500 dark:bg-gray-100"
-										style="animation-delay: {(i + 1) * 0.25}s;"
-									></div>
-								{/each}
-							</div>
-						{:else}
-							{multiple ? "Run all" : "Run"}
-							<span
-								class="inline-flex gap-0.5 rounded-sm border border-white/20 bg-white/10 px-0.5 text-xs text-white/70"
-							>
-								{cmdOrCtrl}<span class="translate-y-px">↵</span>
-							</span>
-						{/if}
-					</button>
 					{#if multiple}
 						<div class="w-[1px] bg-gray-800" aria-hidden="true"></div>
 						<Popover

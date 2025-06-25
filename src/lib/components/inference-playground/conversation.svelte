@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ScrollState } from "$lib/spells/scroll-state.svelte";
-	import { type ConversationClass } from "$lib/state/conversations.svelte";
+	import { conversations, type ConversationClass } from "$lib/state/conversations.svelte";
+	import { cmdOrCtrl } from "$lib/utils/platform.js";
 	import { watch } from "runed";
 	import { tick } from "svelte";
 	import IconPlus from "~icons/carbon/add";
@@ -14,6 +15,10 @@
 	}
 
 	const { conversation, viewCode, onCloseCode }: Props = $props();
+
+	const multiple = $derived(conversations.active.length > 1);
+	const loading = $derived(conversations.generating);
+
 	let messageContainer: HTMLDivElement | null = $state(null);
 	const scrollState = new ScrollState({
 		element: () => messageContainer,
@@ -66,7 +71,7 @@
 </script>
 
 <div
-	class="@container flex flex-col overflow-x-hidden overflow-y-auto"
+	class="@container flex h-full flex-col overflow-x-hidden overflow-y-auto"
 	class:animate-pulse={conversation.generating && !conversation.data.streaming}
 	bind:this={messageContainer}
 >
@@ -94,6 +99,50 @@
 				Add message
 			</div>
 		</button>
+
+		<div class="mt-auto p-2">
+			<label
+				class="flex w-full rounded-full p-1 pl-4 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-neutral-800"
+			>
+				<input type="text" class="flex-1 outline-none" />
+				<button
+					onclick={() => {
+						conversations.genOrStop();
+					}}
+					type="button"
+					class={[
+						"flex items-center justify-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-white focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
+						loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
+						!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
+					]}
+				>
+					{#if loading}
+						<div class="flex flex-none items-center gap-[3px]">
+							<span class="mr-2">
+								{#if conversations.active.some(c => c.data.streaming)}
+									Stop
+								{:else}
+									Cancel
+								{/if}
+							</span>
+							{#each { length: 3 } as _, i}
+								<div
+									class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-500 dark:bg-gray-100"
+									style="animation-delay: {(i + 1) * 0.25}s;"
+								></div>
+							{/each}
+						</div>
+					{:else}
+						{multiple ? "Run all" : "Run"}
+						<span
+							class="inline-flex gap-0.5 rounded-sm border border-white/20 bg-white/10 px-0.5 text-xs text-white/70"
+						>
+							{cmdOrCtrl}<span class="translate-y-px">↵</span>
+						</span>
+					{/if}
+				</button>
+			</label>
+		</div>
 	{:else}
 		<CodeSnippets {conversation} {onCloseCode} />
 	{/if}
