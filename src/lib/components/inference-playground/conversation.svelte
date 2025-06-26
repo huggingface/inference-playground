@@ -14,12 +14,11 @@
 
 	interface Props {
 		conversation: ConversationClass;
-		conversationIdx: number;
 		viewCode: boolean;
 		onCloseCode: () => void;
 	}
 
-	const { conversation, viewCode, onCloseCode, conversationIdx }: Props = $props();
+	const { conversation, viewCode, onCloseCode }: Props = $props();
 
 	const multiple = $derived(conversations.active.length > 1);
 	const loading = $derived(conversations.generating);
@@ -76,7 +75,7 @@
 
 	let input = $state("");
 
-	function onKeydown(event: KeyboardEvent) {
+	async function onKeydown(event: KeyboardEvent) {
 		const ctrlOrMeta = event.ctrlKey || event.metaKey;
 
 		if (ctrlOrMeta && event.key === "Enter") {
@@ -89,7 +88,8 @@
 					variant: "error",
 				});
 			} else {
-				conversation.addMessage({ role: "user", content: input });
+				await conversation.addMessage({ role: "user", content: input });
+				conversation.genNextMessage();
 				input = "";
 			}
 		}
@@ -97,11 +97,11 @@
 
 	const placeholderMessages = [
 		"What is the capital of France?",
-		"What is HuggingFace?",
+		"What is Hugging Face?",
 		"What is the best way to learn machine learning?",
 		"What is Gradio?",
 		"What is Svelte?",
-		"How do I create agents in HuggingFace?",
+		"How do I create agents in Hugging Face?",
 	];
 
 	const placeholder = randomPick(placeholderMessages);
