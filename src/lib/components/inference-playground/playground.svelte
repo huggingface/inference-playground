@@ -42,18 +42,6 @@
 	const systemPromptSupported = $derived(conversations.active.some(c => isSystemPromptSupported(c.model)));
 	const compareActive = $derived(conversations.active.length === 2);
 
-	function onKeydown(event: KeyboardEvent) {
-		if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-			conversations.genNextMessages();
-		}
-		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "l") {
-			conversations.genNextMessages("left");
-		}
-		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "r") {
-			conversations.genNextMessages("right");
-		}
-	}
-
 	function handleTokenSubmit(e: Event) {
 		const form = e.target as HTMLFormElement;
 		const formData = new FormData(form);
@@ -77,7 +65,6 @@
 	/>
 {/if}
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class={[
 		"motion-safe:animate-fade-in grid h-dvh divide-gray-200 overflow-hidden bg-gray-100/50",
@@ -116,7 +103,7 @@
 	</div>
 
 	<!-- Center column -->
-	<div class="relative flex h-full flex-col overflow-hidden" onkeydown={onKeydown}>
+	<div class="relative flex h-full flex-col overflow-hidden">
 		<Toaster />
 		<div
 			class="flex flex-1 divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:pt-3 dark:divide-gray-800"
@@ -130,7 +117,7 @@
 							on:close={() => conversations.delete(conversation.data)}
 						/>
 					{/if}
-					<PlaygroundConversation {conversation} {viewCode} onCloseCode={() => (viewCode = false)} />
+					<PlaygroundConversation {conversation} {conversationIdx} {viewCode} onCloseCode={() => (viewCode = false)} />
 				</div>
 			{/each}
 		</div>

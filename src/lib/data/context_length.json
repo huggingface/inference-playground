@@ -98,6 +98,7 @@
 		"cognitivecomputations/dolphin-mixtral-8x22b": 16000,
 		"sophosympatheia/midnight-rose-70b": 4096,
 		"sao10k/l3-8b-lunaris": 8192,
+		"google/gemma-3-1b-it": 32768,
 		"qwen/qwen3-8b-fp8": 128000,
 		"qwen/qwen3-4b-fp8": 128000,
 		"thudm/glm-4-9b-0414": 32000,
@@ -233,8 +234,8 @@
 		"black-forest-labs/FLUX.1-kontext-pro": 0,
 		"arcee-ai/arcee-blitz": 32768,
 		"marin-community/marin-8b-instruct": 4096,
-		"Qwen/Qwen3-235B-A22B-fp8-tput": 40960,
-		"meta-llama/Llama-3.3-70B-Instruct-Turbo-Free": 131072
+		"meta-llama/Llama-3.3-70B-Instruct-Turbo-Free": 131072,
+		"Qwen/Qwen3-235B-A22B-fp8-tput": 40960
 	},
 	"fireworks-ai": {
 		"accounts/fireworks/models/qwen3-30b-a3b": 40000,

@@ -5,16 +5,21 @@
 	import { watch } from "runed";
 	import { tick } from "svelte";
 	import IconPlus from "~icons/carbon/add";
+	import { addToast } from "../toaster.svelte.js";
 	import CodeSnippets from "./code-snippets.svelte";
 	import Message from "./message.svelte";
+	import { randomPick } from "$lib/utils/array.js";
+	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
+	import { autofocus } from "$lib/attachments/autofocus.js";
 
 	interface Props {
 		conversation: ConversationClass;
+		conversationIdx: number;
 		viewCode: boolean;
 		onCloseCode: () => void;
 	}
 
-	const { conversation, viewCode, onCloseCode }: Props = $props();
+	const { conversation, viewCode, onCloseCode, conversationIdx }: Props = $props();
 
 	const multiple = $derived(conversations.active.length > 1);
 	const loading = $derived(conversations.generating);
@@ -68,7 +73,43 @@
 		conversation.stopGenerating();
 		conversation.genNextMessage();
 	}
+
+	let input = $state("");
+
+	function onKeydown(event: KeyboardEvent) {
+		const ctrlOrMeta = event.ctrlKey || event.metaKey;
+
+		if (ctrlOrMeta && event.key === "Enter") {
+			const lastMessage = conversation.data.messages.at(-1);
+			if (lastMessage?.role === "user") {
+				addToast({
+					title: "Cannot add message",
+					description: "Cannot have multiple user messages in a row",
+
+					variant: "error",
+				});
+			} else {
+				conversation.addMessage({ role: "user", content: input });
+				input = "";
+			}
+		}
+	}
+
+	const placeholderMessages = [
+		"What is the capital of France?",
+		"What is HuggingFace?",
+		"What is the best way to learn machine learning?",
+		"What is Gradio?",
+		"What is Svelte?",
+		"How do I create agents in HuggingFace?",
+	];
+
+	const placeholder = randomPick(placeholderMessages);
+
+	const autosized = new TextareaAutosize();
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <div
 	class="@container flex h-full flex-col overflow-x-hidden overflow-y-auto"
@@ -81,7 +122,6 @@
 				{message}
 				{index}
 				{conversation}
-				autofocus={index === conversation.data.messages.length - 1}
 				onDelete={() => conversation.deleteMessage(index)}
 				onRegen={() => regenMessage(index)}
 			/>
@@ -102,9 +142,15 @@
 
 		<div class="mt-auto p-2">
 			<label
-				class="flex w-full rounded-full p-1 pl-4 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-neutral-800"
+				class="flex w-full items-end rounded-[32px] p-2 pl-8 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-neutral-800"
 			>
-				<input type="text" class="flex-1 outline-none" />
+				<textarea
+					{placeholder}
+					class="max-h-100 flex-1 resize-none self-center outline-none"
+					bind:value={input}
+					{@attach autosized.attachment}
+					{@attach autofocus()}
+				></textarea>
 				<button
 					onclick={() => {
 						conversations.genOrStop();
