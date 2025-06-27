@@ -27,8 +27,18 @@ export async function getModelPreviewImage(
 				return match ? match[1] : null;
 			})
 			.filter((src): src is string => Boolean(src))
-			.filter(src => src.startsWith(`/${modelId}/`))
-			.map(src => `https://huggingface.co${src}`);
+			.filter(src => {
+				// Check if the URL contains the model ID in the path
+				return src.includes(`/${modelId}/`) || src.includes(`/${modelId}/resolve/`);
+			})
+			.map(src => {
+				// Convert relative URLs to absolute
+				if (src.startsWith('/')) {
+					return `https://huggingface.co${src}`;
+				}
+				// Return absolute URLs as-is
+				return src;
+			});
 
 		return modelImages[0]; // Return the first image found
 	} catch (error) {
