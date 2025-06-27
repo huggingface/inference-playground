@@ -63,7 +63,7 @@
 		"prettier-plugin-tailwindcss": "^0.6.11",
 		"runed": "^0.25.0",
 		"shiki": "^3.4.0",
-		"svelte": "^5.33.4",
+		"svelte": "^5.34.8",
 		"svelte-check": "^4.0.0",
 		"tailwind-merge": "^3.0.2",
 		"tailwindcss": "^4.1.8",

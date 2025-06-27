@@ -81,6 +81,7 @@
 	} from "../(state)/visual-items.svelte.js";
 	import type { ApiModelsResponse } from "../../api/models/+server.js";
 	import { dev } from "$app/environment";
+	import ModelMenu from "./model-menu.svelte";
 
 	type Props = {
 		style?: string;
@@ -327,6 +328,8 @@
 				</div>
 			{/if}
 
+			<ModelMenu />
+
 			<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 				<p>Prompt</p>
 				<textarea
@@ -336,6 +339,22 @@
 					rows="4"
 					{@attach autosized.attachment}
 				></textarea>
+			</label>
+
+			<label for="columns" class="hidden space-y-2 text-sm font-medium text-stone-700 lg:block dark:text-stone-300">
+				<p>Columns</p>
+				<select
+					class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+					id="columns"
+					bind:value={settings.columns}
+				>
+					<option value={1}>1 Column</option>
+					<option value={2}>2 Columns</option>
+					<option value={3}>3 Columns</option>
+					<option value={4}>4 Columns</option>
+					<option value={5}>5 Columns</option>
+					<option value={6}>6 Columns</option>
+				</select>
 			</label>
 
 			{#if settings.filterTag === PipelineTag.TextToImage}
@@ -423,22 +442,6 @@
 					</div>
 				</details>
 			{/if}
-
-			<label for="columns" class="hidden space-y-2 text-sm font-medium text-stone-700 lg:block dark:text-stone-300">
-				<p>Columns</p>
-				<select
-					class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 transition-colors dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-					id="columns"
-					bind:value={settings.columns}
-				>
-					<option value={1}>1 Column</option>
-					<option value={2}>2 Columns</option>
-					<option value={3}>3 Columns</option>
-					<option value={4}>4 Columns</option>
-					<option value={5}>5 Columns</option>
-					<option value={6}>6 Columns</option>
-				</select>
-			</label>
 		</div>
 	</div>
 
