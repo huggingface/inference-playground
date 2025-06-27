@@ -1,6 +1,7 @@
 import { PipelineTag, type Model } from "$lib/types.js";
 import type { RequestHandler } from "./$types.js";
 import { cache, CacheEntry } from "./cache.js";
+import { getModelPreviewImage } from "./get-model-image.js";
 
 type GetModelsForTagArgs = {
 	tag: PipelineTag;
@@ -52,6 +53,19 @@ export async function getModelsForTag({ tag, fetch }: GetModelsForTagArgs): Prom
 	}
 
 	const data = await res.json();
+
+	// Fetch preview images for visual pipeline tags
+	if ([PipelineTag.TextToImage, PipelineTag.TextToVideo, PipelineTag.ImageTextToText].includes(tag)) {
+		const modelsWithImages = await Promise.all(
+			data.map(async (model: Model) => {
+				const preview_img = await getModelPreviewImage(model.id, fetch);
+				return { ...model, preview_img };
+			})
+		);
+		cache[tag] = new CacheEntry({ ok: true, data: modelsWithImages });
+		return modelsWithImages;
+	}
+
 	cache[tag] = new CacheEntry({ ok: true, data });
 	return data;
 }

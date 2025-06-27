@@ -46,6 +46,7 @@ export type Model = {
 	tags: string[];
 	pipeline_tag: PipelineTag;
 	library_name?: LibraryName;
+	preview_img?: string;
 };
 
 export type CustomModel = {
