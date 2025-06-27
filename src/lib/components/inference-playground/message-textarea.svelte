@@ -12,6 +12,7 @@
 	let input = $state("");
 
 	async function onKeydown(event: KeyboardEvent) {
+		if (loading) return;
 		const ctrlOrMeta = event.ctrlKey || event.metaKey;
 
 		if (ctrlOrMeta && event.key === "Enter") {
@@ -51,7 +52,7 @@
 
 <div class="mt-auto p-2">
 	<label
-		class="flex w-full items-end rounded-[32px] p-2 pl-8 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-neutral-800"
+		class="flex w-full items-end rounded-[32px] bg-neutral-200 p-2 pl-8 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-neutral-800"
 	>
 		<textarea
 			{placeholder}
@@ -82,7 +83,7 @@
 					</span>
 					{#each { length: 3 } as _, i}
 						<div
-							class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-500 dark:bg-gray-100"
+							class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-200 dark:bg-gray-100"
 							style="animation-delay: {(i + 1) * 0.25}s;"
 						></div>
 					{/each}
