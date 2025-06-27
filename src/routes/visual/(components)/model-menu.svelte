@@ -103,7 +103,7 @@
 		{@const company = model.id.split("/")[0] ?? "Other"}
 		<div
 			class={[
-				"group relative flex h-24 w-64 cursor-pointer flex-col items-start justify-between rounded-lg border p-3 text-left transition-all duration-200",
+				"group relative flex h-32 cursor-pointer flex-col items-start justify-between overflow-hidden rounded-lg border p-3 text-left transition-all duration-200",
 				"border-stone-200 bg-white hover:border-blue-300",
 				"dark:border-stone-600 dark:bg-stone-800 dark:hover:border-blue-500",
 				"focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20",
@@ -112,27 +112,53 @@
 			]}
 			{...item.attrs}
 		>
-			<div class="flex w-full items-start justify-between">
+			{#await getImages(model)}
+				<div
+					class="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800"
+				></div>
+			{:then images}
+				{#if images && images.length > 0}
+					<div class="absolute inset-0">
+						<img
+							src={images[0]}
+							alt=""
+							class="h-full w-full object-cover opacity-20 transition-opacity group-hover:opacity-30"
+							loading="lazy"
+						/>
+						<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+					</div>
+				{:else}
+					<div
+						class="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800"
+					></div>
+				{/if}
+			{:catch}
+				<div
+					class="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800"
+				></div>
+			{/await}
+
+			<div class="relative z-10 flex w-full items-start justify-between">
 				<div class="min-w-0 flex-1">
-					<h4 class="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+					<h4 class="truncate text-sm font-medium text-stone-900 drop-shadow-sm dark:text-stone-100">
 						{getModelName(model)}
 					</h4>
-					<p class="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+					<p class="mt-1 truncate text-xs text-stone-600 drop-shadow-sm dark:text-stone-300">
 						{formatCompanyName(company)}
 					</p>
 				</div>
 				{#if settings.model?.id === model.id}
-					<div class="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white">
+					<div class="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white shadow-sm">
 						<IconCheck class="h-3 w-3" />
 					</div>
 				{/if}
 			</div>
-			<div class="mt-auto flex w-full items-center justify-between">
-				<span class="text-xs text-stone-400 dark:text-stone-500">
+			<div class="relative z-10 mt-auto flex w-full items-center justify-between">
+				<span class="text-xs text-stone-500 drop-shadow-sm dark:text-stone-400">
 					{model.pipeline_tag}
 				</span>
 				<div class="opacity-0 transition-opacity group-hover:opacity-100">
-					<IconChevronRight class="h-4 w-4 text-blue-500" />
+					<IconChevronRight class="h-4 w-4 text-blue-500 drop-shadow-sm" />
 				</div>
 			</div>
 		</div>
