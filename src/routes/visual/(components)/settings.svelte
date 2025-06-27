@@ -65,6 +65,7 @@
 	import { watch } from "runed";
 	import IconCheck from "~icons/lucide/check";
 	import IconChevronDown from "~icons/lucide/chevron-down";
+	import IconChevronRight from "~icons/lucide/chevron-right";
 	import IconHeart from "~icons/lucide/heart";
 	import IconImage from "~icons/lucide/image";
 	import IconSparkles from "~icons/lucide/sparkles";
@@ -340,10 +341,16 @@
 			{#if settings.filterTag === PipelineTag.TextToImage}
 				<!-- Advanced Parameters -->
 				<details class="space-y-4 border-t border-stone-200 pt-4 dark:border-stone-700">
-					<summary class="text-sm font-semibold text-stone-700 dark:text-stone-300">Advanced Parameters</summary>
+					<summary
+						class="flex w-full cursor-pointer items-center gap-2 text-sm font-semibold text-stone-700 select-none dark:text-stone-300"
+					>
+						<IconChevronRight class="h-4 w-4 [details[open]_&]:rotate-90" />
+						Advanced Parameters
+					</summary>
 
 					<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 						<p>Negative Prompt</p>
+
 						<textarea
 							class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
 							bind:value={settings.negative_prompt}
