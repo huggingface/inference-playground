@@ -32,6 +32,13 @@ export class VisualItemEntity {
 		prompt: string;
 		model?: string;
 		provider?: string;
+		guidance_scale?: number;
+		negative_prompt?: string;
+		num_inference_steps?: number;
+		width?: number;
+		height?: number;
+		scheduler?: string;
+		seed?: number;
 	};
 
 	@Fields.number()

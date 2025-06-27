@@ -136,8 +136,8 @@ importers:
         specifier: ^26.0.0
         version: 26.1.0
       melt:
-        specifier: https://pkg.vc/-/@melt-ui/melt@2b022fd
-        version: https://pkg.vc/-/@melt-ui/melt@2b022fd(@floating-ui/dom@1.6.13)(svelte@5.33.4)
+        specifier: ^0.36.0
+        version: 0.36.0(@floating-ui/dom@1.6.13)(svelte@5.33.4)
       openai:
         specifier: ^4.90.0
         version: 4.90.0(ws@8.18.2)
@@ -2403,9 +2403,8 @@ packages:
   mdast-util-to-hast@13.2.0:
     resolution: {integrity: sha512-QGYKEuUsYT9ykKBCMOEDLsU5JRObWQusAolFMeko/tYPufNkRffBAQjIE+99jbA87xv6FgmjLtwjh9wBWajwAA==}
 
-  melt@https://pkg.vc/-/@melt-ui/melt@2b022fd:
-    resolution: {tarball: https://pkg.vc/-/@melt-ui/melt@2b022fd}
-    version: 0.34.0
+  melt@0.36.0:
+    resolution: {integrity: sha512-lJdUuPvsCZs7zpcL2iSvxerHxv3QuM91FoTbdsliOQ2+J3fR4ADqUN878J4kkQSzzHlWqyedQmEBDP6U3iEWgA==}
     peerDependencies:
       '@floating-ui/dom': ^1.6.0
       svelte: ^5.30.1
@@ -5644,7 +5643,7 @@ snapshots:
       unist-util-visit: 5.0.0
       vfile: 6.0.3
 
-  melt@https://pkg.vc/-/@melt-ui/melt@2b022fd(@floating-ui/dom@1.6.13)(svelte@5.33.4):
+  melt@0.36.0(@floating-ui/dom@1.6.13)(svelte@5.33.4):
     dependencies:
       '@floating-ui/dom': 1.6.13
       dequal: 2.0.3

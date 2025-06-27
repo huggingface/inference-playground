@@ -25,6 +25,15 @@
 			}
 		}
 
+		// Reuse advanced parameters if available
+		if (config.guidance_scale !== undefined) settings.guidance_scale = config.guidance_scale;
+		if (config.negative_prompt !== undefined) settings.negative_prompt = config.negative_prompt;
+		if (config.num_inference_steps !== undefined) settings.num_inference_steps = config.num_inference_steps;
+		if (config.width !== undefined) settings.width = config.width;
+		if (config.height !== undefined) settings.height = config.height;
+		if (config.scheduler !== undefined) settings.scheduler = config.scheduler;
+		if (config.seed !== undefined) settings.seed = config.seed;
+
 		if (!inputContainer) return;
 
 		const color = getComputedStyle(document.documentElement).getPropertyValue("--color-mandarin-peel-10");
@@ -134,6 +143,17 @@
 				prompt: currentPrompt,
 				model: isMock ? (isVideo ? "Mock Video Model" : "Mock Model") : settings.model?.id,
 				provider: isMock ? "mock" : settings.provider,
+				// Include advanced parameters for text-to-image
+				...(settings.filterTag === PipelineTag.TextToImage &&
+					!isMock && {
+						guidance_scale: settings.guidance_scale,
+						negative_prompt: settings.negative_prompt,
+						num_inference_steps: settings.num_inference_steps,
+						width: settings.width,
+						height: settings.height,
+						scheduler: settings.scheduler,
+						seed: settings.seed,
+					}),
 			},
 		};
 		visualItems.generating = [...visualItems.generating, item];
@@ -170,7 +190,15 @@
 							provider: settings.provider as any,
 							model: settings.model?.id,
 							inputs: currentPrompt,
-							parameters: { num_inference_steps: 4 },
+							parameters: {
+								guidance_scale: settings.guidance_scale,
+								negative_prompt: settings.negative_prompt || undefined,
+								num_inference_steps: settings.num_inference_steps,
+								width: settings.width,
+								height: settings.height,
+								scheduler: settings.scheduler || undefined,
+								seed: settings.seed || undefined,
+							},
 						})) as unknown as Blob);
 			}
 
@@ -308,6 +336,86 @@
 					{@attach autosized.attachment}
 				></textarea>
 			</label>
+
+			{#if settings.filterTag === PipelineTag.TextToImage}
+				<!-- Advanced Parameters -->
+				<details class="space-y-4 border-t border-stone-200 pt-4 dark:border-stone-700">
+					<summary class="text-sm font-semibold text-stone-700 dark:text-stone-300">Advanced Parameters</summary>
+
+					<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+						<p>Negative Prompt</p>
+						<textarea
+							class="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+							bind:value={settings.negative_prompt}
+							placeholder="What you don't want in the image..."
+							rows="2"
+						></textarea>
+					</label>
+
+					<div class="grid grid-cols-2 gap-3">
+						<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+							<p>Width</p>
+							<input
+								type="number"
+								class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+								bind:value={settings.width}
+								min="64"
+								max="2048"
+								step="64"
+							/>
+						</label>
+						<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+							<p>Height</p>
+							<input
+								type="number"
+								class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+								bind:value={settings.height}
+								min="64"
+								max="2048"
+								step="64"
+							/>
+						</label>
+					</div>
+
+					<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+						<p>Guidance Scale <span class="text-xs text-stone-500">({settings.guidance_scale})</span></p>
+						<input type="range" class="w-full" bind:value={settings.guidance_scale} min="1" max="20" step="0.5" />
+					</label>
+
+					<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+						<p>Inference Steps</p>
+						<input
+							type="number"
+							class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+							bind:value={settings.num_inference_steps}
+							min="1"
+							max="100"
+							step="1"
+						/>
+					</label>
+
+					<div class="grid grid-cols-2 gap-3">
+						<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+							<p>Scheduler <span class="text-xs text-stone-500">(optional)</span></p>
+							<input
+								type="text"
+								class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+								bind:value={settings.scheduler}
+								placeholder="e.g., DPMSolverMultistepScheduler"
+							/>
+						</label>
+						<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
+							<p>Seed <span class="text-xs text-stone-500">(optional)</span></p>
+							<input
+								type="number"
+								class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+								bind:value={settings.seed}
+								placeholder="Random seed"
+							/>
+						</label>
+					</div>
+				</details>
+			{/if}
 
 			<label for="columns" class="hidden space-y-2 text-sm font-medium text-stone-700 lg:block dark:text-stone-300">
 				<p>Columns</p>

@@ -172,6 +172,7 @@
 	"together": {
 		"togethercomputer/m2-bert-80M-32k-retrieval": 32768,
 		"cartesia/sonic": 0,
+		"deepseek-ai/DeepSeek-R1-0528-tput": 163840,
 		"intfloat/multilingual-e5-large-instruct": 514,
 		"Alibaba-NLP/gte-modernbert-base": 8192,
 		"meta-llama/LlamaGuard-2-8b": 8192,
@@ -181,6 +182,7 @@
 		"togethercomputer/MoA-1": 32768,
 		"meta-llama/Meta-Llama-3-70B-Instruct-Turbo": 8192,
 		"meta-llama/Meta-Llama-Guard-3-8B": 8192,
+		"arcee-ai/AFM-4.5B-Preview": 65536,
 		"deepseek-ai/DeepSeek-V3": 131072,
 		"lgai/exaone-3-5-32b-instruct": 32768,
 		"mistralai/Mixtral-8x7B-Instruct-v0.1": 32768,
