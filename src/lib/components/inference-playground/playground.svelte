@@ -6,13 +6,8 @@
 	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { isSystemPromptSupported } from "$lib/utils/business.svelte.js";
-	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
-	import { Popover } from "melt/components";
-	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
-	import IconChatRight from "~icons/carbon/align-box-bottom-right";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
-	import IconChevronDown from "~icons/carbon/chevron-down";
 	import IconCode from "~icons/carbon/code";
 	import IconCompare from "~icons/carbon/compare";
 	import IconInfo from "~icons/carbon/information";
@@ -30,12 +25,10 @@
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
 	import { TEST_IDS } from "$lib/constants.js";
-
-	const multiple = $derived(conversations.active.length > 1);
+	import MessageTextarea from "./message-textarea.svelte";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
-	const loading = $derived(conversations.generating);
 
 	let selectCompareModelOpen = $state(false);
 
@@ -117,10 +110,12 @@
 							on:close={() => conversations.delete(conversation.data)}
 						/>
 					{/if}
-					<PlaygroundConversation {conversation} {conversationIdx} {viewCode} onCloseCode={() => (viewCode = false)} />
+					<PlaygroundConversation {conversation} {viewCode} onCloseCode={() => (viewCode = false)} />
 				</div>
 			{/each}
 		</div>
+
+		<MessageTextarea />
 
 		<!-- Bottom bar -->
 		<div
@@ -181,76 +176,6 @@
 					<IconCode />
 					{!viewCode ? "View Code" : "Hide Code"}
 				</button>
-				<div class="flex">
-					{#if multiple}
-						<div class="w-[1px] bg-gray-800" aria-hidden="true"></div>
-						<Popover
-							floatingConfig={{
-								computePosition: {
-									placement: "top-end",
-								},
-							}}
-						>
-							{#snippet children(popover)}
-								<button
-									class={[
-										"flex items-center justify-center gap-2 rounded-r-lg px-1.5 text-sm font-medium text-white",
-										"focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
-										loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
-										!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
-									]}
-									{...popover.trigger}
-									disabled={loading}
-								>
-									<IconChevronDown />
-								</button>
-								<div
-									class={["flex-col rounded-lg bg-white px-2 py-1 shadow dark:bg-gray-800", popover.open && "flex"]}
-									{...popover.content}
-								>
-									<button
-										class="group py-1 text-sm"
-										onclick={() => {
-											viewCode = false;
-											conversations.genOrStop("left");
-											popover.open = false;
-										}}
-									>
-										<div
-											class="flex items-center gap-2 rounded p-1 group-hover:bg-gray-200 dark:group-hover:bg-gray-700"
-										>
-											<IconChatLeft />
-											<span class="mr-2">Only run left conversation</span>
-											<span class="ml-auto rounded-sm border border-white/20 bg-gray-500/10 px-0.5 text-xs">
-												{cmdOrCtrl}
-												{optOrAlt} L
-											</span>
-										</div>
-									</button>
-									<button
-										class="group py-1 text-sm"
-										onclick={() => {
-											viewCode = false;
-											conversations.genOrStop("right");
-											popover.open = false;
-										}}
-									>
-										<div
-											class="flex items-center gap-2 rounded p-1 group-hover:bg-gray-200 dark:group-hover:bg-gray-700"
-										>
-											<IconChatRight />
-											<span class="mr-2">Only run right conversation</span>
-											<span class="ml-auto rounded-sm border border-white/20 bg-gray-500/10 px-0.5 text-xs">
-												{cmdOrCtrl}
-												{optOrAlt} R
-											</span>
-										</div>
-									</button>
-								</div>
-							{/snippet}
-						</Popover>
-					{/if}
-				</div>
 			</div>
 		</div>
 	</div>
