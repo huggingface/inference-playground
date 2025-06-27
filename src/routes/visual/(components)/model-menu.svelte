@@ -52,6 +52,25 @@
 	function getModelName(model: ApiModelsResponse["models"][number]) {
 		return model.id.split("/").pop()!;
 	}
+
+	async function getImages(model: ApiModelsResponse["models"][number]) {
+		try {
+			const res = await fetch(`/api/model-images?modelId=${encodeURIComponent(model.id)}`);
+			if (!res.ok) {
+				console.error(`Failed to fetch images for ${model.id}:`, res.status, res.statusText);
+				return [];
+			}
+
+			const data = await res.json();
+			console.log(`Images for ${model.id}:`, data.images);
+			return data.images || [];
+		} catch (error) {
+			console.error(`Error fetching images for ${model.id}:`, error);
+			return [];
+		}
+	}
+
+	$inspect(getImages(settings.model!));
 </script>
 
 <button
