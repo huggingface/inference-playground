@@ -7,6 +7,7 @@ const MODEL_BLACKLIST: string[] = [
 	// Add model IDs you want to skip, e.g.:
 	// 'some-org/inappropriate-model',
 	// 'another-org/unwanted-model',
+	"uriel353/flux-pawg", // it's nsfw
 ];
 
 function isBlacklisted(modelId: string): boolean {
@@ -135,42 +136,76 @@ async function main() {
 		const models = await getModelsForTag(tag);
 		console.log(`Found ${models.length} models for ${tag}`);
 
-		for (const model of models) {
-			// Skip blacklisted models
+		// Filter out blacklisted models
+		const validModels = models.filter(model => {
 			if (isBlacklisted(model.id)) {
 				console.log(`🚫 Skipping blacklisted model: ${model.id}`);
-				continue;
+				return false;
 			}
+			return true;
+		});
 
-			console.log(`\n🔍 Processing ${model.id}...`);
-			const imageUrls = await getModelPreviewImages(model.id);
+		console.log(`Processing ${validModels.length} valid models...`);
 
-			if (imageUrls.length === 0) {
-				console.log(`⚠️  No images found for ${model.id}`);
-				continue;
+		// Process models in parallel batches of 10
+		const BATCH_SIZE = 10;
+		for (let i = 0; i < validModels.length; i += BATCH_SIZE) {
+			const batch = validModels.slice(i, i + BATCH_SIZE);
+			console.log(
+				`\n🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validModels.length / BATCH_SIZE)} (${batch.length} models)`
+			);
+
+			const batchPromises = batch.map(async model => {
+				try {
+					console.log(`🔍 Processing ${model.id}...`);
+					const imageUrls = await getModelPreviewImages(model.id);
+
+					if (imageUrls.length === 0) {
+						console.log(`⚠️  No images found for ${model.id}`);
+						return null;
+					}
+
+					// Try to download the first image
+					const firstImageUrl = imageUrls[0];
+					const extension = firstImageUrl.split(".").pop()?.split("?")[0] || "jpg";
+					const filename = `${sanitizeFilename(model.id.replace("/", "_"))}.${extension}`;
+					const outputPath = join(imagesDir, filename);
+
+					// Skip if already exists
+					if (existsSync(outputPath)) {
+						console.log(`⏭️  Image already exists: ${filename}`);
+						return { modelId: model.id, path: `/model-images/${filename}`, downloaded: false };
+					}
+
+					const success = await downloadImage(firstImageUrl, outputPath);
+					if (success) {
+						return { modelId: model.id, path: `/model-images/${filename}`, downloaded: true };
+					}
+					return null;
+				} catch (error) {
+					console.error(`❌ Error processing ${model.id}:`, error);
+					return null;
+				}
+			});
+
+			// Wait for batch to complete
+			const results = await Promise.all(batchPromises);
+
+			// Update mapping and count
+			results.forEach(result => {
+				if (result) {
+					modelImageMap[result.modelId] = result.path;
+					if (result.downloaded) {
+						totalDownloaded++;
+					}
+				}
+			});
+
+			// Small delay between batches to be nice to HuggingFace
+			if (i + BATCH_SIZE < validModels.length) {
+				console.log(`⏸️  Waiting 2s before next batch...`);
+				await new Promise(resolve => setTimeout(resolve, 2000));
 			}
-
-			// Try to download the first image
-			const firstImageUrl = imageUrls[0];
-			const extension = firstImageUrl.split(".").pop()?.split("?")[0] || "jpg";
-			const filename = `${sanitizeFilename(model.id.replace("/", "_"))}.${extension}`;
-			const outputPath = join(imagesDir, filename);
-
-			// Skip if already exists
-			if (existsSync(outputPath)) {
-				console.log(`⏭️  Image already exists: ${filename}`);
-				modelImageMap[model.id] = `/model-images/${filename}`;
-				continue;
-			}
-
-			const success = await downloadImage(firstImageUrl, outputPath);
-			if (success) {
-				modelImageMap[model.id] = `/model-images/${filename}`;
-				totalDownloaded++;
-			}
-
-			// Rate limiting - be nice to HuggingFace
-			await new Promise(resolve => setTimeout(resolve, 500));
 		}
 	}
 

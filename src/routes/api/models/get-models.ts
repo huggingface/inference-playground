@@ -1,7 +1,8 @@
 import { PipelineTag, type Model } from "$lib/types.js";
 import type { RequestHandler } from "./$types.js";
 import { cache, CacheEntry } from "./cache.js";
-import { getModelPreviewImage } from "./get-model-image.js";
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 
 type GetModelsForTagArgs = {
 	tag: PipelineTag;
@@ -54,14 +55,26 @@ export async function getModelsForTag({ tag, fetch }: GetModelsForTagArgs): Prom
 
 	const data = await res.json();
 
-	// Fetch preview images for visual pipeline tags
+	// Add preview images for visual pipeline tags using local mapping
 	if ([PipelineTag.TextToImage, PipelineTag.TextToVideo, PipelineTag.ImageTextToText].includes(tag)) {
-		const modelsWithImages = await Promise.all(
-			data.map(async (model: Model) => {
-				const preview_img = await getModelPreviewImage(model.id, fetch);
-				return { ...model, preview_img };
-			})
-		);
+		let imageMapping: Record<string, string> = {};
+		
+		// Try to load the local image mapping
+		try {
+			const mappingPath = join(process.cwd(), 'static', 'model-image-mapping.json');
+			if (existsSync(mappingPath)) {
+				const mappingContent = readFileSync(mappingPath, 'utf-8');
+				imageMapping = JSON.parse(mappingContent);
+			}
+		} catch (error) {
+			console.warn('Could not load model image mapping:', error);
+		}
+
+		const modelsWithImages = data.map((model: Model) => ({
+			...model,
+			preview_img: imageMapping[model.id] || undefined
+		}));
+		
 		cache[tag] = new CacheEntry({ ok: true, data: modelsWithImages });
 		return modelsWithImages;
 	}
