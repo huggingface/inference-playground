@@ -10,9 +10,8 @@ import ctxLengthData from "$lib/data/context_length.json";
 import { InferenceClient, snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
+import { isCustomModel, isHFModel } from "$lib/utils/is.js";
 import {
-	isCustomModel,
-	isHFModel,
 	Provider,
 	type Conversation,
 	type ConversationMessage,

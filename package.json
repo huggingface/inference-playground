@@ -13,6 +13,7 @@
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
 		"update-ctx-length": "jiti scripts/update-ctx-length.ts",
+		"download-images": "jiti scripts/download-model-images.ts",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test"

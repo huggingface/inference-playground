@@ -1,6 +1,6 @@
 import type { GenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
-import typia from "typia";
+
 import type { ConversationEntityMembers } from "./state/conversations.svelte";
 
 export type ConversationMessage = Pick<ChatCompletionInputMessage, "name" | "role"> & {
@@ -25,8 +25,7 @@ export type ConversationWithHFModel = Conversation & {
 	model: Model;
 };
 
-export const isHFModel = typia.createIs<Model>();
-export const isCustomModel = typia.createIs<CustomModel>();
+
 
 interface TokenizerConfig {
 	chat_template?: string | Array<{ name: string; template: string }>;

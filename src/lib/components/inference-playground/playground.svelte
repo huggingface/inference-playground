@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { isHFModel } from "$lib/utils/is.js";
 	import { observe, observed, ObservedElements } from "$lib/attachments/observe.svelte.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { isSystemPromptSupported } from "$lib/utils/business.svelte.js";
 	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { isCustomModel } from "$lib/utils/is.js";
 	import { type ConversationClass } from "$lib/state/conversations.svelte";
 	import { structuredForbiddenProviders } from "$lib/state/models.svelte";
 	import { token } from "$lib/state/token.svelte.js";
-	import { isCustomModel } from "$lib/types.js";
 	import {
 		getInferenceSnippet,
 		type GetInferenceSnippetReturn,
