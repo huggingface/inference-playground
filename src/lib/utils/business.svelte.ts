@@ -182,65 +182,123 @@ export async function handleStreamingResponse(
 	onChunk: (content: string) => void,
 	abortController: AbortController
 ): Promise<void> {
-	const metadata = await getCompletionMetadata(conversation, abortController.signal);
+	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
+	const model = conversation.model;
+	const systemMessage = projects.current?.systemMessage;
 
-	if (metadata.type === "openai") {
-		const stream = await metadata.client.chat.completions.create({
-			...metadata.args,
-			stream: true,
-		} as OpenAI.ChatCompletionCreateParamsStreaming);
+	const messages: ConversationMessage[] = [
+		...(isSystemPromptSupported(model) && systemMessage?.length ? [{ role: "system", content: systemMessage }] : []),
+		...data.messages,
+	];
+	const parsed = await Promise.all(messages.map(parseMessage));
 
-		let out = "";
-		for await (const chunk of stream) {
-			if (chunk.choices[0]?.delta?.content) {
-				out += chunk.choices[0].delta.content;
-				onChunk(out);
-			}
-		}
-		return;
+	const requestBody = {
+		model: {
+			id: model.id,
+			isCustom: isCustomModel(model),
+			accessToken: isCustomModel(model) ? model.accessToken : undefined,
+			endpointUrl: isCustomModel(model) ? model.endpointUrl : undefined,
+		},
+		messages: parsed,
+		config: data.config,
+		provider: data.provider,
+		streaming: true,
+		response_format: getResponseFormatObj(conversation),
+		accessToken: token.value,
+	};
+
+	const response = await fetch("/api/generate", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(requestBody),
+		signal: abortController.signal,
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to generate response");
 	}
 
-	// HuggingFace streaming
+	const reader = response.body?.getReader();
+	if (!reader) throw new Error("No response body");
+
+	const decoder = new TextDecoder();
 	let out = "";
-	for await (const chunk of metadata.client.chatCompletionStream(metadata.args, { signal: abortController.signal })) {
-		if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0]?.delta?.content) {
-			out += chunk.choices[0].delta.content;
-			onChunk(out);
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			const chunk = decoder.decode(value);
+			const lines = chunk.split("\n");
+
+			for (const line of lines) {
+				if (line.startsWith("data: ")) {
+					const data = line.slice(6);
+					if (data === '{"type":"done"}') return;
+
+					try {
+						const parsed = JSON.parse(data);
+						if (parsed.type === "chunk" && parsed.content) {
+							out += parsed.content;
+							onChunk(out);
+						}
+					} catch (e) {
+						// Ignore malformed JSON
+					}
+				}
+			}
 		}
+	} finally {
+		reader.releaseLock();
 	}
 }
 
 export async function handleNonStreamingResponse(
 	conversation: ConversationClass | Conversation
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const metadata = await getCompletionMetadata(conversation);
+	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
+	const model = conversation.model;
+	const systemMessage = projects.current?.systemMessage;
 
-	if (metadata.type === "openai") {
-		const response = await metadata.client.chat.completions.create({
-			...metadata.args,
-			stream: false,
-		} as OpenAI.ChatCompletionCreateParamsNonStreaming);
+	const messages: ConversationMessage[] = [
+		...(isSystemPromptSupported(model) && systemMessage?.length ? [{ role: "system", content: systemMessage }] : []),
+		...data.messages,
+	];
+	const parsed = await Promise.all(messages.map(parseMessage));
 
-		if (response.choices && response.choices.length > 0 && response.choices[0]?.message) {
-			return {
-				message: {
-					role: "assistant",
-					content: response.choices[0].message.content || "",
-				},
-				completion_tokens: response.usage?.completion_tokens || 0,
-			};
-		}
-		throw new Error("No response from the model");
+	const requestBody = {
+		model: {
+			id: model.id,
+			isCustom: isCustomModel(model),
+			accessToken: isCustomModel(model) ? model.accessToken : undefined,
+			endpointUrl: isCustomModel(model) ? model.endpointUrl : undefined,
+		},
+		messages: parsed,
+		config: data.config,
+		provider: data.provider,
+		streaming: false,
+		response_format: getResponseFormatObj(conversation),
+		accessToken: token.value,
+	};
+
+	const response = await fetch("/api/generate", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(requestBody),
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to generate response");
 	}
 
-	// HuggingFace non-streaming
-	const response = await metadata.client.chatCompletion(metadata.args);
-	if (response.choices && response.choices.length > 0) {
-		const { message } = response.choices[0]!;
-		const { completion_tokens } = response.usage;
-		return { message, completion_tokens };
-	}
-	throw new Error("No response from the model");
+	return await response.json();
 }
 
 export function isSystemPromptSupported(model: Model | CustomModel) {
