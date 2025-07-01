@@ -240,49 +240,7 @@
 			bind:this={inputContainer}
 		>
 			<div class="flex items-end gap-2">
-				<div class="flex flex-1 flex-col gap-2">
-					<label {...modelCombobox.label} class="block text-sm font-medium text-stone-700 dark:text-stone-300">
-						Model
-					</label>
-
-					<div
-						class="focus-within:custom-outline flex w-full items-center justify-between gap-0.5 rounded-lg border border-stone-300 bg-white py-2 pr-3 text-stone-900 transition-colors dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
-					>
-						<input {...modelCombobox.input} class="flex-1 shrink pl-3 outline-none" />
-						<button
-							class="bg-pasilla-3 hover:bg-pasilla-4 active:hover:bg-pasilla-2 rounded px-2 py-1 text-xs"
-							{...modelCombobox.trigger}
-						>
-							<IconChevronDown />
-						</button>
-					</div>
-
-					<div
-						{...modelCombobox.content}
-						class={[
-							"max-h-96 flex-col rounded-lg border border-stone-600 bg-stone-100 p-2 shadow dark:bg-stone-800",
-							modelCombobox.open && "flex",
-						]}
-					>
-						{#each searchedModels as model (model)}
-							<div
-								{...modelCombobox.getOption(model)}
-								class={[
-									"relative flex scroll-m-2 items-center justify-between rounded-xl py-2 pr-2 pl-2",
-									modelCombobox.highlighted?.id === model.id && "bg-stone-700",
-									modelCombobox.value?.id === model.id && "font-semibold",
-								]}
-							>
-								<span>{model.id}</span>
-								{#if modelCombobox.value?.id === model.id}
-									<IconCheck class="text-mandarin-peel-15 font-bold" />
-								{/if}
-							</div>
-						{:else}
-							<div>No models found</div>
-						{/each}
-					</div>
-				</div>
+				<ModelMenu />
 
 				<div
 					class="focus-within:custom-outline relative flex h-10.5 rounded-lg border border-stone-200/20 bg-stone-800 p-0.5 shadow-lg dark:border-stone-600"
@@ -327,8 +285,6 @@
 					<ProviderSelect model={settings.model} bind:provider={settings.provider} />
 				</div>
 			{/if}
-
-			<ModelMenu />
 
 			<label class="block space-y-2 text-sm font-medium text-stone-700 dark:text-stone-300">
 				<p>Prompt</p>
