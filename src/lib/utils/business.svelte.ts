@@ -7,7 +7,7 @@
  **/
 
 import ctxLengthData from "$lib/data/context_length.json";
-import { InferenceClient, snippets } from "@huggingface/inference";
+import { snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import {
@@ -25,7 +25,6 @@ import { type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
-import OpenAI from "openai";
 import { images } from "$lib/state/images.svelte.js";
 import { projects } from "$lib/state/projects.svelte.js";
 import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
@@ -55,20 +54,6 @@ async function parseMessage(message: ConversationMessage): Promise<ChatCompletio
 		],
 	};
 }
-
-type HFCompletionMetadata = {
-	type: "huggingface";
-	client: InferenceClient;
-	args: Parameters<InferenceClient["chatCompletion"]>[0];
-};
-
-type OpenAICompletionMetadata = {
-	type: "openai";
-	client: OpenAI;
-	args: OpenAI.ChatCompletionCreateParams;
-};
-
-type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
 
 export function maxAllowedTokens(conversation: ConversationClass) {
 	const ctxLength = (() => {
@@ -116,65 +101,6 @@ function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 			}
 		}
 	}
-}
-
-async function getCompletionMetadata(
-	conversation: ConversationClass | Conversation,
-	signal?: AbortSignal
-): Promise<CompletionMetadata> {
-	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
-	const model = conversation.model;
-	const systemMessage = projects.current?.systemMessage;
-
-	const messages: ConversationMessage[] = [
-		...(isSystemPromptSupported(model) && systemMessage?.length ? [{ role: "system", content: systemMessage }] : []),
-		...data.messages,
-	];
-	const parsed = await Promise.all(messages.map(parseMessage));
-
-	const baseArgs = {
-		...data.config,
-		messages: parsed,
-		model: model.id,
-		response_format: getResponseFormatObj(conversation),
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	} as any;
-
-	// Handle OpenAI-compatible models
-	if (isCustomModel(model)) {
-		const openai = new OpenAI({
-			apiKey: model.accessToken,
-			baseURL: model.endpointUrl,
-			dangerouslyAllowBrowser: true,
-			fetch: (...args: Parameters<typeof fetch>) => {
-				return fetch(args[0], { ...args[1], signal });
-			},
-		});
-
-		const args = {
-			...baseArgs,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} as any;
-
-		return {
-			type: "openai",
-			client: openai,
-			args,
-		};
-	}
-	const args = {
-		...baseArgs,
-		provider: data.provider,
-		// max_tokens: maxAllowedTokens(conversation) - currTokens,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	} as any;
-
-	// Handle HuggingFace models
-	return {
-		type: "huggingface",
-		client: new InferenceClient(token.value),
-		args,
-	};
 }
 
 export async function handleStreamingResponse(
@@ -246,7 +172,7 @@ export async function handleStreamingResponse(
 							out += parsed.content;
 							onChunk(out);
 						}
-					} catch (e) {
+					} catch {
 						// Ignore malformed JSON
 					}
 				}

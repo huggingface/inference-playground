@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from "./$types.js";
 import { InferenceClient } from "@huggingface/inference";
 import OpenAI from "openai";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
@@ -12,15 +12,10 @@ interface GenerateRequest {
 		endpointUrl?: string;
 	};
 	messages: ChatCompletionInputMessage[];
-	config: {
-		temperature?: number;
-		max_tokens?: number;
-		top_p?: number;
-		[key: string]: any;
-	};
+	config: Record<string, unknown>;
 	provider?: string;
 	streaming?: boolean;
-	response_format?: any;
+	response_format?: unknown;
 	accessToken: string;
 }
 
@@ -98,7 +93,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		} else {
 			// Handle HuggingFace models
 			const client = new InferenceClient(accessToken);
-			const args: any = {
+			const args = {
 				model: model.id,
 				messages,
 				provider,
@@ -111,7 +106,8 @@ export const POST: RequestHandler = async ({ request }) => {
 				const readable = new ReadableStream({
 					async start(controller) {
 						try {
-							for await (const chunk of client.chatCompletionStream(args)) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							for await (const chunk of client.chatCompletionStream(args as any)) {
 								if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0]?.delta?.content) {
 									const data = JSON.stringify({
 										type: "chunk",
@@ -136,7 +132,8 @@ export const POST: RequestHandler = async ({ request }) => {
 					},
 				});
 			} else {
-				const response = await client.chatCompletion(args);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const response = await client.chatCompletion(args as any);
 				if (response.choices && response.choices.length > 0) {
 					const { message } = response.choices[0]!;
 					const { completion_tokens } = response.usage;
