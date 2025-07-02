@@ -5,10 +5,19 @@ import OpenAI from "openai";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 
-const DEBUG_MCP = true;
+const DEBUG_MCP = false;
+
+const mcpLog = (...args: unknown[]) => {
+	if (!DEBUG_MCP) return;
+	console.log("[MCP DEBUG]", ...args);
+};
+
+const mcpError = (...args: unknown[]) => {
+	if (!DEBUG_MCP) return;
+	console.error("[MCP DEBUG]", ...args);
+};
 
 interface GenerateRequest {
 	model: {
@@ -67,19 +76,15 @@ const executeMcpTool = async (
 	toolCall: { id: string; function: { name: string; arguments: string } }
 ) => {
 	try {
-		if (DEBUG_MCP) {
-			console.log(`[MCP DEBUG] Executing tool: ${toolCall.function.name}`);
-			console.log(`[MCP DEBUG] Tool arguments:`, JSON.parse(toolCall.function.arguments));
-		}
+		mcpLog(`Executing tool: ${toolCall.function.name}`);
+		mcpLog(`Tool arguments:`, JSON.parse(toolCall.function.arguments));
 
 		const result = await client.callTool({
 			name: toolCall.function.name,
 			arguments: JSON.parse(toolCall.function.arguments),
 		});
 
-		if (DEBUG_MCP) {
-			console.log(`[MCP DEBUG] Tool result:`, result.content);
-		}
+		mcpLog(`Tool result:`, result.content);
 
 		return {
 			tool_call_id: toolCall.id,
@@ -87,9 +92,7 @@ const executeMcpTool = async (
 			content: JSON.stringify(result.content),
 		};
 	} catch (error) {
-		if (DEBUG_MCP) {
-			console.error(`[MCP DEBUG] Tool execution failed:`, error);
-		}
+		mcpError(`Tool execution failed:`, error);
 
 		return {
 			tool_call_id: toolCall.id,
@@ -109,16 +112,12 @@ const handleConversationWithTools = async (
 	let finalResponse = null;
 	let conversationRound = 0;
 
-	if (DEBUG_MCP) {
-		console.log(`[MCP DEBUG] Starting conversation with tools enabled`);
-		console.log(`[MCP DEBUG] Initial message count: ${conversationMessages.length}`);
-	}
+	mcpLog(`Starting conversation with tools enabled`);
+	mcpLog(`Initial message count: ${conversationMessages.length}`);
 
 	while (true) {
 		conversationRound++;
-		if (DEBUG_MCP) {
-			console.log(`[MCP DEBUG] Conversation round ${conversationRound}`);
-		}
+		mcpLog(`Conversation round ${conversationRound}`);
 		let response;
 
 		if (isCustomModel) {
@@ -147,44 +146,34 @@ const handleConversationWithTools = async (
 		conversationMessages.push(message as any);
 
 		if (!message.tool_calls || message.tool_calls.length === 0) {
-			if (DEBUG_MCP) {
-				console.log(`[MCP DEBUG] No tool calls in response, ending conversation`);
-			}
+			mcpLog(`No tool calls in response, ending conversation`);
 			finalResponse = response;
 			break;
 		}
 
-		if (DEBUG_MCP) {
-			console.log(`[MCP DEBUG] Model requested ${message.tool_calls.length} tool calls`);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			message.tool_calls.forEach((toolCall: any, index: number) => {
-				console.log(`[MCP DEBUG] Tool call ${index + 1}: ${toolCall.function.name}`);
-			});
-		}
+		mcpLog(`Model requested ${message.tool_calls.length} tool calls`);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		message.tool_calls.forEach((toolCall: any, index: number) => {
+			mcpLog(`Tool call ${index + 1}: ${toolCall.function.name}`);
+		});
 
 		const toolResults = await Promise.all(
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			message.tool_calls.map((toolCall: any) => executeMcpTool(mcpClient, toolCall))
 		);
 
-		if (DEBUG_MCP) {
-			console.log(`[MCP DEBUG] All tool calls completed, adding ${toolResults.length} results to conversation`);
-		}
+		mcpLog(`All tool calls completed, adding ${toolResults.length} results to conversation`);
 
 		conversationMessages.push(...toolResults);
 	}
 
-	if (DEBUG_MCP) {
-		console.log(`[MCP DEBUG] Conversation completed after ${conversationRound} rounds`);
-		console.log(`[MCP DEBUG] Final message count: ${conversationMessages.length}`);
-	}
+	mcpLog(`Conversation completed after ${conversationRound} rounds`);
+	mcpLog(`Final message count: ${conversationMessages.length}`);
 
 	return finalResponse;
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-	const fetchUrl = new URL("https://remote.mcpservers.org/fetch/mcp");
-	const httpTransport = new StreamableHTTPClientTransport(fetchUrl);
 	const firecrawlUrl = new URL("https://mcp.firecrawl.dev/fc-a93ffba8a7b348f99580c278adafcfa9/sse");
 	const sseTransport = new SSEClientTransport(firecrawlUrl);
 
@@ -193,19 +182,18 @@ export const POST: RequestHandler = async ({ request }) => {
 		version: "0.0.1",
 	});
 
-	// await mcpClient.connect(httpTransport);
 	await mcpClient.connect(sseTransport);
 
 	const { tools: mcpTools } = await mcpClient.listTools();
 	const tools = mcpTools.map(mcpToolToOpenAIFunction);
 
-	if (DEBUG_MCP) {
-		console.log(`[MCP DEBUG] Connected to MCP server`);
-		console.log(`[MCP DEBUG] Available tools: ${mcpTools.length}`);
-		mcpTools.forEach((tool, index) => {
-			console.log(`[MCP DEBUG] Tool ${index + 1}: ${tool.name}`);
-		});
-	} else {
+	mcpLog(`Connected to MCP server`);
+	mcpLog(`Available tools: ${mcpTools.length}`);
+	mcpTools.forEach((tool, index) => {
+		mcpLog(`Tool ${index + 1}: ${tool.name}`);
+	});
+
+	if (!DEBUG_MCP) {
 		console.log(`MCP: Connected with ${mcpTools.length} tools available`);
 	}
 
@@ -232,9 +220,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			if (streaming) {
 				// For streaming with tools, fall back to non-streaming when tools are involved
 				if (tools && tools.length > 0) {
-					if (DEBUG_MCP) {
-						console.log(`[MCP DEBUG] Streaming request with tools detected, falling back to non-streaming`);
-					}
+					mcpLog(`Streaming request with tools detected, falling back to non-streaming`);
 					const response = await handleConversationWithTools(mcpClient, openai, args, true);
 					if (response.choices && response.choices.length > 0 && response.choices[0]?.message) {
 						return json({
@@ -280,9 +266,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				});
 			} else {
 				if (tools && tools.length > 0) {
-					if (DEBUG_MCP) {
-						console.log(`[MCP DEBUG] Non-streaming request with tools, using conversation handler`);
-					}
+					mcpLog(`Non-streaming request with tools, using conversation handler`);
 					const response = await handleConversationWithTools(mcpClient, openai, args, true);
 					if (response.choices && response.choices.length > 0 && response.choices[0]?.message) {
 						return json({
@@ -324,9 +308,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			if (streaming) {
 				// For streaming with tools, fall back to non-streaming when tools are involved
 				if (tools && tools.length > 0) {
-					if (DEBUG_MCP) {
-						console.log(`[MCP DEBUG] HuggingFace streaming request with tools, falling back to non-streaming`);
-					}
+					mcpLog(`HuggingFace streaming request with tools, falling back to non-streaming`);
 					const response = await handleConversationWithTools(mcpClient, client, args, false);
 					if (response.choices && response.choices.length > 0) {
 						const { message } = response.choices[0]!;
@@ -367,9 +349,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				});
 			} else {
 				if (tools && tools.length > 0) {
-					if (DEBUG_MCP) {
-						console.log(`[MCP DEBUG] HuggingFace non-streaming request with tools, using conversation handler`);
-					}
+					mcpLog(`HuggingFace non-streaming request with tools, using conversation handler`);
 					const response = await handleConversationWithTools(mcpClient, client, args, false);
 					if (response.choices && response.choices.length > 0) {
 						const { message } = response.choices[0]!;
