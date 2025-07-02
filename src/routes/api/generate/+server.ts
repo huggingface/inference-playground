@@ -4,6 +4,9 @@ import { InferenceClient } from "@huggingface/inference";
 import OpenAI from "openai";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+
 interface GenerateRequest {
 	model: {
 		id: string;
@@ -20,6 +23,19 @@ interface GenerateRequest {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
+	const url = new URL("https://mcp.firecrawl.dev/fc-a93ffba8a7b348f99580c278adafcfa9/sse");
+	const transport = new SSEClientTransport(url);
+
+	const client = new Client({
+		name: "playground-client",
+		version: "0.0.1",
+	});
+
+	await client.connect(transport);
+
+	const tools = await client.listTools();
+	console.log(tools);
+
 	try {
 		const body: GenerateRequest = await request.json();
 		const { model, messages, config, provider, streaming, response_format, accessToken } = body;
