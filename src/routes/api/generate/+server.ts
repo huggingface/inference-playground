@@ -6,6 +6,7 @@ import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 interface GenerateRequest {
 	model: {
@@ -22,19 +23,59 @@ interface GenerateRequest {
 	accessToken: string;
 }
 
+interface OpenAIFunctionSchema {
+	type?: string;
+	function?: {
+		name?: string;
+		description?: string;
+		parameters?: {
+			type?: string;
+			required?: string[];
+			additionalProperties?: boolean;
+			[key: string]: unknown;
+		};
+		strict?: boolean;
+	};
+}
+
+type McpToolSchema = {
+	name: string;
+	inputSchema: {
+		type: string;
+		required?: string[];
+		additionalProperties?: boolean;
+		[key: string]: unknown;
+	};
+};
+
+const mcpToolToOpenAIFunction = (tool: McpToolSchema): OpenAIFunctionSchema => {
+	return {
+		type: "function",
+		function: {
+			name: tool.name,
+			description: tool.name,
+			parameters: tool.inputSchema,
+			strict: true,
+		},
+	};
+};
+
 export const POST: RequestHandler = async ({ request }) => {
 	const url = new URL("https://mcp.firecrawl.dev/fc-a93ffba8a7b348f99580c278adafcfa9/sse");
+	const fetchUrl = new URL("https://remote.mcpservers.org/fetch/mcp");
 	const transport = new SSEClientTransport(url);
+	const httpTransport = new StreamableHTTPClientTransport(fetchUrl);
 
 	const client = new Client({
 		name: "playground-client",
 		version: "0.0.1",
 	});
 
-	await client.connect(transport);
+	await client.connect(httpTransport);
 
-	const tools = await client.listTools();
-	console.log(tools);
+	const { tools: mcpTools } = await client.listTools();
+	const tools = mcpTools.map(mcpToolToOpenAIFunction);
+	console.log(JSON.stringify(tools, null, 2));
 
 	try {
 		const body: GenerateRequest = await request.json();
@@ -114,6 +155,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				messages,
 				provider,
 				...config,
+				tools,
 				response_format,
 			};
 
@@ -150,6 +192,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			} else {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const response = await client.chatCompletion(args as any);
+				console.log(JSON.stringify(response, null, 2));
 				if (response.choices && response.choices.length > 0) {
 					const { message } = response.choices[0]!;
 					const { completion_tokens } = response.usage;
