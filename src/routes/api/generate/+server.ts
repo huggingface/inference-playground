@@ -173,6 +173,123 @@ const handleConversationWithTools = async (
 	return finalResponse;
 };
 
+const createStreamingToolResponse = async (
+	mcpClient: Client,
+	inferenceClient: InferenceClient | OpenAI,
+	args: Record<string, unknown>,
+	isCustomModel: boolean
+) => {
+	const encoder = new TextEncoder();
+	const conversationMessages = [...(args.messages as ChatCompletionInputMessage[])];
+	let conversationRound = 0;
+
+	mcpLog(`Starting streaming conversation with tools enabled`);
+	mcpLog(`Initial message count: ${conversationMessages.length}`);
+
+	return new ReadableStream({
+		async start(controller) {
+			try {
+				while (true) {
+					conversationRound++;
+					mcpLog(`Streaming conversation round ${conversationRound}`);
+
+					let response;
+					if (isCustomModel) {
+						// For OpenAI, use non-streaming for tool calls (streaming tool calls are complex)
+						response = await (inferenceClient as OpenAI).chat.completions.create({
+							...args,
+							messages: conversationMessages,
+							stream: false,
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						} as any);
+						// Stream the content if available
+						if (response.choices?.[0]?.message?.content) {
+							const content = response.choices[0].message.content;
+							// Split content into chunks for streaming effect
+							const words = content.split(" ");
+							for (let i = 0; i < words.length; i++) {
+								const chunk = i === 0 ? words[i] : " " + words[i];
+								const data = JSON.stringify({
+									type: "chunk",
+									content: chunk,
+								});
+								controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+								// Small delay for streaming effect
+								await new Promise(resolve => setTimeout(resolve, 10));
+							}
+						}
+					} else {
+						// For HuggingFace, use non-streaming for now
+						response = await (inferenceClient as InferenceClient).chatCompletion({
+							...args,
+							messages: conversationMessages,
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						} as any);
+						// Stream the content if available
+						if (response.choices?.[0]?.message?.content) {
+							const content = response.choices[0].message.content;
+							const data = JSON.stringify({
+								type: "chunk",
+								content,
+							});
+							controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+						}
+					}
+
+					if (!response.choices || response.choices.length === 0) {
+						throw new Error("No response from the model");
+					}
+
+					const message = response.choices[0]!.message;
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					conversationMessages.push(message as any);
+
+					// Check if we have tool calls
+					if (!message.tool_calls || message.tool_calls.length === 0) {
+						mcpLog(`No tool calls in response, ending streaming conversation`);
+						break;
+					}
+
+					mcpLog(`Model requested ${message.tool_calls.length} tool calls`);
+
+					// Send tool call information
+					const toolCallData = JSON.stringify({
+						type: "tool_calls",
+						tool_calls: message.tool_calls,
+					});
+					controller.enqueue(encoder.encode(`data: ${toolCallData}\n\n`));
+
+					// Execute tools
+					const toolResults = await Promise.all(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						message.tool_calls.map((toolCall: any) => executeMcpTool(mcpClient, toolCall))
+					);
+
+					mcpLog(`All tool calls completed, adding ${toolResults.length} results to conversation`);
+
+					// Send tool results
+					const toolResultsData = JSON.stringify({
+						type: "tool_results",
+						results: toolResults,
+					});
+					controller.enqueue(encoder.encode(`data: ${toolResultsData}\n\n`));
+
+					conversationMessages.push(...toolResults);
+				}
+
+				mcpLog(`Streaming conversation completed after ${conversationRound} rounds`);
+				mcpLog(`Final message count: ${conversationMessages.length}`);
+
+				controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+				controller.close();
+			} catch (error) {
+				mcpError(`Streaming conversation error:`, error);
+				controller.error(error);
+			}
+		},
+	});
+};
+
 export const POST: RequestHandler = async ({ request }) => {
 	const firecrawlUrl = new URL("https://mcp.firecrawl.dev/fc-a93ffba8a7b348f99580c278adafcfa9/sse");
 	const sseTransport = new SSEClientTransport(firecrawlUrl);
@@ -218,17 +335,17 @@ export const POST: RequestHandler = async ({ request }) => {
 			};
 
 			if (streaming) {
-				// For streaming with tools, fall back to non-streaming when tools are involved
+				// Use streaming tool response for tools
 				if (tools && tools.length > 0) {
-					mcpLog(`Streaming request with tools detected, falling back to non-streaming`);
-					const response = await handleConversationWithTools(mcpClient, openai, args, true);
-					if (response.choices && response.choices.length > 0 && response.choices[0]?.message) {
-						return json({
-							message: response.choices[0].message,
-							completion_tokens: response.usage?.completion_tokens || 0,
-						});
-					}
-					throw new Error("No response from the model");
+					mcpLog(`Streaming request with tools detected, using streaming tool handler`);
+					const readable = await createStreamingToolResponse(mcpClient, openai, args, true);
+					return new Response(readable, {
+						headers: {
+							"Content-Type": "text/event-stream",
+							"Cache-Control": "no-cache",
+							"Connection": "keep-alive",
+						},
+					});
 				}
 
 				const stream = await openai.chat.completions.create({
@@ -306,16 +423,17 @@ export const POST: RequestHandler = async ({ request }) => {
 			};
 
 			if (streaming) {
-				// For streaming with tools, fall back to non-streaming when tools are involved
+				// Use streaming tool response for tools
 				if (tools && tools.length > 0) {
-					mcpLog(`HuggingFace streaming request with tools, falling back to non-streaming`);
-					const response = await handleConversationWithTools(mcpClient, client, args, false);
-					if (response.choices && response.choices.length > 0) {
-						const { message } = response.choices[0]!;
-						const completion_tokens = response.usage?.completion_tokens || 0;
-						return json({ message, completion_tokens });
-					}
-					throw new Error("No response from the model");
+					mcpLog(`HuggingFace streaming request with tools, using streaming tool handler`);
+					const readable = await createStreamingToolResponse(mcpClient, client, args, false);
+					return new Response(readable, {
+						headers: {
+							"Content-Type": "text/event-stream",
+							"Cache-Control": "no-cache",
+							"Connection": "keep-alive",
+						},
+					});
 				}
 
 				const encoder = new TextEncoder();
