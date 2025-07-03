@@ -2,9 +2,10 @@
 	import { mcpServers, type MCPProtocol, type MCPServerEntity } from "$lib/state/mcps.svelte.js";
 	import { projects } from "$lib/state/projects.svelte.js";
 	import { createFieldValidation } from "$lib/utils/form.svelte";
+	import { entries } from "$lib/utils/object.svelte";
 	import { extractDomain, isValidURL } from "$lib/utils/url.js";
-	import { RadioGroup } from "melt/builders";
-	import typia from "typia";
+	import IconAdd from "~icons/carbon/add";
+	import IconCheck from "~icons/carbon/checkmark";
 	import IconEdit from "~icons/carbon/edit";
 	import IconDelete from "~icons/carbon/trash-can";
 	import Switch from "../switch.svelte";
@@ -15,24 +16,17 @@
 
 	let { server }: Props = $props();
 
-	let editing = $state(true);
+	let editing = $state(false);
 
 	// Form state for adding/editing servers
 	let formState = $derived({
 		name: server.name,
 		url: server.url,
 		protocol: server.protocol,
-		headers: server.headers,
+		headers: entries(server.headers || {}),
 	});
 
 	const protocolOptions: MCPProtocol[] = ["sse", "http"];
-	const protocolRadioGroup = new RadioGroup({
-		value: () => formState.protocol,
-		onValueChange: v => {
-			if (!typia.is<MCPProtocol>(v)) return;
-			formState.protocol = v;
-		},
-	});
 
 	const nameField = createFieldValidation({
 		validate: v => {
@@ -48,6 +42,7 @@
 			if (!isValidURL(v)) return "Invalid URL";
 		},
 	});
+	const disabled = $derived(!nameField.valid || !urlField.valid);
 
 	async function deleteServer() {
 		await mcpServers.delete(server.id);
@@ -75,6 +70,18 @@
 	}
 
 	const isEnabled = $derived(projects.current?.enabledMCPs?.includes(server.id) || false);
+
+	async function saveServer(e: SubmitEvent) {
+		e.preventDefault();
+		if (!nameField.valid || !urlField.valid) return;
+		await mcpServers.update({
+			...server,
+			...formState,
+			headers: formState.headers.reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
+		});
+
+		editing = false;
+	}
 
 	function getFaviconUrl(url: string): string {
 		const domain = extractDomain(url);
@@ -129,7 +136,7 @@
 	</div>
 
 	{#if editing}
-		<form class="mt-2 border-t border-neutral-500 pt-2 dark:border-neutral-700">
+		<form class="mt-2 border-t border-neutral-500 pt-2 dark:border-neutral-700" onsubmit={saveServer}>
 			<label class="flex flex-col gap-2">
 				<p class="block text-sm font-medium text-gray-900 dark:text-white">
 					Server Name <span class="text-red-800 dark:text-red-300">*</span>
@@ -183,6 +190,52 @@
 						</label>
 					{/each}
 				</div>
+			</div>
+
+			<div class="mt-3 flex flex-col gap-2">
+				<p class="block text-sm font-medium text-gray-900 dark:text-white">Headers</p>
+				{#each formState.headers || [] as _, i (i)}
+					<div class="flex items-center gap-2">
+						<input
+							type="text"
+							bind:value={formState.headers[i]![0]}
+							class="flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+						/>
+						<span class="text-gray-500">:</span>
+						<input
+							type="text"
+							bind:value={formState.headers[i]![1]}
+							class="flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+						/>
+						<button
+							class="btn-sm !h-auto self-stretch text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+							onclick={() => {
+								formState.headers.splice(i, 1);
+							}}
+							type="button"
+						>
+							<IconDelete class="h-4 w-4" />
+						</button>
+					</div>
+				{/each}
+				<button
+					class="btn-sm self-start"
+					type="button"
+					onclick={() => {
+						formState.headers.push(["", ""]);
+						formState = formState;
+					}}
+				>
+					<IconAdd class="size-4" />
+					Add Header
+				</button>
+			</div>
+
+			<div class="mt-3 flex items-center gap-2">
+				<button class="btn-sm" {disabled}>
+					<IconCheck /><span>Save</span>
+				</button>
+				<button class="btn-sm" type="button" onclick={() => (editing = false)}> Cancel </button>
 			</div>
 		</form>
 	{/if}
