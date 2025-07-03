@@ -80,6 +80,7 @@
 		"dequal": "^2.0.3",
 		"eslint-plugin-svelte": "^3.6.0",
 		"remult": "^3.0.2",
+		"tailwindcss-spring": "^1.0.1",
 		"typia": "^8.0.0"
 	},
 	"pnpm": {

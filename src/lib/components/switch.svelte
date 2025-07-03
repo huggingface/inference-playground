@@ -3,7 +3,6 @@
 	import { type ComponentProps } from "melt";
 	import { Toggle, type ToggleProps } from "melt/builders";
 	import { ElementSize } from "runed";
-	import { Spring } from "svelte/motion";
 
 	let {
 		class: className,
@@ -23,18 +22,19 @@
 	const thumbSize = new ElementSize(() => thumb);
 	const padding = 2;
 
-	const thumbX = Spring.of(
-		() => {
-			if (toggle.value) {
-				return triggerSize.width - thumbSize.width - padding;
-			}
-			return padding;
-		},
-		{
-			stiffness: 0.08,
-			damping: 0.3,
+	const thumbX = $derived.by(() => {
+		if (toggle.value) {
+			return triggerSize.width - thumbSize.width - padding;
 		}
-	);
+		return padding;
+	});
+
+	let mounted = $state(false);
+	$effect(() => {
+		setTimeout(() => {
+			mounted = true;
+		});
+	});
 </script>
 
 <button
@@ -48,9 +48,10 @@
 >
 	<span
 		bind:this={thumb}
-		class={classes("absolute top-0.5 left-0 h-4 w-4 rounded-full bg-neutral-900", {
+		class={classes("spring-bounce-20 spring-duration-200 absolute top-0.5 left-0 h-4 w-4 rounded-full bg-neutral-900", {
 			"bg-white": toggle.value,
+			"!duration-0": !mounted,
 		})}
-		style="transform:	translateX({thumbX.current}px)"
+		style="transform:	translateX({thumbX}px)"
 	></span>
 </button>
