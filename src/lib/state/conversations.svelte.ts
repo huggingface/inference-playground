@@ -35,7 +35,7 @@ export class ConversationEntity {
 	};
 
 	@Fields.json()
-	messages!: ConversationMessage[];
+	messages?: ConversationMessage[];
 
 	@Fields.boolean()
 	streaming = false;
@@ -127,12 +127,13 @@ export class ConversationClass {
 	addMessage = async (message: ConversationMessage) => {
 		this.update({
 			...this.data,
-			messages: [...this.data.messages, snapshot(message)],
+			messages: [...(this.data.messages || []), snapshot(message)],
 		});
 	};
 
 	updateMessage = async (args: { index: number; message: Partial<ConversationMessage> }) => {
-		const prev = await poll(() => this.data.messages[args.index], { interval: 10, maxAttempts: 200 });
+		if (!this.data.messages) return;
+		const prev = await poll(() => this.data.messages?.[args.index], { interval: 10, maxAttempts: 200 });
 
 		if (!prev) return;
 
@@ -147,6 +148,7 @@ export class ConversationClass {
 	};
 
 	deleteMessage = async (idx: number) => {
+		if (!this.data.messages) return;
 		const imgKeys = this.data.messages.flatMap(m => m.images).filter(isString);
 		await Promise.all([
 			...imgKeys.map(k => images.delete(k)),
@@ -158,6 +160,7 @@ export class ConversationClass {
 	};
 
 	deleteMessages = async (from: number) => {
+		if (!this.data.messages) return;
 		const sliced = this.data.messages.slice(0, from);
 		const notSliced = this.data.messages.slice(from);
 
@@ -179,7 +182,7 @@ export class ConversationClass {
 			if (this.data.streaming) {
 				let addedMessage = false;
 				const streamingMessage = { role: "assistant", content: "" };
-				const index = this.data.messages.length;
+				const index = this.data.messages?.length || 0;
 
 				await handleStreamingResponse(
 					this,
@@ -368,7 +371,7 @@ class Conversations {
 
 		for (let idx = 0; idx < conversations.length; idx++) {
 			const conversation = conversations[idx];
-			if (!conversation || conversation.data.messages.at(-1)?.role !== "assistant") continue;
+			if (!conversation || conversation.data.messages?.at(-1)?.role !== "assistant") continue;
 
 			let prefix = "";
 			if (this.active.length === 2) {

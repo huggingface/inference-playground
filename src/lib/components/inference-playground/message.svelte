@@ -28,7 +28,7 @@
 	};
 
 	const { index, conversation, message, autofocus, onDelete, onRegen }: Props = $props();
-	const isLast = $derived(index === conversation.data.messages.length - 1);
+	const isLast = $derived(index === (conversation.data.messages?.length || 0) - 1);
 
 	const autosized = new TextareaAutosize();
 	const shouldStick = $derived(autosized.textareaHeight > 92);
