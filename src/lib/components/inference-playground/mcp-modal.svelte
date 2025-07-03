@@ -6,6 +6,8 @@
 	import IconEdit from "~icons/carbon/edit";
 	import Dialog from "../dialog.svelte";
 	import { RadioGroup } from "melt/builders";
+	import { extractDomain } from "$lib/utils/url.js";
+	import Switch from "../switch.svelte";
 
 	interface Props {
 		open: boolean;
@@ -120,10 +122,20 @@
 	function isServerEnabledForProject(serverId: string): boolean {
 		return projects.current?.enabledMCPs?.includes(serverId) || false;
 	}
+
+	function getFaviconUrl(url: string): string {
+		const domain = extractDomain(url);
+		return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+	}
+
+	function urlWithoutSubpaths(url: string): string {
+		const urlObj = new URL(url);
+		return urlObj.origin;
+	}
 </script>
 
 <Dialog
-	class="!w-4xl max-w-[90vw]"
+	class="!w-2xl max-w-[90vw]"
 	title="MCP Servers"
 	{open}
 	onClose={() => {
@@ -147,41 +159,43 @@
 			{:else}
 				<div class="space-y-2">
 					{#each mcpServers.all as server (server.id)}
-						<div class="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-							<div class="flex-1">
-								<div class="flex items-center gap-3">
-									<h4 class="font-medium text-gray-900 dark:text-gray-100">{server.name}</h4>
-									<span class="text-sm text-gray-500">{server.url}</span>
-									<span
-										class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 uppercase dark:bg-blue-900 dark:text-blue-200"
-									>
+						<div class="flex justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+							<div>
+								<div class="flex items-center gap-1">
+									<img src={getFaviconUrl(server.url)} alt="Server Icon" class="size-4 rounded-full" />
+									<span class="font-bold">{server.name}</span>
+								</div>
+								<p class="mt-1 truncate text-sm dark:text-neutral-300">
+									<span class="rounded bg-blue-900 px-0.75 py-0.25 uppercase">
 										{server.protocol}
 									</span>
-								</div>
+									<span>
+										{urlWithoutSubpaths(server.url)}
+									</span>
+								</p>
 								{#if server.headers && Object.keys(server.headers).length > 0}
-									<p class="text-sm text-gray-500">Headers: {Object.keys(server.headers).length} configured</p>
+									<p class="mt-1 text-xs dark:text-neutral-400">
+										Headers: {Object.keys(server.headers).length} configured
+									</p>
 								{/if}
 							</div>
-							<div class="flex items-center gap-2">
-								<!-- Project-specific toggle -->
-								<label class="flex items-center gap-2 text-sm">
-									<input
-										type="checkbox"
-										checked={isServerEnabledForProject(server.id)}
-										onchange={e => toggleServerForProject(server.id, e.currentTarget.checked)}
-										class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
-									/>
-									<span class="text-gray-700 dark:text-gray-300">Enable for project</span>
-								</label>
-								<button class="btn-mini" onclick={() => startEdit(server)}>
-									<IconEdit class="h-4 w-4" />
-								</button>
-								<button
-									class="btn-mini text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-									onclick={() => deleteServer(server.id)}
-								>
-									<IconDelete class="h-4 w-4" />
-								</button>
+							<div class="flex flex-col items-end justify-between">
+								<Switch
+									bind:value={() => isServerEnabledForProject(server.id), v => toggleServerForProject(server.id, v)}
+								/>
+								<div class="flex items-center gap-2">
+									<button class="btn-mini" onclick={() => startEdit(server)}>
+										<IconEdit class="h-4 w-4" />
+										<span>Edit</span>
+									</button>
+									<button
+										class="btn-mini text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+										onclick={() => deleteServer(server.id)}
+									>
+										<IconDelete class="h-4 w-4" />
+										<span>Delete</span>
+									</button>
+								</div>
 							</div>
 						</div>
 					{/each}
@@ -308,16 +322,4 @@
 			</div>
 		{/if}
 	</div>
-
-	{#snippet footer()}
-		<button
-			class="btn ml-auto"
-			onclick={() => {
-				open = false;
-				resetForm();
-			}}
-		>
-			Close
-		</button>
-	{/snippet}
 </Dialog>

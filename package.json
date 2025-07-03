@@ -13,7 +13,7 @@
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
 		"update-ctx-length": "jiti scripts/update-ctx-length.ts",
-		"test:unit": "vitest",
+		"test:unit": "vitest --browser.headless",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test"
 	},
@@ -60,7 +60,7 @@
 		"prettier-plugin-tailwindcss": "^0.6.11",
 		"runed": "^0.25.0",
 		"shiki": "^3.4.0",
-		"svelte": "^5.34.3",
+		"svelte": "^5.35.1",
 		"svelte-check": "^4.0.0",
 		"tailwind-merge": "^3.0.2",
 		"tailwindcss": "^4.0.9",
