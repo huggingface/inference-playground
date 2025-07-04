@@ -30,6 +30,7 @@ import { projects } from "$lib/state/projects.svelte.js";
 import { mcpServers } from "$lib/state/mcps.svelte.js";
 import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
 import { modifySnippet } from "$lib/utils/snippets.js";
+import { StreamReader } from "$lib/utils/stream.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -145,7 +146,7 @@ export async function handleStreamingResponse(
 		enabledMCPs: getEnabledMCPs(),
 	};
 
-	const response = await fetch("/api/generate", {
+	const reader = await StreamReader.fromFetch("/api/generate", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -154,44 +155,14 @@ export async function handleStreamingResponse(
 		signal: abortController.signal,
 	});
 
-	if (!response.ok) {
-		const error = await response.json();
-		throw new Error(error.error || "Failed to generate response");
-	}
-
-	const reader = response.body?.getReader();
-	if (!reader) throw new Error("No response body");
-
-	const decoder = new TextDecoder();
 	let out = "";
-
-	try {
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
-
-			const chunk = decoder.decode(value);
-			const lines = chunk.split("\n");
-
-			for (const line of lines) {
-				if (line.startsWith("data: ")) {
-					const data = line.slice(6);
-					if (data === '{"type":"done"}') return;
-
-					try {
-						const parsed = JSON.parse(data);
-						if (parsed.type === "chunk" && parsed.content) {
-							out += parsed.content;
-							onChunk(out);
-						}
-					} catch {
-						// Ignore malformed JSON
-					}
-				}
-			}
+	for await (const chunk of reader.read()) {
+		if (chunk.type === "chunk" && chunk.content) {
+			out += chunk.content;
+			onChunk(out);
+		} else if (chunk.type === "error") {
+			throw new Error(chunk.error || "Stream error");
 		}
-	} finally {
-		reader.releaseLock();
 	}
 }
 

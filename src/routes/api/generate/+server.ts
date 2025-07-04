@@ -1,12 +1,10 @@
-import { InferenceClient } from "@huggingface/inference";
-import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 import { json } from "@sveltejs/kit";
-import OpenAI from "openai";
 import type { RequestHandler } from "./$types.js";
 import type { GenerateRequest } from "./types.js";
 import { connectToMCPServers } from "./mcp.js";
 import { mcpLog } from "./utils.js";
 import { createAdapter } from "./adapter.js";
+import { StreamWriter } from "$lib/utils/stream.js";
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
@@ -32,35 +30,23 @@ export const POST: RequestHandler = async ({ request }) => {
 		};
 
 		if (streaming) {
-			const encoder = new TextEncoder();
-			const readable = new ReadableStream({
-				async start(controller) {
-					try {
-						const stream = await adapter.stream(args);
-						for await (const chunk of stream) {
-							console.log(JSON.stringify(chunk.choices, null, 2));
-							const data = JSON.stringify({
-								type: "chunk",
-								content: chunk.choices[0]?.delta.content,
-							});
-							controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-						}
-						controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
-						controller.close();
-					} catch (error) {
-						console.error("stream error", error);
-						controller.error(error);
-					}
-				},
-			});
+			const writer = new StreamWriter();
 
-			return new Response(readable, {
-				headers: {
-					"Content-Type": "text/event-stream",
-					"Cache-Control": "no-cache",
-					"Connection": "keep-alive",
-				},
-			});
+			(async () => {
+				try {
+					const adapterStream = await adapter.stream(args);
+					for await (const chunk of adapterStream) {
+						console.log(JSON.stringify(chunk.choices, null, 2));
+						writer.writeChunk(chunk.choices[0]?.delta.content || "");
+					}
+					writer.end();
+				} catch (error) {
+					console.error("stream error", error);
+					writer.error(error instanceof Error ? error : new Error(String(error)));
+				}
+			})();
+
+			return writer.createResponse();
 		}
 
 		console.log("Generating response");
