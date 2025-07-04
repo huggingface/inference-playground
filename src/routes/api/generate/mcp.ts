@@ -16,7 +16,7 @@ export const mcpToolToOpenAIFunction = (tool: McpToolSchema): OpenAIFunctionSche
 	};
 };
 
-type MCPServerConnection = { client: Client; tools: OpenAIFunctionSchema[] };
+export type MCPServerConnection = { client: Client; tools: OpenAIFunctionSchema[] };
 
 export const connectToMCPServers = async (servers: MCPServerConfig[]): Promise<MCPServerConnection[]> => {
 	const connections: MCPServerConnection[] = [];
@@ -71,8 +71,8 @@ export const executeMcpTool = async (
 		for (const conn of connections) {
 			try {
 				const toolExists = conn.tools.some(tool => tool.function?.name === toolCall.function.name);
-
 				if (!toolExists) continue;
+				debugLog(`Found tool ${toolCall.function.name}`);
 				result = await conn.client.callTool({
 					name: toolCall.function.name,
 					arguments: JSON.parse(toolCall.function.arguments),

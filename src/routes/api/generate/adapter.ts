@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Sorry */
-import type { ChatCompletionInputMessage, ChatCompletionStreamOutput } from "@huggingface/tasks";
-import type { GenerateRequest, OpenAIFunctionSchema } from "./types.js";
+import { omit } from "$lib/utils/object.svelte.js";
+import { InferenceClient } from "@huggingface/inference";
+import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 import OpenAI from "openai";
 import type { Stream } from "openai/streaming.mjs";
-import { InferenceClient } from "@huggingface/inference";
-import { omit } from "$lib/utils/object.svelte.js";
+import type { GenerateRequest, OpenAIFunctionSchema } from "./types.js";
 
-type GenerationArgs = {
+export type GenerationArgs = {
 	model: string;
 	messages: ChatCompletionInputMessage[];
 	provider?: string;
@@ -15,9 +15,9 @@ type GenerationArgs = {
 	response_format?: unknown;
 };
 
-interface Adapter {
+export interface Adapter {
 	stream: (args: GenerationArgs) => Promise<Stream<OpenAI.Chat.Completions.ChatCompletionChunk>>;
-	generate: (args: GenerationArgs) => Promise<ChatCompletionStreamOutput | OpenAI.Chat.Completions.ChatCompletion>;
+	generate: (args: GenerationArgs) => Promise<OpenAI.Chat.Completions.ChatCompletion>;
 }
 
 function createCustomAdapter({ model }: GenerateRequest): Adapter {
@@ -36,7 +36,7 @@ function createCustomAdapter({ model }: GenerateRequest): Adapter {
 		},
 		generate: (args: GenerationArgs) => {
 			return openai.chat.completions.create({
-				...args,
+				...omit(args, "provider"),
 				stream: false,
 			} as OpenAI.ChatCompletionCreateParamsNonStreaming);
 		},
