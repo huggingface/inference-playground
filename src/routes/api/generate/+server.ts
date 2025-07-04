@@ -36,8 +36,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				try {
 					const adapterStream = await adapter.stream(args);
 					for await (const chunk of adapterStream) {
-						console.log(JSON.stringify(chunk.choices, null, 2));
-						writer.writeChunk(chunk.choices[0]?.delta.content || "");
+						const choice = chunk.choices[0];
+						if (!choice) continue;
+						writer.writeChunk(choice.delta.content || "");
 					}
 					writer.end();
 				} catch (error) {
