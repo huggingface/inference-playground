@@ -15,6 +15,9 @@ export class ProjectEntity {
 
 	@Fields.string()
 	systemMessage?: string;
+
+	@Fields.json()
+	enabledMCPs?: string[];
 }
 
 export type ProjectEntityMembers = MembersOnly<ProjectEntity>;

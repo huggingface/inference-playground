@@ -24,6 +24,7 @@
 	const modes = ["form", "code"] as const;
 	const radioGroup = new RadioGroup({
 		value: modes[0],
+		orientation: "horizontal",
 	});
 
 	type Schema = {
