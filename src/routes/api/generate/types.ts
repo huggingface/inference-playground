@@ -1,4 +1,5 @@
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
+import type { ChatCompletion, ChatCompletionChunk } from "openai/resources/index.mjs";
 
 export interface MCPServerConfig {
 	id: string;
@@ -48,3 +49,5 @@ export type McpToolSchema = {
 		[key: string]: unknown;
 	};
 };
+
+export type FinishReason = ChatCompletionChunk.Choice["finish_reason"];

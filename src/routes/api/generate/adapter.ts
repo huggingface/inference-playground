@@ -4,6 +4,7 @@ import type { GenerateRequest, OpenAIFunctionSchema } from "./types.js";
 import OpenAI from "openai";
 import type { Stream } from "openai/streaming.mjs";
 import { InferenceClient } from "@huggingface/inference";
+import { omit } from "$lib/utils/object.svelte.js";
 
 type GenerationArgs = {
 	model: string;
@@ -29,7 +30,7 @@ function createCustomAdapter({ model }: GenerateRequest): Adapter {
 	return {
 		stream: async (args: GenerationArgs) => {
 			return await openai.chat.completions.create({
-				...args,
+				...omit(args, "provider"),
 				stream: true,
 			} as OpenAI.ChatCompletionCreateParamsStreaming);
 		},

@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { MCPServerConfig, McpToolSchema, OpenAIFunctionSchema } from "./types.js";
-import { mcpError, mcpLog } from "./utils.js";
+import { debugError, debugLog } from "./utils.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 
@@ -32,7 +32,7 @@ export const connectToMCPServers = async (servers: MCPServerConfig[]): Promise<M
 					tools: [],
 				};
 
-				mcpLog(`Connecting to MCP server: ${server.name} (${server.url})`);
+				debugLog(`Connecting to MCP server: ${server.name} (${server.url})`);
 
 				let transport;
 				const url = new URL(server.url);
@@ -47,10 +47,10 @@ export const connectToMCPServers = async (servers: MCPServerConfig[]): Promise<M
 				const { tools: mcpTools } = await conn.client.listTools();
 				const serverTools = mcpTools.map(mcpToolToOpenAIFunction);
 				conn.tools.push(...serverTools);
-				mcpLog(`Connected to ${server.name} with ${mcpTools.length} tools`);
+				debugLog(`Connected to ${server.name} with ${mcpTools.length} tools`);
 				connections.push(conn);
 			} catch (error) {
-				mcpError(`Failed to connect to MCP server ${server.name}:`, error);
+				debugError(`Failed to connect to MCP server ${server.name}:`, error);
 			}
 		})
 	);
@@ -63,8 +63,8 @@ export const executeMcpTool = async (
 	toolCall: { id: string; function: { name: string; arguments: string } }
 ) => {
 	try {
-		mcpLog(`Executing tool: ${toolCall.function.name}`);
-		mcpLog(`Tool arguments:`, JSON.parse(toolCall.function.arguments));
+		debugLog(`Executing tool: ${toolCall.function.name}`);
+		debugLog(`Tool arguments:`, JSON.parse(toolCall.function.arguments));
 
 		// Try to find the tool in any of the connected clients
 		let result = null;
@@ -78,7 +78,7 @@ export const executeMcpTool = async (
 					arguments: JSON.parse(toolCall.function.arguments),
 				});
 			} catch (clientError) {
-				mcpError(`Failed to execute tool on client:`, clientError);
+				debugError(`Failed to execute tool on client:`, clientError);
 				continue;
 			}
 		}
@@ -87,7 +87,7 @@ export const executeMcpTool = async (
 			throw new Error(`Tool ${toolCall.function.name} not found in any connected MCP server`);
 		}
 
-		mcpLog(`Tool result:`, result.content);
+		// mcpLog(`Tool result:`, result.content);
 
 		return {
 			tool_call_id: toolCall.id,
@@ -95,7 +95,7 @@ export const executeMcpTool = async (
 			content: JSON.stringify(result.content),
 		};
 	} catch (error) {
-		mcpError(`Tool execution failed:`, error);
+		debugError(`Tool execution failed:`, error);
 
 		return {
 			tool_call_id: toolCall.id,

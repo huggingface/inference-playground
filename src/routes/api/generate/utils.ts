@@ -1,11 +1,11 @@
-const DEBUG_MCP = true;
+const DEBUG_LOG = true;
 
-export const mcpLog = (...args: unknown[]) => {
-	if (!DEBUG_MCP) return;
-	console.log("[MCP DEBUG]", ...args);
+export const debugLog = (...args: unknown[]) => {
+	if (!DEBUG_LOG) return;
+	console.log("[LOG DEBUG]", ...args);
 };
 
-export const mcpError = (...args: unknown[]) => {
-	if (!DEBUG_MCP) return;
-	console.error("[MCP DEBUG]", ...args);
+export const debugError = (...args: unknown[]) => {
+	if (!DEBUG_LOG) return;
+	console.error("[LOG DEBUG]", ...args);
 };
