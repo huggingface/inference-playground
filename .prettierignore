@@ -18,3 +18,5 @@ pnpm-lock.yaml
 yarn.lock
 
 context_length.json
+
+.claude

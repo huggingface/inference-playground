@@ -23,7 +23,7 @@
 	const atBottom = $derived(scrollState.arrived.bottom);
 
 	watch(
-		() => conversation.data.messages.at(-1)?.content,
+		() => conversation.data.messages?.at(-1)?.content,
 		() => {
 			const shouldScroll = atBottom && !scrollState.isScrolling;
 			if (!shouldScroll) return;
@@ -38,7 +38,7 @@
 	);
 
 	function addMessage() {
-		const msgs = conversation.data.messages.slice();
+		const msgs = conversation.data.messages?.slice() || [];
 		conversation.update({
 			...conversation.data,
 			messages: [
@@ -53,7 +53,7 @@
 
 	async function regenMessage(idx: number) {
 		// TODO: migrate to new logic
-		const msg = conversation.data.messages[idx];
+		const msg = conversation.data.messages?.[idx];
 		if (!msg) return;
 		if (msg.role === "user") {
 			await conversation.deleteMessages(idx + 1);
@@ -72,7 +72,7 @@
 	bind:this={messageContainer}
 >
 	{#if !viewCode}
-		{#each conversation.data.messages as message, index}
+		{#each conversation.data.messages || [] as message, index}
 			<Message
 				{message}
 				{index}

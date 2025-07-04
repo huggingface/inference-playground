@@ -128,7 +128,7 @@ async function getCompletionMetadata(
 
 	const messages: ConversationMessage[] = [
 		...(isSystemPromptSupported(model) && systemMessage?.length ? [{ role: "system", content: systemMessage }] : []),
-		...data.messages,
+		...(data.messages || []),
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));
 

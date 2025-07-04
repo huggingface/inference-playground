@@ -112,7 +112,6 @@
 		python: getSnippet({ lang: "python", tokenStr, conversation }),
 		http: getSnippet({ lang: "sh", tokenStr, conversation }),
 	} as Record<Language, GetInferenceSnippetReturn>);
-	$inspect(snippetsByLang);
 
 	const selectedSnippet = $derived(snippetsByLang[lang][selectedSnippetIdxByLang[lang]]);
 
