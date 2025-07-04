@@ -27,6 +27,7 @@ import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import { images } from "$lib/state/images.svelte.js";
 import { projects } from "$lib/state/projects.svelte.js";
+import { mcpServers } from "$lib/state/mcps.svelte.js";
 import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
 import { modifySnippet } from "$lib/utils/snippets.js";
 
@@ -73,6 +74,16 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 
 	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
 	return ctxLength;
+}
+
+function getEnabledMCPs() {
+	return mcpServers.enabled.map(server => ({
+		id: server.id,
+		name: server.name,
+		url: server.url,
+		protocol: server.protocol,
+		headers: server.headers,
+	}));
 }
 
 function getResponseFormatObj(conversation: ConversationClass | Conversation) {
@@ -131,6 +142,7 @@ export async function handleStreamingResponse(
 		streaming: true,
 		response_format: getResponseFormatObj(conversation),
 		accessToken: token.value,
+		enabledMCPs: getEnabledMCPs(),
 	};
 
 	const response = await fetch("/api/generate", {
@@ -209,6 +221,7 @@ export async function handleNonStreamingResponse(
 		streaming: false,
 		response_format: getResponseFormatObj(conversation),
 		accessToken: token.value,
+		enabledMCPs: getEnabledMCPs(),
 	};
 
 	const response = await fetch("/api/generate", {

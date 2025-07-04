@@ -1,6 +1,7 @@
 import { idb } from "$lib/remult.js";
 import { dequal } from "dequal";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
+import { projects } from "./projects.svelte";
 
 export type MCPProtocol = "sse" | "http";
 
@@ -61,6 +62,12 @@ class MCPServers {
 
 	get all() {
 		return Object.values(this.#servers);
+	}
+
+	get enabled() {
+		const currentProject = projects.current;
+		if (!currentProject) return [];
+		return this.all.filter(server => currentProject.enabledMCPs?.includes(server.id));
 	}
 
 	async update(data: MCPServerEntity) {

@@ -6,10 +6,9 @@
 	import { watch } from "runed";
 	import IconX from "~icons/carbon/close";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
-	import StructuredOutputModal from "./structured-output-modal.svelte";
 	import MCPModal from "./mcp-modal.svelte";
+	import StructuredOutputModal from "./structured-output-modal.svelte";
 	import { mcpServers } from "$lib/state/mcps.svelte.js";
-	import { projects } from "$lib/state/projects.svelte.js";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -47,11 +46,6 @@
 
 	let editingStructuredOutput = $state(false);
 	let editingMCP = $state(false);
-
-	const enabledMCPCount = $derived(() => {
-		const enabledMCPIds = projects.current?.enabledMCPs || [];
-		return enabledMCPIds.filter(id => mcpServers.all.find(server => server.id === id)).length;
-	});
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -136,9 +130,9 @@
 	<div class="mt-2 flex cursor-pointer items-center justify-between">
 		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">MCP Servers</span>
 		<div class="flex items-center gap-2">
-			{#if enabledMCPCount() > 0}
+			{#if mcpServers.enabled.length > 0}
 				<span class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-					{enabledMCPCount()} enabled
+					{mcpServers.enabled.length} enabled
 				</span>
 			{/if}
 			<button class="btn-mini" type="button" onclick={() => (editingMCP = true)}> configure </button>
