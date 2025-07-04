@@ -14,6 +14,7 @@
 	}
 
 	const { conversation, viewCode, onCloseCode }: Props = $props();
+
 	let messageContainer: HTMLDivElement | null = $state(null);
 	const scrollState = new ScrollState({
 		element: () => messageContainer,
@@ -66,7 +67,7 @@
 </script>
 
 <div
-	class="@container flex flex-col overflow-x-hidden overflow-y-auto"
+	class="@container flex h-full flex-col overflow-x-hidden overflow-y-auto"
 	class:animate-pulse={conversation.generating && !conversation.data.streaming}
 	bind:this={messageContainer}
 >
@@ -76,7 +77,6 @@
 				{message}
 				{index}
 				{conversation}
-				autofocus={index === (conversation.data.messages?.length || 0) - 1}
 				onDelete={() => conversation.deleteMessage(index)}
 				onRegen={() => regenMessage(index)}
 			/>

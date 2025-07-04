@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { autofocus as autofocusAction } from "$lib/attachments/autofocus.js";
 	import Tooltip from "$lib/components/tooltip.svelte";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
@@ -22,12 +21,11 @@
 		conversation: ConversationClass;
 		message: ConversationMessage;
 		index: number;
-		autofocus?: boolean;
 		onDelete?: () => void;
 		onRegen?: () => void;
 	};
 
-	const { index, conversation, message, autofocus, onDelete, onRegen }: Props = $props();
+	const { index, conversation, message, onDelete, onRegen }: Props = $props();
 	const isLast = $derived(index === (conversation.data.messages?.length || 0) - 1);
 
 	const autosized = new TextareaAutosize();
@@ -116,7 +114,6 @@
 				rows="1"
 				data-message
 				data-test-id={TEST_IDS.message}
-				{@attach autofocusAction(autofocus)}
 				{@attach autosized.attachment}
 			></textarea>
 

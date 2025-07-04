@@ -6,13 +6,8 @@
 	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { isSystemPromptSupported } from "$lib/utils/business.svelte.js";
-	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
-	import { Popover } from "melt/components";
-	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
-	import IconChatRight from "~icons/carbon/align-box-bottom-right";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
-	import IconChevronDown from "~icons/carbon/chevron-down";
 	import IconCode from "~icons/carbon/code";
 	import IconCompare from "~icons/carbon/compare";
 	import IconInfo from "~icons/carbon/information";
@@ -30,29 +25,15 @@
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
 	import { TEST_IDS } from "$lib/constants.js";
-
-	const multiple = $derived(conversations.active.length > 1);
+	import MessageTextarea from "./message-textarea.svelte";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
-	const loading = $derived(conversations.generating);
 
 	let selectCompareModelOpen = $state(false);
 
 	const systemPromptSupported = $derived(conversations.active.some(c => isSystemPromptSupported(c.model)));
 	const compareActive = $derived(conversations.active.length === 2);
-
-	function onKeydown(event: KeyboardEvent) {
-		if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-			conversations.genNextMessages();
-		}
-		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "l") {
-			conversations.genNextMessages("left");
-		}
-		if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === "r") {
-			conversations.genNextMessages("right");
-		}
-	}
 
 	function handleTokenSubmit(e: Event) {
 		const form = e.target as HTMLFormElement;
@@ -77,7 +58,6 @@
 	/>
 {/if}
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class={[
 		"motion-safe:animate-fade-in grid h-dvh divide-gray-200 overflow-hidden bg-gray-100/50",
@@ -116,7 +96,7 @@
 	</div>
 
 	<!-- Center column -->
-	<div class="relative flex h-full flex-col overflow-hidden" onkeydown={onKeydown}>
+	<div class="relative flex h-full flex-col overflow-hidden">
 		<Toaster />
 		<div
 			class="flex flex-1 divide-x divide-gray-200 overflow-x-auto overflow-y-hidden *:w-full max-sm:w-dvw md:pt-3 dark:divide-gray-800"
@@ -134,6 +114,8 @@
 				</div>
 			{/each}
 		</div>
+
+		<MessageTextarea />
 
 		<!-- Bottom bar -->
 		<div
@@ -194,114 +176,6 @@
 					<IconCode />
 					{!viewCode ? "View Code" : "Hide Code"}
 				</button>
-				<div class="flex">
-					<button
-						onclick={() => {
-							viewCode = false;
-							conversations.genOrStop();
-						}}
-						type="button"
-						class={[
-							"flex h-[39px]  items-center justify-center gap-2 rounded-l-lg px-3.5 py-2.5 text-sm font-medium text-white focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
-							multiple ? "rounded-l-lg" : "rounded-lg",
-							loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
-							!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
-						]}
-					>
-						{#if loading}
-							<div class="flex flex-none items-center gap-[3px]">
-								<span class="mr-2">
-									{#if conversations.active.some(c => c.data.streaming)}
-										Stop
-									{:else}
-										Cancel
-									{/if}
-								</span>
-								{#each { length: 3 } as _, i}
-									<div
-										class="h-1 w-1 flex-none animate-bounce rounded-full bg-gray-500 dark:bg-gray-100"
-										style="animation-delay: {(i + 1) * 0.25}s;"
-									></div>
-								{/each}
-							</div>
-						{:else}
-							{multiple ? "Run all" : "Run"}
-							<span
-								class="inline-flex gap-0.5 rounded-sm border border-white/20 bg-white/10 px-0.5 text-xs text-white/70"
-							>
-								{cmdOrCtrl}<span class="translate-y-px">↵</span>
-							</span>
-						{/if}
-					</button>
-					{#if multiple}
-						<div class="w-[1px] bg-gray-800" aria-hidden="true"></div>
-						<Popover
-							floatingConfig={{
-								computePosition: {
-									placement: "top-end",
-								},
-							}}
-						>
-							{#snippet children(popover)}
-								<button
-									class={[
-										"flex items-center justify-center gap-2 rounded-r-lg px-1.5 text-sm font-medium text-white",
-										"focus:ring-4 focus:ring-gray-300 focus:outline-hidden dark:focus:ring-gray-700",
-										loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
-										!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
-									]}
-									{...popover.trigger}
-									disabled={loading}
-								>
-									<IconChevronDown />
-								</button>
-								<div
-									class={["flex-col rounded-lg bg-white px-2 py-1 shadow dark:bg-gray-800", popover.open && "flex"]}
-									{...popover.content}
-								>
-									<button
-										class="group py-1 text-sm"
-										onclick={() => {
-											viewCode = false;
-											conversations.genOrStop("left");
-											popover.open = false;
-										}}
-									>
-										<div
-											class="flex items-center gap-2 rounded p-1 group-hover:bg-gray-200 dark:group-hover:bg-gray-700"
-										>
-											<IconChatLeft />
-											<span class="mr-2">Only run left conversation</span>
-											<span class="ml-auto rounded-sm border border-white/20 bg-gray-500/10 px-0.5 text-xs">
-												{cmdOrCtrl}
-												{optOrAlt} L
-											</span>
-										</div>
-									</button>
-									<button
-										class="group py-1 text-sm"
-										onclick={() => {
-											viewCode = false;
-											conversations.genOrStop("right");
-											popover.open = false;
-										}}
-									>
-										<div
-											class="flex items-center gap-2 rounded p-1 group-hover:bg-gray-200 dark:group-hover:bg-gray-700"
-										>
-											<IconChatRight />
-											<span class="mr-2">Only run right conversation</span>
-											<span class="ml-auto rounded-sm border border-white/20 bg-gray-500/10 px-0.5 text-xs">
-												{cmdOrCtrl}
-												{optOrAlt} R
-											</span>
-										</div>
-									</button>
-								</div>
-							{/snippet}
-						</Popover>
-					{/if}
-				</div>
 			</div>
 		</div>
 	</div>

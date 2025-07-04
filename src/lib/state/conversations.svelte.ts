@@ -125,7 +125,7 @@ export class ConversationClass {
 	};
 
 	addMessage = async (message: ConversationMessage) => {
-		this.update({
+		await this.update({
 			...this.data,
 			messages: [...(this.data.messages || []), snapshot(message)],
 		});
