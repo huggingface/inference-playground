@@ -32,6 +32,13 @@ export class MCPServerEntity {
 
 export type MCPServerEntityMembers = MembersOnly<MCPServerEntity>;
 
+export type MCPFormData = {
+	name: string;
+	url: string;
+	protocol: MCPProtocol;
+	headers: Record<string, string>;
+};
+
 const mcpServersRepo = repo(MCPServerEntity, idb);
 
 class MCPServers {
