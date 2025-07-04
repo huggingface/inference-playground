@@ -16,7 +16,7 @@ export class StreamReader {
 
 	async *read(): AsyncGenerator<StreamChunk, void, unknown> {
 		const reader = this.response.body!.getReader();
-		
+
 		try {
 			while (true) {
 				const { done, value } = await reader.read();
@@ -63,9 +63,9 @@ export class StreamWriter {
 
 	constructor() {
 		this.stream = new ReadableStream({
-			start: (controller) => {
+			start: controller => {
 				this.controller = controller;
-			}
+			},
 		});
 	}
 
@@ -73,7 +73,7 @@ export class StreamWriter {
 		if (!this.controller) {
 			throw new Error("Stream not initialized");
 		}
-		
+
 		const data = JSON.stringify(chunk);
 		this.controller.enqueue(this.encoder.encode(`data: ${data}\n\n`));
 	}

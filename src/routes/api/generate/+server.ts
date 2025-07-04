@@ -1,13 +1,12 @@
-import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types.js";
-import type { FinishReason, GenerateRequest } from "./types.js";
-import { connectToMCPServers, executeMcpTool, type MCPServerConnection } from "./mcp.js";
-import { debugLog } from "./utils.js";
-import { createAdapter, type Adapter, type GenerationArgs } from "./adapter.js";
-import { StreamWriter } from "$lib/utils/stream.js";
-import type { ChatCompletionMessage } from "openai/resources/index.mjs";
-import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 import { last } from "$lib/utils/array.js";
+import { StreamWriter } from "$lib/utils/stream.js";
+import { json } from "@sveltejs/kit";
+import type { ChatCompletionMessage } from "openai/resources/index.mjs";
+import type { RequestHandler } from "./$types.js";
+import { createAdapter, type GenerationArgs } from "./adapter.js";
+import { connectToMCPServers, executeMcpTool, type MCPServerConnection } from "./mcp.js";
+import type { FinishReason, GenerateRequest } from "./types.js";
+import { debugLog } from "./utils.js";
 
 type AssistantResponse = { message: ChatCompletionMessage; finish_reason: FinishReason };
 
@@ -26,7 +25,7 @@ async function generateLoop({ args, getAssistantResponse, connections }: Generat
 		switch (finish_reason) {
 			case null: {
 				const res = await getAssistantResponse(args);
-				args.messages.push(res.message as any);
+				args.messages.push(res.message);
 				finish_reason = res.finish_reason;
 				break;
 			}
@@ -43,6 +42,7 @@ async function generateLoop({ args, getAssistantResponse, connections }: Generat
 
 				await Promise.allSettled(
 					toolCalls.map(async toolCall => {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						const response = await executeMcpTool(connections, toolCall as any);
 						debugLog("Tool call response", response);
 						args.messages.push(response);
@@ -97,6 +97,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							role: "assistant",
 							content: "",
 							// refusal: null,
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						} as any,
 						finish_reason: null,
 					};
@@ -158,6 +159,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			role: "assistant",
 			content: "",
 			// refusal: null,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
 
 		await generateLoop({
@@ -174,7 +176,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					// const { completion_tokens } = response.usage || { completion_tokens: 0 };
 
 					return {
-						message: response.choices[0]!.message as any,
+						message: response.choices[0]!.message,
 						finish_reason: response.choices[0]!.finish_reason,
 					};
 				}

@@ -5,10 +5,11 @@ import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 import OpenAI from "openai";
 import type { Stream } from "openai/streaming.mjs";
 import type { GenerateRequest, OpenAIFunctionSchema } from "./types.js";
+import type { ChatCompletionMessage } from "openai/resources/index.mjs";
 
 export type GenerationArgs = {
 	model: string;
-	messages: ChatCompletionInputMessage[];
+	messages: Array<ChatCompletionInputMessage | ChatCompletionMessage>;
 	provider?: string;
 	config?: Record<string, unknown>;
 	tools?: OpenAIFunctionSchema[];
@@ -52,7 +53,7 @@ function createHFAdapter({ accessToken }: GenerateRequest): Adapter {
 				provider: args.provider as any,
 				response_format: args.response_format as any,
 				tools: args.tools as any,
-			}) as any;
+			} as any) as any;
 		},
 		generate: (args: GenerationArgs) => {
 			return client.chatCompletion(args as any) as any;
