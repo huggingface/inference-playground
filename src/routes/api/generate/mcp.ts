@@ -26,7 +26,7 @@ export const connectToMCPServers = async (servers: MCPServerConfig[]): Promise<M
 			try {
 				const conn: MCPServerConnection = {
 					client: new Client({
-						name: "playground-client",
+						name: "playground-client" + crypto.randomUUID(),
 						version: "0.0.1",
 					}),
 					tools: [],

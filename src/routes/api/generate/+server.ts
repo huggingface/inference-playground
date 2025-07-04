@@ -66,6 +66,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body: GenerateRequest = await request.json();
 		const { model, messages, config, provider, streaming, response_format, enabledMCPs } = body;
 
+		if (enabledMCPs?.length === 0) {
+			debugLog(`MCP: Enabled MCP servers: ${enabledMCPs?.join(", ")}`);
+		}
+
 		// Connect to enabled MCP servers
 		const connections = await connectToMCPServers(enabledMCPs || []);
 		const tools = connections.flatMap(conn => conn.tools);

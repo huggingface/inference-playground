@@ -10,6 +10,7 @@ import ctxLengthData from "$lib/data/context_length.json";
 import { snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
+import { isMcpEnabled } from "$lib/constants.js";
 import {
 	isCustomModel,
 	isHFModel,
@@ -78,6 +79,8 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 }
 
 function getEnabledMCPs() {
+	if (!isMcpEnabled()) return [];
+	
 	return mcpServers.enabled.map(server => ({
 		id: server.id,
 		name: server.name,
