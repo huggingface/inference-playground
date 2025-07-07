@@ -132,9 +132,9 @@
 					</div>
 
 					<div class="my-4 flex items-center gap-2">
-						<div class="h-px grow bg-neutral-500" aria-hidden="true"></div>
-						<span class="text-xs text-neutral-400">or</span>
-						<div class="h-px grow bg-neutral-500" aria-hidden="true"></div>
+						<div class="h-px grow bg-gray-500" aria-hidden="true"></div>
+						<span class="text-xs text-gray-400">or</span>
+						<div class="h-px grow bg-gray-500" aria-hidden="true"></div>
 					</div>
 
 					<h3 class="text-lg font-semibold">Save a copied project</h3>

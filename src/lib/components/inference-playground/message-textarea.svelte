@@ -52,7 +52,7 @@
 
 <div class="mt-auto p-2">
 	<label
-		class="flex w-full items-end rounded-[32px] bg-neutral-200 p-2 pl-8 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-neutral-800"
+		class="flex w-full items-end rounded-[32px] bg-gray-200 p-2 pl-8 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-gray-800"
 	>
 		<textarea
 			{placeholder}
