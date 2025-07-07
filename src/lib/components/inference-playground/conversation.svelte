@@ -3,7 +3,6 @@
 	import { type ConversationClass } from "$lib/state/conversations.svelte";
 	import { watch } from "runed";
 	import { tick } from "svelte";
-	import IconPlus from "~icons/carbon/add";
 	import CodeSnippets from "./code-snippets.svelte";
 	import Message from "./message.svelte";
 
@@ -37,20 +36,6 @@
 		}
 	);
 
-	function addMessage() {
-		const msgs = conversation.data.messages?.slice() || [];
-		conversation.update({
-			...conversation.data,
-			messages: [
-				...msgs,
-				{
-					role: msgs.at(-1)?.role === "user" ? "assistant" : "user",
-					content: "",
-				},
-			],
-		});
-	}
-
 	async function regenMessage(idx: number) {
 		// TODO: migrate to new logic
 		const msg = conversation.data.messages?.[idx];
@@ -81,19 +66,6 @@
 				onRegen={() => regenMessage(index)}
 			/>
 		{/each}
-
-		<button
-			class="flex px-3.5 py-6 hover:bg-gray-50 md:px-6 dark:hover:bg-gray-800/50"
-			onclick={addMessage}
-			disabled={conversation.generating}
-		>
-			<div class="flex items-center gap-2 p-0! text-sm font-semibold">
-				<div class="text-lg">
-					<IconPlus />
-				</div>
-				Add message
-			</div>
-		</button>
 	{:else}
 		<CodeSnippets {conversation} {onCloseCode} />
 	{/if}
