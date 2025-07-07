@@ -2,7 +2,6 @@
 	import { autofocus } from "$lib/attachments/autofocus.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { conversations } from "$lib/state/conversations.svelte";
-	import { randomPick } from "$lib/utils/array.js";
 	import { cmdOrCtrl } from "$lib/utils/platform.js";
 	import { addToast } from "../toaster.svelte.js";
 
@@ -17,7 +16,7 @@
 
 		if (ctrlOrMeta && event.key === "Enter") {
 			const c = conversations.active;
-			const isValid = c.every(c => c.data.messages.at(-1)?.role !== "user");
+			const isValid = c.every(c => c.data.messages?.at(-1)?.role !== "user");
 
 			if (!isValid) {
 				addToast({
@@ -34,17 +33,6 @@
 		}
 	}
 
-	const placeholderMessages = [
-		"What is the capital of France?",
-		"What is Hugging Face?",
-		"What is the best way to learn machine learning?",
-		"What is Gradio?",
-		"What is Svelte?",
-		"How do I create agents in Hugging Face?",
-	];
-
-	const placeholder = randomPick(placeholderMessages);
-
 	const autosized = new TextareaAutosize();
 </script>
 
@@ -55,7 +43,7 @@
 		class="flex w-full items-end rounded-[32px] bg-gray-200 p-2 pl-8 outline-offset-2 outline-blue-500 focus-within:outline-2 dark:bg-gray-800"
 	>
 		<textarea
-			{placeholder}
+			placeholder="Enter your message"
 			class="max-h-100 flex-1 resize-none self-center outline-none"
 			bind:value={input}
 			{@attach autosized.attachment}
