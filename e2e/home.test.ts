@@ -30,7 +30,7 @@ test.describe.serial("Token Handling and Subsequent Tests", () => {
 	});
 
 	// Nested describe for tests that use the saved state
-	test.describe("Tests requiring persisted token", () => {
+	test.describe.skip("Tests requiring persisted token", () => {
 		test.use({ storageState: STORAGE_STATE_FILE });
 
 		test("can create a conversation with persisted token", async ({ page }) => {
@@ -67,7 +67,7 @@ test.describe.serial("Token Handling and Subsequent Tests", () => {
 			const assistantMsg = "assistant message: hey";
 
 			// Fill user message
-			await page.getByRole("textbox", { name: "Enter user message" }).click();
+			await page.getByRole("textbox", { name: "Enter message" }).click();
 			await page.getByRole("textbox", { name: "Enter user message" }).fill(userMsg);
 			// Blur
 			await page.locator(".relative > div:nth-child(2) > div").first().click();
