@@ -21,20 +21,9 @@
 
 	async function sendMessage() {
 		const c = conversations.active;
-		const isValid = c.every(c => c.data.messages?.at(-1)?.role !== "user");
-
-		if (!isValid) {
-			addToast({
-				title: "Cannot add message",
-				description: "Cannot have multiple user messages in a row",
-
-				variant: "error",
-			});
-		} else {
-			await Promise.all(c.map(c => c.addMessage({ role: "user", content: input })));
-			c.forEach(c => c.genNextMessage());
-			input = "";
-		}
+		await Promise.all(c.map(c => c.addMessage({ role: "user", content: input })));
+		c.forEach(c => c.genNextMessage());
+		input = "";
 	}
 
 	const autosized = new TextareaAutosize();
