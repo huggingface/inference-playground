@@ -119,18 +119,16 @@
 
 		<!-- Bottom bar -->
 		<div
-			class="relative mt-auto flex h-20 shrink-0 items-center justify-center gap-2 overflow-hidden border-t border-gray-200 px-3 whitespace-nowrap dark:border-gray-800"
+			class="relative mt-auto flex h-14 shrink-0 items-center justify-center gap-2 overflow-hidden px-3 whitespace-nowrap"
 		>
 			<div class="flex flex-1 justify-start gap-x-2">
 				{#if !compareActive}
-					<button
+					<button	
 						type="button"
 						onclick={() => (viewSettings = !viewSettings)}
-						class="flex h-[39px] items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 focus:outline-hidden md:hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+						class="flex h-[28px]! px-2 items-center gap-1 rounded-lg border border-gray-200 bg-white  py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 focus:outline-hidden md:hidden dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 					>
-						<div class="text-black dark:text-white">
 							<IconSettings />
-						</div>
 						{!viewSettings ? "Settings" : "Hide"}
 					</button>
 				{/if}
@@ -139,7 +137,7 @@
 						<button
 							type="button"
 							onclick={conversations.reset}
-							class="btn size-[39px]"
+							class="btn size-[28px]! p-0!"
 							{...tooltip.trigger}
 							data-test-id={TEST_IDS.reset}
 						>
@@ -170,7 +168,7 @@
 				<button
 					type="button"
 					onclick={() => (viewCode = !viewCode)}
-					class="btn"
+					class="btn h-[28px]! px-2!"
 					{@attach observe({ name: ObservedElements.BottomActions, useRaf: true })}
 				>
 					<IconCode />
