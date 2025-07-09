@@ -123,12 +123,12 @@
 		>
 			<div class="flex flex-1 justify-start gap-x-2">
 				{#if !compareActive}
-					<button	
+					<button
 						type="button"
 						onclick={() => (viewSettings = !viewSettings)}
-						class="flex h-[28px]! px-2 items-center gap-1 rounded-lg border border-gray-200 bg-white  py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 focus:outline-hidden md:hidden dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+						class="flex h-[28px]! px-2 items-center gap-1 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 focus:outline-hidden md:hidden dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
 					>
-							<IconSettings />
+						<IconSettings />
 						{!viewSettings ? "Settings" : "Hide"}
 					</button>
 				{/if}

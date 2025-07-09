@@ -33,7 +33,7 @@
 
 <div class="mt-auto px-2">
 	<label
-		class="flex w-full items-end rounded-[32px] bg-gray-200 p-2 pl-6  outline-gray-500 focus-within:outline-2 dark:bg-gray-800"
+		class="flex w-full items-end rounded-[32px] bg-gray-200 p-2 pl-6 outline-gray-500 focus-within:outline-2 dark:bg-gray-800"
 	>
 		<textarea
 			placeholder="Enter your message"
