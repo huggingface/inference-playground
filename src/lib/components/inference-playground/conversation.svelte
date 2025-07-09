@@ -57,15 +57,22 @@
 	bind:this={messageContainer}
 >
 	{#if !viewCode}
-		{#each conversation.data.messages || [] as message, index}
-			<Message
-				{message}
-				{index}
-				{conversation}
-				onDelete={() => conversation.deleteMessage(index)}
-				onRegen={() => regenMessage(index)}
-			/>
-		{/each}
+		{#if conversation.data.messages?.length}
+			{#each conversation.data.messages as message, index}
+				<Message
+					{message}
+					{index}
+					{conversation}
+					onDelete={() => conversation.deleteMessage(index)}
+					onRegen={() => regenMessage(index)}
+				/>
+			{/each}
+		{:else}
+			<div class="m-auto flex flex-col items-center gap-2 text-center px-4 text-balance">
+				<h1 class="text-2xl font-semibold">Welcome to Hugging Face Inference Playground</h1>
+				<p class="text-lg text-gray-500">Try hundreds of models on different providers</p>
+			</div>
+		{/if}
 	{:else}
 		<CodeSnippets {conversation} {onCloseCode} />
 	{/if}

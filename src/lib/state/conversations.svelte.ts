@@ -57,8 +57,6 @@ export type ConversationEntityMembers = MembersOnly<ConversationEntity>;
 
 const conversationsRepo = repo(ConversationEntity, idb);
 
-const startMessageUser: ConversationMessage = { role: "user", content: "" };
-
 export const emptyModel: Model = {
 	_id: "",
 	inferenceProviderMapping: [],
@@ -78,7 +76,7 @@ function getDefaultConversation(projectId: string) {
 		projectId,
 		modelId: models.trending[0]?.id ?? models.remote[0]?.id ?? emptyModel.id,
 		config: { ...defaultGenerationConfig },
-		messages: [{ ...startMessageUser }],
+		messages: [],
 		streaming: true,
 		createdAt: new Date(),
 	} satisfies Partial<ConversationEntityMembers>;
