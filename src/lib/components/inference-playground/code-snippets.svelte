@@ -82,8 +82,8 @@
 		fromEntries(
 			keys(labelsByLanguage).map(lang => {
 				return [lang, 0];
-			})
-		)
+			}),
+		),
 	);
 
 	type InstallInstructions = {
@@ -147,7 +147,9 @@
 		class="border-b border-gray-200 text-center text-sm font-medium text-gray-500 dark:border-gray-700 dark:text-gray-400"
 	>
 		<ul class="-mb-px flex flex-wrap">
-			{#each entries(labelsByLanguage) as [language, label]}
+			{#each entries(labelsByLanguage).filter(([lang]) => {
+				return snippetsByLang[lang]?.length;
+			}) as [language, label]}
 				<li>
 					<button
 						onclick={() => (lang = language)}
@@ -218,7 +220,7 @@
 		<pre
 			class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-xs dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
 				installInstructions.content,
-				selectedSnippet?.language
+				selectedSnippet?.language,
 			)}</pre>
 	{/if}
 
@@ -253,6 +255,6 @@
 	<pre
 		class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-xs dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
 			selectedSnippet?.content,
-			selectedSnippet?.language
+			selectedSnippet?.language,
 		)}</pre>
 </div>

@@ -161,6 +161,7 @@ export enum Provider {
 	Together = "together",
 	Cohere = "cohere",
 	Groq = "groq",
+	Auto = "auto",
 }
 
 export enum Status {

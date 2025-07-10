@@ -21,7 +21,6 @@ import {
 } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
 import { omit, tryGet } from "$lib/utils/object.svelte.js";
-import { type InferenceProvider } from "@huggingface/inference";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
@@ -120,7 +119,7 @@ function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 
 async function getCompletionMetadata(
 	conversation: ConversationClass | Conversation,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<CompletionMetadata> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
@@ -180,7 +179,7 @@ async function getCompletionMetadata(
 export async function handleStreamingResponse(
 	conversation: ConversationClass | Conversation,
 	onChunk: (content: string) => void,
-	abortController: AbortController
+	abortController: AbortController,
 ): Promise<void> {
 	const metadata = await getCompletionMetadata(conversation, abortController.signal);
 
@@ -211,7 +210,7 @@ export async function handleStreamingResponse(
 }
 
 export async function handleNonStreamingResponse(
-	conversation: ConversationClass | Conversation
+	conversation: ConversationClass | Conversation,
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
 	const metadata = await getCompletionMetadata(conversation);
 
@@ -325,11 +324,11 @@ export function getInferenceSnippet(
 		temperature?: ConversationEntityMembers["config"]["temperature"];
 		top_p?: ConversationEntityMembers["config"]["top_p"];
 		structured_output?: ConversationEntityMembers["structuredOutput"];
-	}
+	},
 ): GetInferenceSnippetReturn {
 	const model = conversation.model;
 	const data = conversation.data;
-	const provider = (isCustomModel(model) ? "hf-inference" : data.provider) as InferenceProvider;
+	const provider = (isCustomModel(model) ? "hf-inference" : data.provider) as Provider;
 
 	// If it's a custom model, we don't generate inference snippets
 	if (isCustomModel(model)) {
@@ -337,14 +336,13 @@ export function getInferenceSnippet(
 	}
 
 	const providerMapping = model.inferenceProviderMapping.find(p => p.provider === provider);
-	if (!providerMapping) return [];
+	if (!providerMapping && provider !== "auto") return [];
 	const allSnippets = snippets.getInferenceSnippets(
 		{ ...model, inference: "" },
-		accessToken,
 		provider,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		{ ...providerMapping, hfModelId: model.id } as any,
-		opts
+		{ ...opts, accessToken },
 	);
 
 	return allSnippets

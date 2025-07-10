@@ -22,7 +22,7 @@
 		"@eslint/js": "^9.22.0",
 		"@floating-ui/dom": "^1.6.13",
 		"@huggingface/hub": "^2.1.0",
-		"@huggingface/inference": "^3.13.2",
+		"@huggingface/inference": "^4.4.0",
 		"@huggingface/tasks": "^0.19.8",
 		"@huggingface/transformers": "^3.5.1",
 		"@iconify-json/carbon": "^1.2.8",
