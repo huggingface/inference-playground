@@ -2,6 +2,7 @@
 	import { type ConversationClass } from "$lib/state/conversations.svelte";
 	import { structuredForbiddenProviders } from "$lib/state/models.svelte";
 	import { token } from "$lib/state/token.svelte.js";
+	import { billing } from "$lib/state/billing.svelte";
 	import { isCustomModel } from "$lib/types.js";
 	import {
 		getInferenceSnippet,
@@ -54,6 +55,7 @@
 			temperature: data.config.temperature,
 			top_p: data.config.top_p,
 			accessToken: tokenStr,
+			billTo: billing.organization || undefined,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

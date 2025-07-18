@@ -32,6 +32,9 @@ export default ts.config(
 				// While certain Svelte settings may be statically loaded from svelte.config.js even if you don’t specify it,
 				// explicitly specifying it ensures better compatibility and functionality.
 				svelteConfig,
+				svelteFeatures: {
+					experimentalGenerics: true,
+				},
 			},
 		},
 	},

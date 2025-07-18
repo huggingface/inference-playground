@@ -24,11 +24,14 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
+	import BillingModal from "./billing-modal.svelte";
+	import BillingIndicator from "../billing-indicator.svelte";
 	import { TEST_IDS } from "$lib/constants.js";
 	import MessageTextarea from "./message-textarea.svelte";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
+	let billingModalOpen = $state(false);
 
 	let selectCompareModelOpen = $state(false);
 
@@ -218,40 +221,45 @@
 
 					<GenerationConfig conversation={conversations.active[0]!} />
 
-					<div class="mt-auto flex items-center justify-end gap-4 whitespace-nowrap">
-						<button
-							onclick={() => projects.current && showShareModal(projects.current)}
-							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-						>
-							<IconShare class="text-xs" />
-							Share
-						</button>
-						<a
-							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-							href="https://huggingface.co/spaces/victor/providers-metrics"
-							target="_blank"
-						>
-							<IconWaterfall class="text-xs" />
-							Metrics
-						</a>
-						{#if token.value}
+					<div class="mt-auto space-y-3">
+						<div class="flex items-center justify-end">
+							<BillingIndicator showModal={() => (billingModalOpen = true)} />
+						</div>
+						<div class="flex items-center justify-end gap-4 whitespace-nowrap">
 							<button
-								onclick={token.reset}
+								onclick={() => projects.current && showShareModal(projects.current)}
 								class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
 							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="text-xs" width="1em" height="1em" viewBox="0 0 32 32">
-									<path
-										fill="currentColor"
-										d="M23.216 4H26V2h-7v6h2V5.096A11.96 11.96 0 0 1 28 16c0 6.617-5.383 12-12 12v2c7.72 0 14-6.28 14-14c0-5.009-2.632-9.512-6.784-12"
-									/>
-									<path fill="currentColor" d="M16 20a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M15 9h2v9h-2z" /><path
-										fill="currentColor"
-										d="M16 4V2C8.28 2 2 8.28 2 16c0 4.977 2.607 9.494 6.784 12H6v2h7v-6h-2v2.903A11.97 11.97 0 0 1 4 16C4 9.383 9.383 4 16 4"
-									/>
-								</svg>
-								Reset token
+								<IconShare class="text-xs" />
+								Share
 							</button>
-						{/if}
+							<a
+								class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+								href="https://huggingface.co/spaces/victor/providers-metrics"
+								target="_blank"
+							>
+								<IconWaterfall class="text-xs" />
+								Metrics
+							</a>
+							{#if token.value}
+								<button
+									onclick={token.reset}
+									class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="text-xs" width="1em" height="1em" viewBox="0 0 32 32">
+										<path
+											fill="currentColor"
+											d="M23.216 4H26V2h-7v6h2V5.096A11.96 11.96 0 0 1 28 16c0 6.617-5.383 12-12 12v2c7.72 0 14-6.28 14-14c0-5.009-2.632-9.512-6.784-12"
+										/>
+										<path fill="currentColor" d="M16 20a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M15 9h2v9h-2z" /><path
+											fill="currentColor"
+											d="M16 4V2C8.28 2 2 8.28 2 16c0 4.977 2.607 9.494 6.784 12H6v2h7v-6h-2v2.903A11.97 11.97 0 0 1 4 16C4 9.383 9.383 4 16 4"
+										/>
+									</svg>
+									Reset token
+								</button>
+							{/if}
+						</div>
 					</div>
 
 					<div class="mt-auto hidden">
@@ -311,4 +319,8 @@
 		}}
 		onClose={() => (selectCompareModelOpen = false)}
 	/>
+{/if}
+
+{#if billingModalOpen}
+	<BillingModal onClose={() => (billingModalOpen = false)} />
 {/if}

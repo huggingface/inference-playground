@@ -10,6 +10,7 @@ import ctxLengthData from "$lib/data/context_length.json";
 import { InferenceClient, snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
+import { billing } from "$lib/state/billing.svelte";
 import {
 	isCustomModel,
 	isHFModel,
@@ -169,9 +170,14 @@ async function getCompletionMetadata(
 	} as any;
 
 	// Handle HuggingFace models
+	const clientOptions: ConstructorParameters<typeof InferenceClient>[1] = {};
+	if (billing.organization) {
+		clientOptions.billTo = billing.organization;
+	}
+
 	return {
 		type: "huggingface",
-		client: new InferenceClient(token.value),
+		client: new InferenceClient(token.value, clientOptions),
 		args,
 	};
 }
@@ -324,6 +330,7 @@ export function getInferenceSnippet(
 		temperature?: ConversationEntityMembers["config"]["temperature"];
 		top_p?: ConversationEntityMembers["config"]["top_p"];
 		structured_output?: ConversationEntityMembers["structuredOutput"];
+		billTo?: string;
 	},
 ): GetInferenceSnippetReturn {
 	const model = conversation.model;
@@ -344,7 +351,6 @@ export function getInferenceSnippet(
 		{ ...providerMapping, hfModelId: model.id } as any,
 		{ ...opts, directRequest: false },
 	);
-	console.log(allSnippets);
 
 	return allSnippets
 		.filter(s => s.language === language)
@@ -365,6 +371,7 @@ export function getInferenceSnippet(
 		});
 }
 
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
 const tokenizers = new Map<string, PreTrainedTokenizer | null>();
 
 export async function getTokenizer(model: Model) {
