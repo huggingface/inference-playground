@@ -10,39 +10,29 @@
 	}
 
 	const { showModal }: Props = $props();
-
-	const statusColor = $derived(() => {
-		if (!billing.organization) return "text-gray-600 dark:text-gray-400";
-		if (billing.validating) return "text-yellow-600 dark:text-yellow-400";
-		if (billing.isValid) return "text-green-600 dark:text-green-400";
-		return "text-red-600 dark:text-red-400";
-	});
-
-	const bgColor = $derived(() => {
-		if (!billing.organization) return "bg-gray-50 dark:bg-gray-800";
-		if (billing.validating) return "bg-yellow-50 dark:bg-yellow-900/20";
-		if (billing.isValid) return "bg-green-50 dark:bg-green-900/20";
-		return "bg-red-50 dark:bg-red-900/20";
-	});
 </script>
 
 <button
 	onclick={showModal}
-	class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 {bgColor}"
+	class={[
+		"flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+		"bg-gray-100/50 hover:bg-gray-100 active:bg-gray-200",
+		"dark:bg-gray-800/70 dark:hover:bg-gray-700 dark:active:bg-gray-700/50",
+	]}
 >
 	<!-- Avatar or Icon -->
 	{#if billing.organization && billing.organizationInfo?.avatar && billing.isValid}
 		<img src={billing.organizationInfo.avatar} alt={billing.displayName} class="h-5 w-5 rounded-full" />
 	{:else if billing.organization}
-		<IconGroup class="h-4 w-4 {statusColor}" />
+		<IconGroup class="h-4 w-4" />
 	{:else}
-		<IconUser class="h-4 w-4 {statusColor}" />
+		<IconUser class="h-4 w-4" />
 	{/if}
 
 	<!-- Billing info -->
 	<div class="flex flex-col items-start">
-		<div class="flex items-center gap-1">
-			<span class="font-medium {statusColor}">
+		<div class="flex items-center gap-1.5">
+			<span class="font-medium">
 				{billing.displayName}
 			</span>
 
