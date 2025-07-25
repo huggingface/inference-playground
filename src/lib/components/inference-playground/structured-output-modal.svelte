@@ -1,3 +1,11 @@
+<script lang="ts" module>
+	let open = $state(false);
+
+	export function openStructuredOutputModal() {
+		open = true;
+	}
+</script>
+
 <script lang="ts">
 	import { isDark } from "$lib/spells/is-dark.svelte";
 	import { Synced } from "$lib/spells/synced.svelte";
@@ -14,10 +22,9 @@
 
 	interface Props {
 		conversation: ConversationClass;
-		open: boolean;
 	}
 
-	let { conversation, open = $bindable(false) }: Props = $props();
+	let { conversation }: Props = $props();
 
 	let tempSchema = $derived(conversation.data.structuredOutput?.schema ?? "");
 
@@ -124,122 +131,116 @@
 	</div>
 
 	{#if radioGroup.value === "form"}
-		<div class="fade-y -mx-2 mt-2 -mb-4 max-h-200 space-y-4 overflow-auto px-2 py-4 text-left">
+		<div class="fade-y -mx-2 -mb-4 max-h-200 space-y-4 overflow-auto px-2 py-4 text-left">
 			<!-- Properties Section -->
-			<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-				<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Properties</h3>
-				{#if schemaObj.current.schema?.properties}
-					<div class="mt-3 space-y-3">
-						{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition]}
-							<SchemaProperty
-								bind:name={
-									() => propertyName,
-									value => {
-										const updatedProperties = renameKey(
-											schemaObj.current.schema?.properties ?? {},
-											propertyName,
-											value,
-										);
+			<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Properties</h3>
+			{#if schemaObj.current.schema?.properties}
+				<div class="mt-3 space-y-3">
+					{#each Object.entries(schemaObj.current.schema.properties) as [propertyName, propertyDefinition]}
+						<SchemaProperty
+							bind:name={
+								() => propertyName,
+								value => {
+									const updatedProperties = renameKey(schemaObj.current.schema?.properties ?? {}, propertyName, value);
+									updateSchemaNested({ properties: updatedProperties });
+								}
+							}
+							bind:definition={
+								() => propertyDefinition,
+								v => {
+									const updatedProperties = { ...schemaObj.current.schema?.properties };
+									if (updatedProperties && updatedProperties[propertyName]) {
+										updatedProperties[propertyName] = v;
 										updateSchemaNested({ properties: updatedProperties });
 									}
 								}
-								bind:definition={
-									() => propertyDefinition,
-									v => {
-										const updatedProperties = { ...schemaObj.current.schema?.properties };
-										if (updatedProperties && updatedProperties[propertyName]) {
-											updatedProperties[propertyName] = v;
-											updateSchemaNested({ properties: updatedProperties });
+							}
+							bind:required={
+								() => schemaObj.current.schema?.required?.includes(propertyName) ?? false,
+								v => {
+									let updatedRequired = [...(schemaObj.current.schema?.required || [])];
+									if (v) {
+										if (!updatedRequired.includes(propertyName)) {
+											updatedRequired.push(propertyName);
 										}
+									} else {
+										updatedRequired = updatedRequired.filter(name => name !== name);
 									}
+									updateSchemaNested({ required: updatedRequired });
 								}
-								bind:required={
-									() => schemaObj.current.schema?.required?.includes(propertyName) ?? false,
-									v => {
-										let updatedRequired = [...(schemaObj.current.schema?.required || [])];
-										if (v) {
-											if (!updatedRequired.includes(propertyName)) {
-												updatedRequired.push(propertyName);
-											}
-										} else {
-											updatedRequired = updatedRequired.filter(name => name !== name);
-										}
-										updateSchemaNested({ required: updatedRequired });
-									}
-								}
-								onDelete={() => {
-									const updatedProperties = { ...schemaObj.current.schema?.properties };
-									if (!updatedProperties || !updatedProperties[propertyName]) return;
-									delete updatedProperties[propertyName];
-									updateSchemaNested({ properties: updatedProperties });
-								}}
-							/>
-						{:else}
-							<p class="mt-3 text-sm text-gray-500">No properties defined yet.</p>
-						{/each}
+							}
+							onDelete={() => {
+								const updatedProperties = { ...schemaObj.current.schema?.properties };
+								if (!updatedProperties || !updatedProperties[propertyName]) return;
+								delete updatedProperties[propertyName];
+								updateSchemaNested({ properties: updatedProperties });
+							}}
+						/>
+					{:else}
+						<p class="mt-3 text-sm text-gray-500">No properties defined yet.</p>
+					{/each}
+				</div>
+			{:else}
+				<p class="mt-3 text-sm text-gray-500">No properties defined yet.</p>
+			{/if}
+
+			<button
+				type="button"
+				class="btn-sm mt-4 flex w-full items-center justify-center rounded-md"
+				onclick={() => {
+					const newPropertyName = `newProperty${Object.keys(schemaObj.current.schema?.properties || {}).length + 1}`;
+					const updatedProperties = {
+						...(schemaObj.current.schema?.properties || {}),
+						[newPropertyName]: { type: "string" as const },
+					};
+					updateSchemaNested({ properties: updatedProperties });
+				}}
+			>
+				Add property
+			</button>
+		</div>
+
+		<!-- Strict and Additional Properties -->
+		<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+			<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Options</h3>
+			<div class="mt-3 space-y-2">
+				<div class="relative flex items-start">
+					<div class="flex h-5 items-center">
+						<input
+							id="additionalProperties"
+							name="additionalProperties"
+							type="checkbox"
+							class="h-4 w-4 rounded border border-gray-300 bg-white text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
+							checked={schemaObj.current.schema?.additionalProperties !== undefined
+								? schemaObj.current.schema.additionalProperties
+								: true}
+							onchange={e => updateSchemaNested({ additionalProperties: e.currentTarget.checked })}
+						/>
 					</div>
-				{:else}
-					<p class="mt-3 text-sm text-gray-500">No properties defined yet.</p>
-				{/if}
-
-				<button
-					type="button"
-					class="btn-sm mt-4 flex w-full items-center justify-center rounded-md"
-					onclick={() => {
-						const newPropertyName = `newProperty${Object.keys(schemaObj.current.schema?.properties || {}).length + 1}`;
-						const updatedProperties = {
-							...(schemaObj.current.schema?.properties || {}),
-							[newPropertyName]: { type: "string" as const },
-						};
-						updateSchemaNested({ properties: updatedProperties });
-					}}
-				>
-					Add property
-				</button>
-			</div>
-
-			<!-- Strict and Additional Properties -->
-			<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-				<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Options</h3>
-				<div class="mt-3 space-y-2">
-					<div class="relative flex items-start">
-						<div class="flex h-5 items-center">
-							<input
-								id="additionalProperties"
-								name="additionalProperties"
-								type="checkbox"
-								class="h-4 w-4 rounded border border-gray-300 bg-white text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-								checked={schemaObj.current.schema?.additionalProperties !== undefined
-									? schemaObj.current.schema.additionalProperties
-									: true}
-								onchange={e => updateSchemaNested({ additionalProperties: e.currentTarget.checked })}
-							/>
-						</div>
-						<div class="ml-3 text-sm">
-							<label for="additionalProperties" class="font-medium text-gray-700 dark:text-gray-300">
-								Allow additional properties
-							</label>
-							<p id="additionalProperties-description" class="text-gray-500">
-								If unchecked, only properties defined in the schema are allowed.
-							</p>
-						</div>
+					<div class="ml-3 text-sm">
+						<label for="additionalProperties" class="font-medium text-gray-700 dark:text-gray-300">
+							Allow additional properties
+						</label>
+						<p id="additionalProperties-description" class="text-gray-500">
+							If unchecked, only properties defined in the schema are allowed.
+						</p>
 					</div>
+				</div>
 
-					<div class="relative flex items-start">
-						<div class="flex h-5 items-center">
-							<input
-								id="strict"
-								name="strict"
-								type="checkbox"
-								class="h-4 w-4 rounded border border-gray-300 bg-white text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-								checked={schemaObj.current.strict !== undefined ? schemaObj.current.strict : false}
-								onchange={e => updateSchema({ strict: e.currentTarget.checked })}
-							/>
-						</div>
-						<div class="ml-3 text-sm">
-							<label for="strict" class="font-medium text-gray-700 dark:text-gray-300">Strict mode</label>
-							<p id="strict-description" class="text-gray-500">Enforces stricter validation rules.</p>
-						</div>
+				<div class="relative flex items-start">
+					<div class="flex h-5 items-center">
+						<input
+							id="strict"
+							name="strict"
+							type="checkbox"
+							class="h-4 w-4 rounded border border-gray-300 bg-white text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
+							checked={schemaObj.current.strict !== undefined ? schemaObj.current.strict : false}
+							onchange={e => updateSchema({ strict: e.currentTarget.checked })}
+						/>
+					</div>
+					<div class="ml-3 text-sm">
+						<label for="strict" class="font-medium text-gray-700 dark:text-gray-300">Strict mode</label>
+						<p id="strict-description" class="text-gray-500">Enforces stricter validation rules.</p>
 					</div>
 				</div>
 			</div>
