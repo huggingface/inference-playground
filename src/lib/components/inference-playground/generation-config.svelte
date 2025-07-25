@@ -8,6 +8,7 @@
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
 	import StructuredOutputModal, { openStructuredOutputModal } from "./structured-output-modal.svelte";
 	import ExtraParamsModal, { openExtraParamsModal } from "./extra-params-modal.svelte";
+	import { cn } from "$lib/utils/cn.js";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -42,6 +43,8 @@
 			},
 		});
 	}
+
+	const extraParamsLen = $derived(Object.keys(conversation.data.extraParams ?? {}).length);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -122,8 +125,16 @@
 		</label>
 	{/if}
 
-	<div class="mt-2 flex cursor-pointer items-center">
+	<div class="mt-2 flex items-center gap-2">
 		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Extra parameters</span>
+		<span
+			class={cn(
+				"rounded-md bg-black px-2 py-1 text-xs font-semibold text-white dark:bg-blue-600",
+				!extraParamsLen && "hidden",
+			)}
+		>
+			{extraParamsLen}
+		</span>
 		<button class="btn-mini ml-auto" type="button" onclick={openExtraParamsModal}>edit</button>
 	</div>
 </div>
