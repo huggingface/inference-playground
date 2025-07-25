@@ -27,7 +27,17 @@
 	});
 </script>
 
-<dialog bind:this={dialog} onclose={onClose}>
+<dialog
+	bind:this={dialog}
+	oncancel={e => {
+		e.preventDefault();
+		onClose?.();
+	}}
+	onclose={e => {
+		e.preventDefault();
+		onClose?.();
+	}}
+>
 	{#if open}
 		<form class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/85" onsubmit={onSubmit}>
 			<div
