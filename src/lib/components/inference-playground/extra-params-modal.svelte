@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	let open = $state(true); // TODO: revert to false
+	let open = $state(false);
 
 	export function openExtraParamsModal() {
 		open = true;
