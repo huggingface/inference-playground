@@ -30,6 +30,9 @@ export class ConversationEntity {
 	config: GenerationConfig = {};
 
 	@Fields.json()
+	extraParams?: Record<string, string>;
+
+	@Fields.json()
 	structuredOutput?: {
 		enabled?: boolean;
 		schema?: string;
