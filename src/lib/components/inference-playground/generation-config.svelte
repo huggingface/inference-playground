@@ -6,7 +6,9 @@
 	import { watch } from "runed";
 	import IconX from "~icons/carbon/close";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
-	import StructuredOutputModal from "./structured-output-modal.svelte";
+	import StructuredOutputModal, { openStructuredOutputModal } from "./structured-output-modal.svelte";
+	import ExtraParamsModal, { openExtraParamsModal } from "./extra-params-modal.svelte";
+	import { cn } from "$lib/utils/cn.js";
 
 	interface Props {
 		conversation: ConversationClass;
@@ -42,7 +44,7 @@
 		});
 	}
 
-	let editingStructuredOutput = $state(false);
+	const extraParamsLen = $derived(Object.keys(conversation.data.extraParams ?? {}).length);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -115,13 +117,27 @@
 					class="peer sr-only"
 					id="structured-output"
 				/>
-				<button class="btn-mini" type="button" onclick={() => (editingStructuredOutput = true)}> edit </button>
+				<button class="btn-mini" type="button" onclick={openStructuredOutputModal}> edit </button>
 				<div
 					class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
 				></div>
 			</div>
 		</label>
 	{/if}
+
+	<div class="mt-2 flex items-center gap-2">
+		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Extra parameters</span>
+		<span
+			class={cn(
+				"rounded-md bg-black px-2 py-1 text-xs font-semibold text-white dark:bg-blue-600",
+				!extraParamsLen && "hidden",
+			)}
+		>
+			{extraParamsLen}
+		</span>
+		<button class="btn-mini ml-auto" type="button" onclick={openExtraParamsModal}>edit</button>
+	</div>
 </div>
 
-<StructuredOutputModal {conversation} bind:open={editingStructuredOutput} />
+<StructuredOutputModal {conversation} />
+<ExtraParamsModal {conversation} />
