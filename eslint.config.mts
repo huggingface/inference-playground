@@ -61,6 +61,8 @@ export default ts.config(
 				},
 			],
 
+			"@typescript-eslint/no-this-alias": "off",
+
 			"object-shorthand": ["error", "always"],
 			"svelte/no-at-html-tags": "off",
 			"svelte/require-each-key": "off",

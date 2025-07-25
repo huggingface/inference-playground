@@ -102,3 +102,9 @@ export function renameKey<T extends object>(
 	}
 	return result;
 }
+
+export function unmutableSet<T extends object>(obj: T, key: keyof T, value: T[keyof T]) {
+	const newObj = { ...obj };
+	newObj[key] = value;
+	return newObj;
+}
