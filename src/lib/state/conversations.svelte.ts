@@ -5,9 +5,10 @@ import {
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
 import { PipelineTag, Provider, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
-import { handleNonStreamingResponse, handleStreamingResponse } from "$lib/utils/business.svelte.js";
+import { handleNonStreamingResponse, handleStreamingResponse, estimateTokens } from "$lib/utils/business.svelte.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
 import { models, structuredForbiddenProviders } from "./models.svelte";
+import { pricing } from "./pricing.svelte.js";
 import { DEFAULT_PROJECT_ID, ProjectEntity, projects } from "./projects.svelte";
 import { token } from "./token.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -87,7 +88,7 @@ export class ConversationClass {
 	readonly model = $derived(models.all.find(m => m.id === this.data.modelId) ?? emptyModel);
 
 	abortManager = new AbortManager();
-	generationStats = $state({ latency: 0, tokens: 0 }) as GenerationStatistics;
+	generationStats = $state({ latency: 0, tokens: 0, cost: 0 }) as GenerationStatistics;
 	generating = $state(false);
 
 	constructor(data: ConversationEntityMembers) {
@@ -232,6 +233,17 @@ export class ConversationClass {
 
 		const endTime = performance.now();
 		this.generationStats.latency = Math.round(endTime - startTime);
+		
+		// Calculate cost if we have pricing data
+		if (this.data.provider && this.data.provider !== "auto") {
+			const inputTokens = estimateTokens(this);
+			const outputTokens = this.generationStats.tokens;
+			const costEstimate = pricing.estimateCost(this.model.id, this.data.provider, inputTokens, outputTokens);
+			if (costEstimate) {
+				this.generationStats.cost = costEstimate.total;
+			}
+		}
+		
 		this.generating = false;
 	};
 

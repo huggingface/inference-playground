@@ -28,6 +28,7 @@
 	import BillingIndicator from "../billing-indicator.svelte";
 	import { TEST_IDS } from "$lib/constants.js";
 	import MessageTextarea from "./message-textarea.svelte";
+	import { atLeastNDecimals } from "$lib/utils/number";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
@@ -155,7 +156,7 @@
 			<div
 				class="pointer-events-none absolute inset-0 flex flex-1 shrink-0 items-center justify-around gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 			>
-				{#each iterate(conversations.generationStats) as [{ latency, tokens }, isLast]}
+				{#each iterate(conversations.generationStats) as [{ latency, tokens, cost }, isLast]}
 					{@const baLeft = observed["bottom-actions"].rect.left}
 					{@const tceRight = observed["token-count-end"].offset.right}
 					<span
@@ -165,7 +166,7 @@
 							useRaf: true,
 						})}
 					>
-						{tokens} tokens · Latency {latency}ms
+						{tokens} tokens · Latency {latency}ms · Cost ${atLeastNDecimals(cost ?? 0, 1)}
 					</span>
 				{/each}
 			</div>

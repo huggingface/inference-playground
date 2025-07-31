@@ -197,6 +197,7 @@ export type ValueOf<T> = T[keyof T];
 export interface GenerationStatistics {
 	latency: number;
 	tokens: number;
+	cost?: number;
 }
 
 export type ModelsJson = {
