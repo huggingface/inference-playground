@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "pnpm run update-ctx-length && vite dev",
+		"dev": "vite dev",
 		"build": "pnpm run update-ctx-length && vite build",
 		"preview": "vite preview",
 		"prepare": "ts-patch install && svelte-kit sync || echo ''",
@@ -12,7 +12,6 @@
 		"lint": "prettier . --check . && eslint src/",
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
-		"update-ctx-length": "jiti scripts/update-ctx-length.ts",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test"
