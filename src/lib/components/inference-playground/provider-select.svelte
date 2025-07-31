@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte";
+	import { pricing } from "$lib/state/pricing.svelte";
 	import type { Model } from "$lib/types.js";
 	import { randomPick } from "$lib/utils/array.js";
 	import { cn } from "$lib/utils/cn.js";
@@ -75,6 +76,13 @@
 		if (provider in nameMap) return formatName(provider);
 		return provider === "auto" ? "Auto" : provider;
 	}
+
+	function getProviderPricing(provider: string) {
+		if (provider === "auto") return null;
+		const pd = pricing.getPricing(conversation.model.id, provider);
+		return pricing.formatPricing(pd);
+	}
+	const providerPricing = $derived(getProviderPricing(conversation.data.provider ?? ""));
 </script>
 
 <div class="flex flex-col gap-2">
@@ -92,9 +100,16 @@
 			classes,
 		)}
 	>
-		<div class="flex items-center gap-1 text-sm">
+		<div class="flex items-center gap-2 text-sm">
 			<IconProvider provider={conversation.data.provider} />
-			{getProviderName(conversation.data.provider ?? "") ?? "loading"}
+			<div class="flex flex-col items-start">
+				<span>{getProviderName(conversation.data.provider ?? "") ?? "loading"}</span>
+				{#if providerPricing}
+					<span class="text-xs text-gray-500 dark:text-gray-400">
+						In: {providerPricing.input} • Out: {providerPricing.output}
+					</span>
+				{/if}
+			</div>
 		</div>
 		<div
 			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
@@ -105,12 +120,22 @@
 
 	<div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
 		{#snippet option(provider: string)}
+			{@const providerPricing = getProviderPricing(provider)}
 			<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
 				<div
 					class="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 				>
 					<IconProvider {provider} />
-					{getProviderName(provider)}
+					<div class="flex flex-col">
+						<span>{getProviderName(provider)}</span>
+						{#if providerPricing}
+							<div class="flex flex-col">
+								<span class="text-xs text-gray-500 dark:text-gray-400">
+									In: {providerPricing.input} • Out: {providerPricing.output}
+								</span>
+							</div>
+						{/if}
+					</div>
 				</div>
 			</div>
 		{/snippet}

@@ -6,7 +6,7 @@
  *
  **/
 
-import ctxLengthData from "$lib/data/context_length.json";
+import { pricing } from "$lib/state/pricing.svelte.js";
 import { InferenceClient, snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
@@ -21,7 +21,7 @@ import {
 	type Model,
 } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
-import { omit, tryGet } from "$lib/utils/object.svelte.js";
+import { omit } from "$lib/utils/object.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
@@ -71,20 +71,15 @@ type OpenAICompletionMetadata = {
 type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
 
 export function maxAllowedTokens(conversation: ConversationClass) {
-	const ctxLength = (() => {
-		const model = conversation.model;
-		const { provider } = conversation.data;
+	const model = conversation.model;
+	const { provider } = conversation.data;
 
-		if (!provider || !isHFModel(model)) return;
+	if (!provider || !isHFModel(model)) {
+		return customMaxTokens[conversation.model.id] ?? 100000;
+	}
 
-		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
-		if (!idOnProvider) return;
-
-		const models = tryGet(ctxLengthData, provider);
-		if (!models) return;
-
-		return tryGet(models, idOnProvider) as number | undefined;
-	})();
+	// Try to get context length from router data
+	const ctxLength = pricing.getContextLength(model.id, provider);
 
 	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
 	return ctxLength;
@@ -387,15 +382,16 @@ export async function getTokenizer(model: Model) {
 }
 
 // When you don't have access to a tokenizer, guesstimate
-export function estimateTokens(conversation: Conversation) {
-	const content = conversation.messages.reduce((acc, curr) => {
+export function estimateTokens(conversation: ConversationClass) {
+	if (!conversation.data.messages) return 0;
+	const content = conversation.data.messages?.reduce((acc, curr) => {
 		return acc + (curr?.content ?? "");
 	}, "");
 
 	return content.length / 4; // 1 token ~ 4 characters
 }
 
-export async function getTokens(conversation: Conversation): Promise<number> {
+export async function getTokens(conversation: ConversationClass): Promise<number> {
 	const model = conversation.model;
 	if (isCustomModel(model)) return estimateTokens(conversation);
 	const tokenizer = await getTokenizer(model);
@@ -404,7 +400,7 @@ export async function getTokens(conversation: Conversation): Promise<number> {
 	// This is a simplified version - you might need to adjust based on your exact needs
 	let formattedText = "";
 
-	conversation.messages.forEach((message, index) => {
+	conversation.data.messages?.forEach((message, index) => {
 		let content = `<|start_header_id|>${message.role}<|end_header_id|>\n\n${message.content?.trim()}<|eot_id|>`;
 
 		// Add BOS token to the first message

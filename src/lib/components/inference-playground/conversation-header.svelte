@@ -9,6 +9,7 @@
 	import Avatar from "../avatar.svelte";
 	import GenerationConfig from "./generation-config.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
+	import PricingEstimate from "./pricing-estimate.svelte";
 	import ProviderSelect from "./provider-select.svelte";
 
 	interface Props {
@@ -68,12 +69,13 @@
 	<div
 		class="{conversationIdx === 0
 			? 'mr-4 max-sm:ml-4'
-			: 'mx-4'}  mt-2 h-11 text-sm leading-none whitespace-nowrap max-sm:mt-4"
+			: 'mx-4'}  mt-2 flex flex-col gap-2 text-sm leading-none whitespace-nowrap max-sm:mt-4"
 	>
 		<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 		<ProviderSelect
 			conversation={conversation as any}
-			class="rounded-lg border border-gray-200/80 bg-white dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
+			class="h-11 rounded-lg border border-gray-200/80 bg-white dark:border-white/5 dark:bg-gray-800/70 dark:hover:bg-gray-800"
 		/>
+		<PricingEstimate {conversation} class="px-3" />
 	</div>
 {/if}
