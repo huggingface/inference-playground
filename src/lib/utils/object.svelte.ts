@@ -108,3 +108,9 @@ export function unmutableSet<T extends object>(obj: T, key: keyof T, value: T[ke
 	newObj[key] = value;
 	return newObj;
 }
+
+export function deleteKey<T extends object>(obj: T, key: keyof T) {
+	const newObj = { ...obj };
+	delete newObj[key];
+	return newObj;
+}
