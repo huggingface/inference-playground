@@ -12,7 +12,7 @@ export function createFieldValidation(args: CreateFieldValidationArgs) {
 	const key = createAttachmentKey();
 	let node: HTMLInputElement;
 
-	const onblur = (e: Event & { currentTarget: HTMLInputElement }) => {
+	const onblur = (_e: Event & { currentTarget: HTMLInputElement }) => {
 		validate();
 	};
 

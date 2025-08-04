@@ -127,15 +127,17 @@ async function getCompletionMetadata(
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));
 
-	const extraParams = data.extraParams ? Object.fromEntries(
-		Object.entries(data.extraParams).map(([key, value]) => {
-			try {
-				return [key, JSON.parse(value as string)];
-			} catch {
-				return [key, value];
-			}
-		})
-	) : {};
+	const extraParams = data.extraParams
+		? Object.fromEntries(
+				Object.entries(data.extraParams).map(([key, value]) => {
+					try {
+						return [key, JSON.parse(value as string)];
+					} catch {
+						return [key, value];
+					}
+				}),
+			)
+		: {};
 
 	const baseArgs = {
 		...data.config,
