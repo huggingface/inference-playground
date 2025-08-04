@@ -233,7 +233,7 @@ export class ConversationClass {
 
 		const endTime = performance.now();
 		this.generationStats.latency = Math.round(endTime - startTime);
-		
+
 		// Calculate cost if we have pricing data
 		if (this.data.provider && this.data.provider !== "auto") {
 			const inputTokens = estimateTokens(this);
@@ -243,7 +243,7 @@ export class ConversationClass {
 				this.generationStats.cost = costEstimate.total;
 			}
 		}
-		
+
 		this.generating = false;
 	};
 
