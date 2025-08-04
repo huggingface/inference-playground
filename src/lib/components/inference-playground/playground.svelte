@@ -28,7 +28,7 @@
 	import BillingIndicator from "../billing-indicator.svelte";
 	import { TEST_IDS } from "$lib/constants.js";
 	import MessageTextarea from "./message-textarea.svelte";
-	import { atLeastNDecimals } from "$lib/utils/number";
+	import { atLeastNDecimals } from "$lib/utils/number.js";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
