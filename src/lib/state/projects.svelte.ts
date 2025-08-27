@@ -104,15 +104,13 @@ class Projects {
 		}
 	}
 
-	branch = async (fromProjectId: string, messageIndex: number, newProjectName?: string): Promise<string> => {
+	branch = async (fromProjectId: string, messageIndex: number): Promise<string> => {
 		const fromProject = this.#projects[fromProjectId];
 		if (!fromProject) throw new Error("Source project not found");
 
-		const branchName = newProjectName || `${fromProject.name} (branch)`;
-
 		// Create new project with branching info
 		const newProjectId = await this.create({
-			name: branchName,
+			name: `${fromProject.name} (branch)`,
 			systemMessage: fromProject.systemMessage,
 			branchedFromId: fromProjectId,
 			branchedFromMessageIndex: messageIndex,

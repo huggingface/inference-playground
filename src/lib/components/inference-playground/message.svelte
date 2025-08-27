@@ -24,7 +24,6 @@
 	import IconChevronRight from "~icons/carbon/chevron-right";
 	import ArrowSplitRounded from "~icons/material-symbols/arrow-split-rounded";
 	import { addToast } from "$lib/components/toaster.svelte.js";
-	import { prompt } from "../prompts.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 
 	type Props = {
@@ -351,10 +350,7 @@
 							tabindex="0"
 							onclick={async () => {
 								try {
-									const newName = await prompt("Branch name", `${projects.current?.name} (branch)`);
-									if (newName) {
-										await projects.branch(projects.activeId, index, newName);
-									}
+									await projects.branch(projects.activeId, index);
 								} catch (error) {
 									addToast({
 										title: "Error",
