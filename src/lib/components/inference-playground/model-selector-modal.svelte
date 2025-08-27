@@ -26,7 +26,7 @@
 
 	let { onModelSelect, onClose, conversation }: Props = $props();
 
-	const combobox = new Combobox({
+	const combobox = new Combobox<string | undefined>({
 		onOpenChange(o) {
 			if (!o) onClose?.();
 		},

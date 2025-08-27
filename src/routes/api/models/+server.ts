@@ -10,10 +10,15 @@ export type ApiModelsResponse = {
 
 export const GET: RequestHandler = async ({ fetch, url: requestUrl }) => {
 	const requestedTags = requestUrl.searchParams.getAll("pipeline_tag");
-	if (!typia.is<PipelineTag[]>(requestedTags)) {
+
+	// If no specific tags requested, get default tags
+	const tags = requestedTags.length > 0 ? requestedTags : [PipelineTag.TextGeneration, PipelineTag.ImageTextToText];
+
+	if (!typia.is<PipelineTag[]>(tags)) {
 		return error(500, "Invalid query params");
 	}
-	const promises = await Promise.all(requestedTags.map(tag => getModelsForTag({ tag, fetch })));
+
+	const promises = await Promise.all(tags.map(tag => getModelsForTag({ tag, fetch })));
 
 	return json({ models: promises.flat() });
 };

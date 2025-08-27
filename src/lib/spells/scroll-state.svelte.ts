@@ -100,7 +100,7 @@ export class ScrollState {
 			right: 0,
 			top: 0,
 			bottom: 0,
-		})
+		}),
 	);
 	onScroll = $derived(this.#options.onScroll ?? noop);
 	onStop = $derived(this.#options.onStop ?? noop);
@@ -108,14 +108,14 @@ export class ScrollState {
 		this.#options.eventListenerOptions ?? {
 			capture: false,
 			passive: true,
-		}
+		},
 	);
 	behavior = $derived(extract(this.#options.behavior, "auto"));
 	onError = $derived(
 		this.#options.onError ??
 			((e: unknown) => {
 				console.error(e);
-			})
+			}),
 	);
 
 	/** State */
@@ -162,14 +162,14 @@ export class ScrollState {
 			"scroll",
 			// throttle ? useThrottleFn(onScrollHandler, throttle, true, false) : onScrollHandler,
 			this.onScrollHandler,
-			this.eventListenerOptions
+			this.eventListenerOptions,
 		);
 
 		useEventListener(
 			() => this.element,
 			"scrollend",
 			e => this.onScrollEnd(e),
-			this.eventListenerOptions
+			this.eventListenerOptions,
 		);
 
 		onMount(() => {

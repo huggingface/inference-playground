@@ -1,13 +1,15 @@
+<script lang="ts" module>
+	let img = $state<string>();
+
+	export const previewImage = (i: string) => {
+		img = i;
+	};
+</script>
+
 <script lang="ts">
 	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { fade, scale } from "svelte/transition";
 	import IconCross from "~icons/carbon/close";
-
-	interface Props {
-		img?: string;
-	}
-
-	let { img = $bindable() }: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 

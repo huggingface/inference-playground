@@ -68,7 +68,7 @@
 			if (prev === undefined) testSuccessful = exists;
 			else testSuccessful = false;
 		},
-		{ lazy: true }
+		{ lazy: true },
 	);
 
 	let testing = $state(false);

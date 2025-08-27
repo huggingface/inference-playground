@@ -7,7 +7,7 @@ import type { MaybeGetter } from "$lib/types.js";
  */
 export function extract<T, D extends T>(
 	value: MaybeGetter<T>,
-	defaultValue?: D
+	defaultValue?: D,
 ): D extends undefined | null ? T : Exclude<T, undefined | null> | D {
 	if (isFunction(value)) {
 		const getter = value;

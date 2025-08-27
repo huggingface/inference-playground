@@ -93,7 +93,7 @@
 								{/if}
 								{#each conversations as { messages }, i}
 									<span class={["text-gray-800 dark:text-gray-200"]}>
-										{messages.length} message{messages.length === 1 ? "" : "s"}
+										{messages?.length || 0} message{(messages?.length || 0) === 1 ? "" : "s"}
 									</span>
 									{#if multiple && i === 0}
 										<span class="text-gray-500">|</span>
@@ -139,7 +139,7 @@
 								{...tooltip.arrow}
 							></div>
 							{#each conversations as conversation, i}
-								{@const msgs = conversation.messages}
+								{@const msgs = conversation.messages || []}
 								{@const sliced = msgs.slice(0, 4)}
 								<div
 									class={[

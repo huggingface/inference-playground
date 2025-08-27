@@ -15,7 +15,7 @@ export type Conversation = {
 	systemMessage: ConversationMessage;
 	streaming: boolean;
 	provider?: string;
-} & Pick<ConversationEntityMembers, "structuredOutput">;
+} & Pick<ConversationEntityMembers, "structuredOutput" | "extraParams">;
 
 export type ConversationWithCustomModel = Conversation & {
 	model: CustomModel;
@@ -62,7 +62,7 @@ export type CustomModel = {
 export type Config = {
 	architectures: string[];
 	model_type: string;
-	tokenizer_config: TokenizerConfig;
+	tokenizer_config?: TokenizerConfig;
 	auto_map?: AutoMap;
 	quantization_config?: QuantizationConfig;
 };
@@ -160,11 +160,14 @@ export enum Provider {
 	Sambanova = "sambanova",
 	Together = "together",
 	Cohere = "cohere",
+	Groq = "groq",
+	Auto = "auto",
 }
 
 export enum Status {
 	Live = "live",
 	Staging = "staging",
+	Error = "error",
 }
 
 export enum Task {
@@ -196,6 +199,7 @@ export type ValueOf<T> = T[keyof T];
 export interface GenerationStatistics {
 	latency: number;
 	tokens: number;
+	cost?: number;
 }
 
 export type ModelsJson = {

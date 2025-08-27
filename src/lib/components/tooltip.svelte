@@ -45,7 +45,6 @@
 	[data-melt-tooltip-content] {
 		border: 0;
 
-		position: absolute;
 		pointer-events: none;
 		opacity: 0;
 

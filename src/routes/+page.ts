@@ -3,11 +3,16 @@ import type { PageLoad } from "./$types.js";
 import type { ApiModelsResponse } from "./api/models/+server.js";
 
 export const load: PageLoad = async ({ fetch }) => {
-	const params = new URLSearchParams();
-	params.append("pipeline_tag", PipelineTag.TextGeneration);
-	params.append("pipeline_tag", PipelineTag.ImageTextToText);
+	const [modelsRes, routerRes] = await Promise.all([
+		fetch("/api/models"),
+		fetch("https://router.huggingface.co/v1/models"),
+	]);
 
-	const res = await fetch(`/api/models?${params.toString()}`);
-	const json: ApiModelsResponse = await res.json();
-	return json;
+	const models: ApiModelsResponse = await modelsRes.json();
+	const routerData = await routerRes.json();
+
+	return {
+		...models,
+		routerData,
+	};
 };

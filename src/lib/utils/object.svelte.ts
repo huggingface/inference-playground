@@ -88,7 +88,7 @@ export function deepMerge<T extends DeepMergeable, U extends DeepMergeable>(targ
 export function renameKey<T extends object>(
 	obj: T,
 	oldKey: keyof T,
-	newKey: string
+	newKey: string,
 ): { [K in keyof T as K extends typeof oldKey ? typeof newKey : K]: T[K] } {
 	const entries = Object.entries(obj);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,4 +101,16 @@ export function renameKey<T extends object>(
 		}
 	}
 	return result;
+}
+
+export function unmutableSet<T extends object>(obj: T, key: keyof T, value: T[keyof T]) {
+	const newObj = { ...obj };
+	newObj[key] = value;
+	return newObj;
+}
+
+export function deleteKey<T extends object>(obj: T, key: keyof T) {
+	const newObj = { ...obj };
+	delete newObj[key];
+	return newObj;
 }
