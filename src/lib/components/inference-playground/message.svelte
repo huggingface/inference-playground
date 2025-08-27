@@ -22,6 +22,10 @@
 	import { parseThinkingTokens } from "$lib/utils/thinking.js";
 	import IconChevronDown from "~icons/carbon/chevron-down";
 	import IconChevronRight from "~icons/carbon/chevron-right";
+	import ArrowSplitRounded from "~icons/material-symbols/arrow-split-rounded";
+	import { addToast } from "$lib/components/toaster.svelte.js";
+	import { prompt } from "../prompts.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 
 	type Props = {
 		conversation: ConversationClass;
@@ -345,6 +349,37 @@
 					{#snippet trigger(tooltip)}
 						<button
 							tabindex="0"
+							onclick={async () => {
+								try {
+									const newName = await prompt("Branch name", `${projects.current?.name} (branch)`);
+									if (newName) {
+										await projects.branch(projects.activeId, index, newName);
+									}
+								} catch (error) {
+									addToast({
+										title: "Error",
+										description: error instanceof Error ? error.message : "Failed to create branch",
+										variant: "error",
+									});
+								}
+							}}
+							type="button"
+							class="grid size-7 place-items-center border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
+					hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100
+					focus:outline-hidden dark:border-gray-600 dark:bg-gray-800
+					dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+							{...tooltip.trigger}
+						>
+							<ArrowSplitRounded />
+						</button>
+					{/snippet}
+					Branch from here
+				</Tooltip>
+
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<button
+							tabindex="0"
 							onclick={onDelete}
 							type="button"
 							class="grid size-7 place-items-center border border-gray-200 bg-white text-xs font-medium text-gray-900 hover:bg-gray-100
@@ -399,3 +434,23 @@
 		{/each}
 	</div>
 </div>
+
+{#if projects.current?.branchedFromId && projects.current?.branchedFromMessageIndex === index}
+	<div class="mt-4 flex items-center justify-center">
+		<div
+			class="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+		>
+			<ArrowSplitRounded class="mr-1 size-4" />
+			<span>Branched from</span>
+			<button
+				onclick={() => {
+					if (!projects.current?.branchedFromId) return;
+					projects.activeId = projects.current.branchedFromId;
+				}}
+				class="font-medium text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+			>
+				{projects.getBranchedFromProject(projects.current.id)?.name || "original project"}
+			</button>
+		</div>
+	</div>
+{/if}

@@ -157,9 +157,24 @@ export class ConversationClass {
 		});
 	};
 
+	checkAndClearBranchStatus = async (deletionIndex: number) => {
+		const currentProject = projects.current;
+
+		if (!currentProject?.branchedFromId || typeof currentProject?.branchedFromMessageIndex !== "number") return;
+
+		// If we're deleting messages at or before the branch point, clear branch status
+		if (deletionIndex <= currentProject.branchedFromMessageIndex) {
+			await projects.clearBranchStatus(currentProject.id);
+		}
+	};
+
 	deleteMessage = async (idx: number) => {
 		if (!this.data.messages) return;
 		const imgKeys = this.data.messages.flatMap(m => m.images).filter(isString);
+
+		// Check if we need to clear branch status
+		await this.checkAndClearBranchStatus(idx);
+
 		await Promise.all([
 			...imgKeys.map(k => images.delete(k)),
 			this.update({
@@ -173,6 +188,9 @@ export class ConversationClass {
 		if (!this.data.messages) return;
 		const sliced = this.data.messages.slice(0, from);
 		const notSliced = this.data.messages.slice(from);
+
+		// Check if we need to clear branch status
+		await this.checkAndClearBranchStatus(from);
 
 		const imgKeys = notSliced.flatMap(m => m.images).filter(isString);
 		await Promise.all([
@@ -378,6 +396,42 @@ class Conversations {
 				conversations.create({ ...c.data, projectId: to });
 			}),
 		);
+	};
+
+	duplicateUpToMessage = async (from: ProjectEntity["id"], to: ProjectEntity["id"], messageIndex: number) => {
+		const fromArr = this.#conversations[from] ?? [];
+
+		// Clear any existing conversations for the target project first
+		this.#conversations[to] = [];
+
+		// Delete any existing conversations in the database for this project
+		const existingConversations = await conversationsRepo.find({ where: { projectId: to } });
+		await Promise.all(existingConversations.map(c => conversationsRepo.delete(c.id)));
+
+		const newConversations: ConversationClass[] = [];
+
+		for (const c of fromArr) {
+			// Copy only messages up to the specified index with deep clone
+			const truncatedMessages =
+				c.data.messages?.slice(0, messageIndex + 1).map(msg => ({
+					...msg,
+					images: msg.images ? [...msg.images] : undefined,
+				})) || [];
+
+			const conversationData = {
+				...snapshot(c.data),
+				projectId: to,
+				messages: truncatedMessages,
+				id: undefined, // Let the database generate a new ID
+			};
+
+			// Use conversationsRepo directly to avoid default conversation merging
+			const saved = await conversationsRepo.save(conversationData);
+			newConversations.push(new ConversationClass(saved));
+		}
+
+		// Update the in-memory cache
+		this.#conversations[to] = newConversations;
 	};
 
 	genNextMessages = async (conv: "left" | "right" | "both" | ConversationClass = "both") => {
