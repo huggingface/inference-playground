@@ -239,13 +239,6 @@
 						<BillingIndicator showModal={() => (billingModalOpen = true)} />
 					</div>
 					<div class="flex flex-wrap items-center justify-end gap-4 whitespace-nowrap">
-						<a
-							href="/visual"
-							class="flex basis-full items-center justify-end gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-						>
-							<IconImage class="text-xs" />
-							Image/Video generation
-						</a>
 						<button
 							onclick={() => projects.current && showShareModal(projects.current)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
@@ -303,7 +296,15 @@
 	{/if}
 </div>
 
-<div class="absolute bottom-6 left-4 flex items-center gap-2 max-md:hidden">
+<div class="absolute bottom-6 left-4 flex flex-wrap items-center gap-2 max-md:hidden">
+	<a
+		href="/visual"
+		class="flex basis-full items-center justify-start gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+	>
+		<IconImage class="text-xs" />
+		Image/Video generation
+	</a>
+
 	<a
 		target="_blank"
 		href="https://huggingface.co/docs/inference-providers/tasks/chat-completion"
