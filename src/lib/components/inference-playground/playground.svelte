@@ -1,40 +1,36 @@
 <script lang="ts">
-	import { isHFModel } from "$lib/utils/is.js";
 	import { observe, observed, ObservedElements } from "$lib/attachments/observe.svelte.js";
+	import { TEST_IDS } from "$lib/constants.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 	import { token } from "$lib/state/token.svelte.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { isSystemPromptSupported } from "$lib/utils/business.svelte.js";
-	import { cmdOrCtrl, optOrAlt } from "$lib/utils/platform.js";
-	import { Popover } from "melt/components";
-	import IconChatLeft from "~icons/carbon/align-box-bottom-left";
-	import IconImage from "~icons/carbon/image";
-	import IconChatRight from "~icons/carbon/align-box-bottom-right";
+	import { isHFModel } from "$lib/utils/is.js";
+	import { atLeastNDecimals } from "$lib/utils/number.js";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
+	import IconClose from "~icons/carbon/close";
 	import IconCode from "~icons/carbon/code";
 	import IconCompare from "~icons/carbon/compare";
+	import IconImage from "~icons/carbon/image";
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
 	import IconShare from "~icons/carbon/share";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
+	import BillingIndicator from "../billing-indicator.svelte";
 	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
 	import Tooltip from "../tooltip.svelte";
+	import BillingModal from "./billing-modal.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
 	import GenerationConfig from "./generation-config.svelte";
 	import HFTokenModal from "./hf-token-modal.svelte";
+	import MessageTextarea from "./message-textarea.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import BillingModal from "./billing-modal.svelte";
-	import BillingIndicator from "../billing-indicator.svelte";
-	import { TEST_IDS } from "$lib/constants.js";
-	import MessageTextarea from "./message-textarea.svelte";
-	import { atLeastNDecimals } from "$lib/utils/number.js";
-	import IconClose from "~icons/carbon/close";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
@@ -239,6 +235,10 @@
 				<GenerationConfig conversation={conversations.active[0]!} />
 
 				<div class="mt-auto space-y-3">
+					<div class="flex items-center justify-end">
+						<BillingIndicator showModal={() => (billingModalOpen = true)} />
+					</div>
+					<div class="flex flex-wrap items-center justify-end gap-4 whitespace-nowrap">
 						<a
 							href="/visual"
 							class="flex basis-full items-center justify-end gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
@@ -246,10 +246,6 @@
 							<IconImage class="text-xs" />
 							Image/Video generation
 						</a>
-					<div class="flex items-center justify-end">
-						<BillingIndicator showModal={() => (billingModalOpen = true)} />
-					</div>
-					<div class="flex items-center justify-end gap-4 whitespace-nowrap">
 						<button
 							onclick={() => projects.current && showShareModal(projects.current)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
