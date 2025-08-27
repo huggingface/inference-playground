@@ -1,5 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
 import typia from "typia";
+import type { Model, CustomModel } from "$lib/types.js";
 
 export function isHtmlElement(element: unknown): element is HTMLElement {
 	return element instanceof HTMLElement;
@@ -38,3 +39,6 @@ export function isPromise(value: unknown): value is Promise<unknown> {
 }
 
 export const isNumber = typia.createIs<number>();
+
+export const isHFModel = typia.createIs<Model>();
+export const isCustomModel = typia.createIs<CustomModel>();

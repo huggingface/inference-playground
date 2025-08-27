@@ -34,7 +34,7 @@
 			onCompute: noop,
 		},
 		sameWidth: false,
-		value: () => undefined,
+		value: () => "",
 		onValueChange(modelId) {
 			if (!modelId) return;
 			onModelSelect?.(modelId);

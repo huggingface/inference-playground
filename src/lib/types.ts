@@ -1,6 +1,6 @@
 import type { GenerationConfig } from "$lib/components/inference-playground/generation-config-settings.js";
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
-import typia from "typia";
+
 import type { ConversationEntityMembers } from "./state/conversations.svelte";
 
 export type ConversationMessage = Pick<ChatCompletionInputMessage, "name" | "role"> & {
@@ -25,8 +25,7 @@ export type ConversationWithHFModel = Conversation & {
 	model: Model;
 };
 
-export const isHFModel = typia.createIs<Model>();
-export const isCustomModel = typia.createIs<CustomModel>();
+
 
 interface TokenizerConfig {
 	chat_template?: string | Array<{ name: string; template: string }>;
@@ -46,6 +45,7 @@ export type Model = {
 	tags: string[];
 	pipeline_tag: PipelineTag;
 	library_name?: LibraryName;
+	preview_img?: string;
 };
 
 export type CustomModel = {
@@ -183,9 +183,11 @@ export enum LibraryName {
 export enum PipelineTag {
 	TextGeneration = "text-generation",
 	ImageTextToText = "image-text-to-text",
+	TextToImage = "text-to-image",
+	TextToVideo = "text-to-video",
 }
 
-export const pipelineTagLabel: Record<PipelineTag, string> = {
+export const pipelineTagLabel: Partial<Record<PipelineTag, string>> = {
 	[PipelineTag.TextGeneration]: "Text→Text",
 	[PipelineTag.ImageTextToText]: "Image+Text→Text",
 };

@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { isCustomModel, isHFModel } from "$lib/utils/is.js";
 	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
-	import { isCustomModel, isHFModel, type Model } from "$lib/types.js";
+	import { type Model } from "$lib/types.js";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import Avatar from "../avatar.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";

@@ -12,6 +12,7 @@
 		"lint": "prettier . --check . && eslint src/",
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
+		"download-images": "jiti scripts/download-model-images.ts",
 		"test:unit": "vitest --browser.headless",
 		"test": "npm run test:unit",
 		"test:e2e": "playwright test"
@@ -27,6 +28,7 @@
 		"@iconify-json/carbon": "^1.2.8",
 		"@iconify-json/lucide": "^1.2.45",
 		"@iconify-json/material-symbols": "^1.2.15",
+		"@iconify-json/tabler": "^1.2.18",
 		"@playwright/test": "^1.49.1",
 		"@ryoppippi/unplugin-typia": "^1.0.0",
 		"@samchon/openapi": "^3.0.0",
@@ -35,9 +37,10 @@
 		"@sveltejs/kit": "^2.5.27",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
 		"@tailwindcss/container-queries": "^0.1.1",
-		"@tailwindcss/postcss": "^4.0.9",
+		"@tailwindcss/postcss": "^4.1.8",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/svelte": "^5.2.4",
+		"@types/chroma-js": "^3.1.1",
 		"@types/node": "^22.14.1",
 		"@vitest/browser": "^3.1.4",
 		"clsx": "^2.1.1",
@@ -45,6 +48,7 @@
 		"eslint": "^9.22.0",
 		"eslint-config-prettier": "^10.1.1",
 		"eslint-plugin-prettier": "^5.2.3",
+		"eslint-plugin-svelte": "^3.6.0",
 		"fake-indexeddb": "^6.0.1",
 		"globals": "^16.0.0",
 		"highlight.js": "^11.10.0",
@@ -62,7 +66,7 @@
 		"svelte": "^5.36.16",
 		"svelte-check": "^4.0.0",
 		"tailwind-merge": "^3.0.2",
-		"tailwindcss": "^4.0.9",
+		"tailwindcss": "^4.1.8",
 		"ts-patch": "^3.3.0",
 		"tslib": "^2.4.1",
 		"typescript": "^5.8.2",
@@ -75,11 +79,14 @@
 	"type": "module",
 	"dependencies": {
 		"@tailwindcss/typography": "^0.5.16",
+		"chroma-js": "^3.1.2",
 		"dequal": "^2.0.3",
 		"eslint-plugin-svelte": "^3.11.0",
 		"marked": "^16.1.2",
+		"node-vibrant": "^4.0.3",
 		"remult": "^3.0.2",
-		"typia": "^8.0.0"
+		"typia": "^8.0.0",
+		"vaul-svelte": "https://pkg.vc/-/@melt-ui/vaul-svelte@9195c05"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [

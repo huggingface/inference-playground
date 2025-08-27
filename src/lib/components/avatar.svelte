@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { isCustomModel, type CustomModel, type Model } from "$lib/types.js";
+	import { isCustomModel } from "$lib/utils/is.js";
+	import { type CustomModel, type Model } from "$lib/types.js";
 	import IconCube from "~icons/carbon/cube";
 
 	interface Props {
