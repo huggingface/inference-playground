@@ -26,7 +26,7 @@
 	<!-- Resize Handle -->
 	<div
 		class={[
-			"dark:hover:bg-mandarin-peel-12 absolute inset-y-0 right-0 w-1 translate-x-full cursor-col-resize outline-hidden transition-colors hover:bg-blue-500 focus-visible:ring-2",
+			"dark:hover:bg-mandarin-peel-12 absolute inset-y-0 -right-1 z-50 w-1 translate-x-full cursor-col-resize outline-hidden transition-colors hover:bg-blue-500 focus-visible:ring-2",
 			splitter.isResizing ? "dark:bg-mandarin-peel-12 bg-blue-500" : "bg-stone-300 dark:bg-stone-800",
 		]}
 		{...splitter.separator}
