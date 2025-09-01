@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 					"Accept-Encoding": "identity",
 					"User-Agent": "Mozilla/5.0 (compatible; proxy)",
 				},
-			}
+			},
 		);
 
 		if (!apiResponse.ok) {

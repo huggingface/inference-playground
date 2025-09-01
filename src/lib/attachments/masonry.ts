@@ -9,7 +9,7 @@ function isHTMLElement(element: ChildNode): element is HTMLElement {
 function getStyleInfo(
 	el: HTMLElement,
 	property: "grid-template-columns" | "grid-template-rows",
-	attribute: "gridTemplateColumns" | "gridTemplateRows"
+	attribute: "gridTemplateColumns" | "gridTemplateRows",
 ) {
 	const inline = el.style[attribute];
 	const computedValue = getComputedStyle(el)[attribute];

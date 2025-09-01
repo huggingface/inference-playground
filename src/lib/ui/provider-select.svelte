@@ -80,7 +80,7 @@
 		class={cn(
 			"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-stone-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
 			"hover:brightness-95 dark:border-stone-700 dark:bg-stone-800 dark:hover:brightness-110",
-			classes
+			classes,
 		)}
 	>
 		<div class="flex items-center gap-1 text-sm">

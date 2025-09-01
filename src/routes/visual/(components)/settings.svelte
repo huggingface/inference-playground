@@ -46,7 +46,7 @@
 			],
 			{
 				duration: 1200,
-			}
+			},
 		);
 	}
 </script>
@@ -54,6 +54,8 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import LocalToasts from "$lib/components/local-toasts.svelte";
+	import { addToast } from "$lib/components/toaster.svelte.js";
+	import { AbortManager } from "$lib/spells/abort-manager.svelte.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { PipelineTag } from "$lib/types.js";
@@ -109,7 +111,7 @@
 	});
 
 	const filteredModels = $derived(
-		data.models.filter(m => m.pipeline_tag === settings.filterTag).toSorted((a, b) => a.id.localeCompare(b.id))
+		data.models.filter(m => m.pipeline_tag === settings.filterTag).toSorted((a, b) => a.id.localeCompare(b.id)),
 	);
 	watch(
 		() => $state.snapshot(filteredModels),
@@ -117,7 +119,7 @@
 			if (filteredModels.some(m => m.id === settings.model?.id) || !filteredModels.length) return;
 			settings.model = filteredModels[0]!;
 			modelCombobox.inputValue = settings.model.id;
-		}
+		},
 	);
 
 	const searchedModels = $derived(
@@ -125,10 +127,19 @@
 			needle: modelCombobox.touched ? modelCombobox.inputValue : "",
 			haystack: filteredModels,
 			property: "id",
-		})
+		}),
 	);
 
 	let autosized = new TextareaAutosize();
+	let abortManager = new AbortManager();
+
+	function formatGenerationTime(ms: number): string {
+		if (ms < 1000) {
+			return `${Math.round(ms)}ms`;
+		} else {
+			return `${(ms / 1000).toFixed(1)}s`;
+		}
+	}
 
 	async function generateContent(isMock: boolean = false) {
 		if (!settings.prompt.trim()) return;
@@ -136,11 +147,13 @@
 		const currentPrompt = settings.prompt.trim();
 		const startTime = Date.now();
 		const isVideo = settings.filterTag === PipelineTag.TextToVideo;
+		const abortController = abortManager.createController();
 
 		// Add loading item
 		const item: GeneratingItem = {
 			id: crypto.randomUUID(),
 			type: isVideo ? VisualEntityType.Video : VisualEntityType.Image,
+			abortController,
 			config: {
 				prompt: currentPrompt,
 				model: isMock ? (isVideo ? "Mock Video Model" : "Mock Model") : settings.model?.id,
@@ -168,10 +181,23 @@
 				const min = 1000;
 				const max = isVideo ? 3000 : 4000;
 				const delay = Math.random() * (max - min) + min;
-				await new Promise(resolve => setTimeout(resolve, delay));
+				await new Promise((resolve, reject) => {
+					const timeout = setTimeout(resolve, delay);
+					abortController.signal.addEventListener("abort", () => {
+						clearTimeout(timeout);
+						reject(new Error("Generation cancelled"));
+					});
+				});
+
+				// Check if aborted before fetch
+				if (abortController.signal.aborted) {
+					throw new Error("Generation cancelled");
+				}
 
 				// Fetch appropriate mock content
-				const response = await fetch(isVideo ? "/placeholder.mp4" : "/api/sb-image");
+				const response = await fetch(isVideo ? "/placeholder.mp4" : "/api/sb-image", {
+					signal: abortController.signal,
+				});
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`);
 				}
@@ -180,28 +206,39 @@
 				// Real generation using Hugging Face API
 				const client = new InferenceClient(token.value);
 
+				// Check if aborted before API call
+				if (abortController.signal.aborted) {
+					throw new Error("Generation cancelled");
+				}
+
 				blob = isVideo
-					? ((await client.textToVideo({
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							provider: settings.provider as any,
-							model: settings.model?.id,
-							inputs: currentPrompt,
-						})) as unknown as Blob)
-					: ((await client.textToImage({
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							provider: settings.provider as any,
-							model: settings.model?.id,
-							inputs: currentPrompt,
-							parameters: {
-								guidance_scale: settings.guidance_scale,
-								negative_prompt: settings.negative_prompt || undefined,
-								num_inference_steps: settings.num_inference_steps,
-								width: settings.width,
-								height: settings.height,
-								scheduler: settings.scheduler || undefined,
-								seed: settings.seed || undefined,
+					? ((await client.textToVideo(
+							{
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								provider: settings.provider as any,
+								model: settings.model?.id,
+								inputs: currentPrompt,
 							},
-						})) as unknown as Blob);
+							{ signal: abortController.signal },
+						)) as unknown as Blob)
+					: ((await client.textToImage(
+							{
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								provider: settings.provider as any,
+								model: settings.model?.id,
+								inputs: currentPrompt,
+								parameters: {
+									guidance_scale: settings.guidance_scale,
+									negative_prompt: settings.negative_prompt || undefined,
+									num_inference_steps: settings.num_inference_steps,
+									width: settings.width,
+									height: settings.height,
+									scheduler: settings.scheduler || undefined,
+									seed: settings.seed || undefined,
+								},
+							},
+							{ signal: abortController.signal },
+						)) as unknown as Blob);
 			}
 
 			const endTime = Date.now();
@@ -213,9 +250,58 @@
 				storageKey,
 				generationTimeMs,
 			});
+
+			// Show success toast
+			addToast({
+				title: `${capitalize(contentType)} generated successfully`,
+				description: `Generated in ${formatGenerationTime(generationTimeMs)}`,
+				variant: "success",
+			});
 		} catch (error) {
 			const prefix = isMock ? "Mock " : "";
-			console.error(`${prefix}${isVideo ? "video" : "image"} generation failed:`, error);
+
+			// Handle abort specifically
+			if (error instanceof Error && (error.name === "AbortError" || error.message === "Generation cancelled")) {
+				addToast({
+					title: "Generation cancelled",
+					description: `${capitalize(contentType)} generation was cancelled`,
+					variant: "warning",
+				});
+			} else {
+				// Handle specific error types
+				let title = `${capitalize(contentType)} generation failed`;
+				let description = "Unknown error occurred";
+
+				if (error instanceof Error) {
+					const errorMsg = error.message.toLowerCase();
+
+					if (errorMsg.includes("unauthorized") || errorMsg.includes("invalid token")) {
+						title = "Authentication error";
+						description = "Invalid or expired HuggingFace token. Please check your token.";
+					} else if (errorMsg.includes("quota") || errorMsg.includes("rate limit")) {
+						title = "Quota exceeded";
+						description = "API quota or rate limit exceeded. Please try again later.";
+					} else if (errorMsg.includes("network") || errorMsg.includes("fetch")) {
+						title = "Network error";
+						description = "Failed to connect to the API. Please check your internet connection.";
+					} else if (errorMsg.includes("model") || errorMsg.includes("not found")) {
+						title = "Model error";
+						description = "The selected model is not available or not found.";
+					} else if (errorMsg.includes("timeout")) {
+						title = "Request timeout";
+						description = "The generation request timed out. Please try again.";
+					} else {
+						description = error.message;
+					}
+				}
+
+				addToast({
+					title,
+					description,
+					variant: "error",
+				});
+				console.error(`${prefix}${isVideo ? "video" : "image"} generation failed:`, error);
+			}
 		} finally {
 			visualItems.generating = visualItems.generating.filter(_item => item !== _item);
 		}

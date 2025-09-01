@@ -29,7 +29,7 @@ type PersistedObjOptions<T> = {
 export function createPersistedObj<T extends object>(
 	key: string,
 	initialValue: T,
-	options: PersistedObjOptions<T> = {}
+	options: PersistedObjOptions<T> = {},
 ): T {
 	const {
 		storage: storageType = "local",

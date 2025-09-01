@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] AbortController for cancelling requests
+- [x] AbortController for cancelling requests
 - [x] Link back to normal playground
 - [x] Persist generation parameters
 - [x] Combobox for models

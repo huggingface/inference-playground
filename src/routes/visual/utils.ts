@@ -51,7 +51,7 @@ class VideoFrameExtractionError extends Error {
 	constructor(
 		message: string,
 		public readonly code: string,
-		public readonly originalError?: Error
+		public readonly originalError?: Error,
 	) {
 		super(message);
 		this.name = "VideoFrameExtractionError";
@@ -81,7 +81,7 @@ function calculateOutputDimensions(
 	originalWidth: number,
 	originalHeight: number,
 	maxWidth?: number,
-	maxHeight?: number
+	maxHeight?: number,
 ): { width: number; height: number } {
 	let { width, height } = { width: originalWidth, height: originalHeight };
 
@@ -109,7 +109,7 @@ async function waitForDrawableFrame(
 	canvas: HTMLCanvasElement,
 	ctx: CanvasRenderingContext2D,
 	maxAttempts: number = 20,
-	debug: boolean = false
+	debug: boolean = false,
 ): Promise<void> {
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		debugLog(
@@ -120,7 +120,7 @@ async function waitForDrawableFrame(
 				videoWidth: video.videoWidth,
 				videoHeight: video.videoHeight,
 			},
-			debug
+			debug,
 		);
 
 		// Wait for video to be in a drawable state
@@ -168,7 +168,7 @@ async function waitForDrawableFrame(
  */
 async function extractVideoFrame(
 	videoBlob: Blob,
-	options: FrameExtractionOptions = {}
+	options: FrameExtractionOptions = {},
 ): Promise<FrameExtractionResult> {
 	const {
 		percentage = 50,
@@ -281,7 +281,7 @@ async function extractVideoFrame(
 				videoHeight: video.videoHeight,
 				readyState: video.readyState,
 			},
-			debug
+			debug,
 		);
 
 		const { videoWidth, videoHeight, duration } = video;
@@ -383,7 +383,7 @@ async function extractVideoFrame(
 					}
 				},
 				format,
-				format === "image/jpeg" ? quality : undefined
+				format === "image/jpeg" ? quality : undefined,
 			);
 		});
 
@@ -413,7 +413,7 @@ async function extractVideoFrame(
 		throw new VideoFrameExtractionError(
 			error instanceof Error ? error.message : String(error),
 			"EXTRACTION_ERROR",
-			error instanceof Error ? error : undefined
+			error instanceof Error ? error : undefined,
 		);
 	} finally {
 		if (cleanup) {
@@ -428,7 +428,7 @@ async function extractVideoFrame(
 async function extractVideoFrameWithRetry(
 	videoBlob: Blob,
 	options: FrameExtractionOptions = {},
-	maxRetries: number = 3
+	maxRetries: number = 3,
 ): Promise<FrameExtractionResult> {
 	const strategies = [
 		{ ...options, preload: "auto" },

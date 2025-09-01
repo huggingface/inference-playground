@@ -81,7 +81,9 @@ export class VisualItem {
 	}
 }
 
-export type GeneratingItem = Pick<VisualItemEntityMembers, "type" | "config" | "id">;
+export type GeneratingItem = Pick<VisualItemEntityMembers, "type" | "config" | "id"> & {
+	abortController?: AbortController;
+};
 
 class VisualItems {
 	#items = $state<VisualItem[]>([]);
@@ -120,8 +122,27 @@ class VisualItems {
 		if (item instanceof VisualItem) {
 			return visualItemRepo.delete(item.data.id);
 		} else {
+			// Cancel generation if it's still running
+			if (item.abortController && !item.abortController.signal.aborted) {
+				item.abortController.abort();
+			}
 			this.generating = this.generating.filter(_item => _item !== item);
 		}
+	}
+
+	cancelGeneration(item: GeneratingItem) {
+		if (item.abortController && !item.abortController.signal.aborted) {
+			item.abortController.abort();
+		}
+	}
+
+	cancelAllGenerations() {
+		this.generating.forEach(item => {
+			if (item.abortController && !item.abortController.signal.aborted) {
+				item.abortController.abort();
+			}
+		});
+		this.generating = [];
 	}
 }
 

@@ -38,7 +38,7 @@ export async function getModelsForTag({ tag, fetch }: GetModelsForTagArgs): Prom
 	url.searchParams.append("limit", "100");
 	url.searchParams.append("pipeline_tag", tag);
 	["inferenceProviderMapping", "config", "library_name", "pipeline_tag", "tags", "mask_token", "trendingScore"].forEach(
-		s => url.searchParams.append("expand[]", s)
+		s => url.searchParams.append("expand[]", s),
 	);
 
 	if ([PipelineTag.TextGeneration, PipelineTag.ImageTextToText].includes(tag)) {
@@ -58,23 +58,23 @@ export async function getModelsForTag({ tag, fetch }: GetModelsForTagArgs): Prom
 	// Add preview images for visual pipeline tags using local mapping
 	if ([PipelineTag.TextToImage, PipelineTag.TextToVideo, PipelineTag.ImageTextToText].includes(tag)) {
 		let imageMapping: Record<string, string> = {};
-		
+
 		// Try to load the local image mapping
 		try {
-			const mappingPath = join(process.cwd(), 'static', 'model-image-mapping.json');
+			const mappingPath = join(process.cwd(), "static", "model-image-mapping.json");
 			if (existsSync(mappingPath)) {
-				const mappingContent = readFileSync(mappingPath, 'utf-8');
+				const mappingContent = readFileSync(mappingPath, "utf-8");
 				imageMapping = JSON.parse(mappingContent);
 			}
 		} catch (error) {
-			console.warn('Could not load model image mapping:', error);
+			console.warn("Could not load model image mapping:", error);
 		}
 
 		const modelsWithImages = data.map((model: Model) => ({
 			...model,
-			preview_img: imageMapping[model.id] || undefined
+			preview_img: imageMapping[model.id] || undefined,
 		}));
-		
+
 		cache[tag] = new CacheEntry({ ok: true, data: modelsWithImages });
 		return modelsWithImages;
 	}

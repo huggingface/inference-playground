@@ -31,7 +31,7 @@
 
 	let search = $state("");
 	const filteredModels = $derived(
-		data.models.filter(m => m.pipeline_tag === settings.filterTag).toSorted((a, b) => a.id.localeCompare(b.id))
+		data.models.filter(m => m.pipeline_tag === settings.filterTag).toSorted((a, b) => a.id.localeCompare(b.id)),
 	);
 
 	const searchedModels = $derived(
@@ -39,7 +39,7 @@
 			needle: search,
 			haystack: filteredModels,
 			property: "id",
-		})
+		}),
 	);
 
 	function formatCompanyName(name: string) {

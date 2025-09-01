@@ -90,7 +90,7 @@ async function getModelsForTag(tag: PipelineTag): Promise<any[]> {
 	url.searchParams.append("limit", "100");
 	url.searchParams.append("pipeline_tag", tag);
 	["inferenceProviderMapping", "config", "library_name", "pipeline_tag", "tags", "mask_token", "trendingScore"].forEach(
-		s => url.searchParams.append("expand[]", s)
+		s => url.searchParams.append("expand[]", s),
 	);
 
 	if ([PipelineTag.TextGeneration, PipelineTag.ImageTextToText].includes(tag)) {
@@ -152,7 +152,7 @@ async function main() {
 		for (let i = 0; i < validModels.length; i += BATCH_SIZE) {
 			const batch = validModels.slice(i, i + BATCH_SIZE);
 			console.log(
-				`\n🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validModels.length / BATCH_SIZE)} (${batch.length} models)`
+				`\n🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validModels.length / BATCH_SIZE)} (${batch.length} models)`,
 			);
 
 			const batchPromises = batch.map(async model => {

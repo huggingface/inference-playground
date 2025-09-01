@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { masonry } from "$lib/attachments/masonry.js";
 	import { default as IconPhoto } from "~icons/lucide/image";
-	import IconX from "~icons/lucide/x";
 	import Sidebar from "./(components)/sidebar.svelte";
 	import Settings, { reuseSettings } from "./(components)/settings.svelte";
 	import { isVisualItem, visualItems, type GeneratingItem, type VisualItem } from "./(state)/visual-items.svelte.js";
@@ -10,6 +9,8 @@
 	import { settings } from "./(state)/settings.svelte.js";
 	import HFTokenModal from "$lib/components/inference-playground/hf-token-modal.svelte";
 	import { token } from "$lib/state/token.svelte.js";
+	import Toaster from "$lib/components/toaster.svelte";
+	import IconX from "~icons/lucide/x";
 
 	let expandedItem: VisualItem | null = $state(null);
 	let dialogElement: HTMLDialogElement;
@@ -83,7 +84,8 @@
 	</Drawer.Root>
 
 	<!-- Main content -->
-	<main class="dark:bg-mandarin-peel-1 flex-1 overflow-auto bg-stone-50 p-6">
+	<main class="dark:bg-mandarin-peel-1 relative flex-1 overflow-auto bg-stone-50 p-6">
+		<Toaster class="bottom-2" />
 		{#if visualItems.all.length === 0}
 			<div class="flex h-full items-center justify-center text-stone-500">
 				<div class="text-center">

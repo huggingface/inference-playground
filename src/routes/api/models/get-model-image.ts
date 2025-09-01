@@ -1,6 +1,6 @@
 export async function getModelPreviewImage(
 	modelId: string,
-	fetch: typeof globalThis.fetch
+	fetch: typeof globalThis.fetch,
 ): Promise<string | undefined> {
 	try {
 		const hfPage = `https://huggingface.co/${modelId}`;
@@ -33,7 +33,7 @@ export async function getModelPreviewImage(
 			})
 			.map(src => {
 				// Convert relative URLs to absolute
-				if (src.startsWith('/')) {
+				if (src.startsWith("/")) {
 					return `https://huggingface.co${src}`;
 				}
 				// Return absolute URLs as-is

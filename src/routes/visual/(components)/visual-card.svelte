@@ -10,7 +10,7 @@
 	import IconTrash from "~icons/lucide/trash";
 	import LoadingAnimation from "./loading-animation.svelte";
 	import { adjustBgColorForAPCAContrast, extractVideoFrameWithRetry } from "../utils.js";
-	import { isVisualItem, type GeneratingItem, type VisualItem } from "../(state)/visual-items.svelte.js";
+	import { isVisualItem, visualItems, type GeneratingItem, type VisualItem } from "../(state)/visual-items.svelte.js";
 
 	interface Props {
 		item: VisualItem | GeneratingItem;
@@ -41,7 +41,7 @@
 			extractVideoFrameWithRetry(
 				item.blob,
 				{ percentage: 25, format: "image/jpeg", quality: 0.8, maxWidth: 1920, timeout: 20000, debug: false },
-				2
+				2,
 			).then(frame => {
 				if (!frame.blob) return;
 				Vibrant.from(URL.createObjectURL(frame.blob))
@@ -78,7 +78,7 @@
 	});
 
 	const borderGradient = $derived(
-		`linear-gradient(to bottom, ${palette?.Vibrant?.hex} 0%, ${palette?.Muted?.hex} 100%)`
+		`linear-gradient(to bottom, ${palette?.Vibrant?.hex} 0%, ${palette?.Muted?.hex} 100%)`,
 	);
 
 	const aspectClass = $derived(item.type === "video" ? "aspect-video" : "aspect-square");
@@ -196,7 +196,12 @@
 				{#if !isVisualItem(item)}
 					<button
 						class="btn-depth btn-depth-red flex items-center justify-center"
-						onclick={onDelete}
+						onclick={() => {
+							// Cancel the generation
+							visualItems.cancelGeneration(item);
+							// Remove from the list
+							onDelete?.();
+						}}
 						aria-label="Cancel {item.type} generation"
 					>
 						Cancel

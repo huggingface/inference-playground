@@ -6,6 +6,12 @@
 	import { omit } from "$lib/utils/object.svelte.js";
 	import { AnimationFrames } from "runed";
 	import { conversations } from "$lib/state/conversations.svelte.js";
+	import { cn } from "$lib/utils/cn.js";
+
+	type Props = {
+		class?: string;
+	};
+	const props: Props = $props();
 
 	let toastHeights = $state<number[]>([]);
 	new AnimationFrames(() => {
@@ -46,7 +52,7 @@
 
 <div
 	{...omit(toaster.root, "popover")}
-	class={["absolute right-2 bottom-40 flex w-[300px] flex-col ", !isComparing && "md:right-0"]}
+	class={cn("absolute right-2 bottom-40 flex w-[300px] flex-col ", !isComparing && "md:right-0", props.class)}
 	style:--toasts={toaster.toasts.length}
 	style={getRootStyle()}
 >

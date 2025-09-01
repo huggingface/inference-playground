@@ -25,8 +25,6 @@ export type ConversationWithHFModel = Conversation & {
 	model: Model;
 };
 
-
-
 interface TokenizerConfig {
 	chat_template?: string | Array<{ name: string; template: string }>;
 	model_max_length?: number;

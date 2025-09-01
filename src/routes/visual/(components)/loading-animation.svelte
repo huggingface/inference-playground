@@ -13,7 +13,7 @@
 			x: GRID_START_X + col * PIXEL_SPACING,
 			y: GRID_START_Y + row * PIXEL_SPACING,
 			delay: (row * GRID_SIZE + col) * ANIMATION_DELAY_INCREMENT,
-		}))
+		})),
 	).flat();
 </script>
 
