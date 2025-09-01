@@ -1,4 +1,4 @@
-export function fileToDataURL(file: File): Promise<string> {
+export function fileToDataURL(file: File | Blob): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
 
@@ -99,4 +99,60 @@ export function getBase64ImageSize(base64: string): { bytes: number; kilobytes: 
 		kilobytes: parseFloat(kilobytes.toFixed(2)),
 		megabytes: parseFloat(megabytes.toFixed(2)),
 	};
+}
+
+/**
+ * Converts a Data URL string into a Blob object.
+ *
+ * @param dataurl The Data URL string (e.g., "data:image/png;base64,...").
+ * @returns A Blob object, or null if the Data URL is invalid or conversion fails.
+ */
+export function dataURLtoBlob(dataurl: string): Blob | null {
+	// 1. Separate header and data
+	const parts = dataurl.split(",");
+	if (parts.length < 2) {
+		console.error("Invalid Data URL format.");
+		return null;
+	}
+
+	const header = parts[0];
+	const data = parts[1];
+
+	if (!header || !data) return null;
+
+	// Extract MIME type from the header
+	const mimeMatch = header.match(/:(.*?)(;|$)/);
+	const mime = mimeMatch ? mimeMatch[1] : "";
+
+	// 2. Decode base64 if present, otherwise assume plain text or URL-encoded
+	let decodedData: string;
+	if (header.includes(";base64")) {
+		try {
+			decodedData = atob(data); // Decode base64 string
+		} catch (e) {
+			console.error("Error decoding base64 data:", e);
+			return null;
+		}
+	} else {
+		try {
+			decodedData = decodeURIComponent(data); // Decode URL-encoded string
+		} catch (e) {
+			console.error("Error decoding URL-encoded data:", e);
+			return null;
+		}
+	}
+
+	// 3. Create a Uint8Array from the decoded binary string
+	const uint8Array = new Uint8Array(decodedData.length);
+	for (let i = 0; i < decodedData.length; i++) {
+		uint8Array[i] = decodedData.charCodeAt(i);
+	}
+
+	// 4. Create and return the Blob
+	try {
+		return new Blob([uint8Array], { type: mime });
+	} catch (e) {
+		console.error("Error creating Blob:", e);
+		return null;
+	}
 }

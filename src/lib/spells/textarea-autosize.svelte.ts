@@ -1,5 +1,5 @@
 import { useResizeObserver, watch } from "runed";
-import { onDestroy, tick } from "svelte";
+import { onDestroy } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import { on } from "svelte/events";
 import { extract } from "./extract.svelte.js";
@@ -24,8 +24,8 @@ export class TextareaAutosize {
 	#resizeTimeout: number | null = null;
 	#hiddenTextarea: HTMLTextAreaElement | null = null;
 
-	element = $state<HTMLTextAreaElement>();
-	input = $state("");
+	element: HTMLTextAreaElement | undefined;
+	#input = "";
 	styleProp = $derived.by(() => extract(this.#options.styleProp, "height"));
 	maxHeight = $derived.by(() => extract(this.#options.maxHeight, undefined));
 	textareaHeight = $state(0);
@@ -36,10 +36,6 @@ export class TextareaAutosize {
 
 		// Create hidden textarea for measurements
 		this.#createHiddenTextarea();
-
-		watch([() => this.input, () => this.element], () => {
-			tick().then(() => this.triggerResize());
-		});
 
 		watch(
 			() => this.textareaHeight,
@@ -135,7 +131,7 @@ export class TextareaAutosize {
 
 		// Copy current styles and content to hidden textarea
 		this.#copyStyles();
-		this.#hiddenTextarea.value = this.input || "";
+		this.#hiddenTextarea.value = this.#input || "";
 
 		// Measure the hidden textarea
 		const scrollHeight = this.#hiddenTextarea.scrollHeight;
@@ -158,27 +154,29 @@ export class TextareaAutosize {
 
 	attachment: Attachment<HTMLTextAreaElement> = node => {
 		this.element = node;
-		this.input = node.value;
+		this.#input = node.value;
 
 		// Detect programmatic changes
 		const desc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!;
 		Object.defineProperty(node, "value", {
 			get: desc.get,
 			set: v => {
-				const cleanup = $effect.root(() => {
-					this.input = v;
-				});
-				cleanup();
+				this.#input = v;
+				queueMicrotask(this.triggerResize);
 				desc.set?.call(node, v);
 			},
 		});
 
-		const removeListener = on(node, "input", _ => {
-			this.input = node.value;
+		queueMicrotask(this.triggerResize);
+
+		const removeListener = on(node, "input", () => {
+			this.#input = node.value;
+			this.triggerResize();
 		});
 
 		return () => {
 			removeListener();
+			this.#input = "";
 			this.element = undefined;
 		};
 	};

@@ -13,7 +13,6 @@
 	}
 
 	let { children }: Props = $props();
-	conversations.init();
 </script>
 
 <svelte:boundary>

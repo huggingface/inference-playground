@@ -10,16 +10,9 @@ import { pricing } from "$lib/state/pricing.svelte.js";
 import { InferenceClient, snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
+import { isCustomModel, isHFModel } from "$lib/utils/is.js";
 import { billing } from "$lib/state/billing.svelte";
-import {
-	isCustomModel,
-	isHFModel,
-	Provider,
-	type Conversation,
-	type ConversationMessage,
-	type CustomModel,
-	type Model,
-} from "$lib/types.js";
+import { Provider, type Conversation, type ConversationMessage, type CustomModel, type Model } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
 import { omit } from "$lib/utils/object.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";

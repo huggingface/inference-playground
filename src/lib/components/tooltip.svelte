@@ -36,9 +36,9 @@
 
 {@render trigger(tooltip)}
 
-<div {...tooltip.content} class="rounded-xl bg-white p-0 shadow-xl dark:bg-gray-700">
+<div {...tooltip.content} class="rounded-xl bg-white p-0 shadow-xl dark:bg-stone-700">
 	<div {...tooltip.arrow} class="size-2 rounded-tl"></div>
-	<p class="px-4 py-1 text-gray-700 dark:text-white">{@render children()}</p>
+	<p class="px-4 py-1 text-stone-700 dark:text-white">{@render children()}</p>
 </div>
 
 <style>

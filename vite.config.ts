@@ -12,7 +12,9 @@ export default defineConfig({
 		sveltekit(),
 		Icons({ compiler: "svelte", autoInstall: true }),
 	],
-	server: { allowedHosts: isDev ? true : undefined },
+	server: {
+		allowedHosts: isDev ? true : undefined,
+	},
 	test: {
 		workspace: [
 			{

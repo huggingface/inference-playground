@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { isHFModel, type Model } from "$lib/types.js";
+	import { isHFModel } from "$lib/utils/is.js";
+	import { type Model } from "$lib/types.js";
 
 	import { createEventDispatcher } from "svelte";
 

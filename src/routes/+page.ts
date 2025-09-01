@@ -1,3 +1,4 @@
+import { PipelineTag } from "$lib/types.js";
 import type { PageLoad } from "./$types.js";
 import type { ApiModelsResponse } from "./api/models/+server.js";
 
