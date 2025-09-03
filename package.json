@@ -27,6 +27,7 @@
 		"@iconify-json/carbon": "^1.2.8",
 		"@iconify-json/lucide": "^1.2.45",
 		"@iconify-json/material-symbols": "^1.2.15",
+		"@iconify-json/mingcute": "^1.2.5",
 		"@playwright/test": "^1.49.1",
 		"@ryoppippi/unplugin-typia": "^1.0.0",
 		"@samchon/openapi": "^3.0.0",
@@ -75,6 +76,7 @@
 	"type": "module",
 	"dependencies": {
 		"@tailwindcss/typography": "^0.5.16",
+		"@xyflow/svelte": "^1.2.4",
 		"dequal": "^2.0.3",
 		"eslint-plugin-svelte": "^3.11.0",
 		"marked": "^16.1.2",
