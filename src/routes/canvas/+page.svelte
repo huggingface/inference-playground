@@ -3,20 +3,33 @@
 
 	import "@xyflow/svelte/dist/style.css";
 	import ChatNode from "./chat-node.svelte";
+	import { PersistedState } from "runed";
 
 	const nodeTypes = { chat: ChatNode } as const;
 
-	let nodes = $state.raw<Node[]>([
-		{ id: "1", position: { x: 0, y: 0 }, data: { label: "1" } },
-		{ id: "2", position: { x: 0, y: 100 }, data: { label: "2" } },
-		{ id: "3", position: { x: 0, y: 200 }, data: { label: "3" }, type: "chat" },
+	let nodes = new PersistedState<Node[]>("inf-pg-nodes", [
+		{
+			id: "1",
+			position: { x: 100, y: 100 },
+			data: { query: "", response: "", modelId: undefined },
+			type: "chat",
+			width: undefined,
+			height: undefined,
+		},
 	]);
+	$inspect(nodes);
 
-	let edges = $state.raw<Edge[]>([{ id: "e1-2", source: "1", target: "2", animated: true }]);
+	let edges = $state.raw<Edge[]>([]);
+
+	// Make edges non-editable
+	const edgeOptions = {
+		deletable: false,
+		selectable: false,
+	};
 </script>
 
 <div style:width="100vw" style:height="100vh">
-	<SvelteFlow bind:nodes bind:edges fitView {nodeTypes}>
+	<SvelteFlow bind:nodes={nodes.current} bind:edges fitView {nodeTypes} defaultEdgeOptions={edgeOptions}>
 		<MiniMap />
 		<Controls />
 		<Background />
