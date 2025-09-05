@@ -302,6 +302,8 @@ class Conversations {
 			.then(res => {
 				this.#conversations = { ...this.#conversations, [DEFAULT_PROJECT_ID]: [new ConversationClass(res)] };
 			});
+
+		projects.activeId = DEFAULT_PROJECT_ID;
 	});
 
 	get conversations() {
