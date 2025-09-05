@@ -68,7 +68,7 @@
 	<div
 		class="{conversationIdx === 0
 			? 'mr-4 max-sm:ml-4'
-			: 'mx-4'}  mt-2 h-11 text-sm leading-none whitespace-nowrap max-sm:mt-4"
+			: 'mx-4'}  mt-2 h-14 text-sm leading-none whitespace-nowrap max-sm:mt-4"
 	>
 		<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 		<ProviderSelect

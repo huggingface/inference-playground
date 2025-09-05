@@ -60,7 +60,7 @@ class Checkpoints {
 				conversations: conversations.for(project.id).map(c => c.data),
 				timestamp: new Date(),
 				projectId: project.id,
-			})
+			}),
 		);
 
 		// Hack because dates are formatted to string by save

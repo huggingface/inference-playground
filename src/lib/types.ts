@@ -15,7 +15,7 @@ export type Conversation = {
 	systemMessage: ConversationMessage;
 	streaming: boolean;
 	provider?: string;
-} & Pick<ConversationEntityMembers, "structuredOutput">;
+} & Pick<ConversationEntityMembers, "structuredOutput" | "extraParams">;
 
 export type ConversationWithCustomModel = Conversation & {
 	model: CustomModel;
@@ -161,6 +161,7 @@ export enum Provider {
 	Together = "together",
 	Cohere = "cohere",
 	Groq = "groq",
+	Auto = "auto",
 }
 
 export enum Status {
@@ -196,6 +197,7 @@ export type ValueOf<T> = T[keyof T];
 export interface GenerationStatistics {
 	latency: number;
 	tokens: number;
+	cost?: number;
 }
 
 export type ModelsJson = {

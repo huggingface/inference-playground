@@ -50,8 +50,8 @@ export const observed: Record<ObservedElements, ObservedData> = $state(
 			};
 			return acc;
 		},
-		{} as Record<ObservedElements, ObservedData>
-	)
+		{} as Record<ObservedElements, ObservedData>,
+	),
 );
 
 type ObserveArgs = {

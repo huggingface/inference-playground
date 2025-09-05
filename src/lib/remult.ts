@@ -33,7 +33,7 @@ export function initRemultSvelteReactivity() {
 export class JsonEntityIndexedDbStorage implements JsonEntityStorage {
 	constructor(
 		private dbName: string = "db",
-		private storeName: string = "jsonStore"
+		private storeName: string = "jsonStore",
 	) {}
 	supportsRawJson = true;
 	//@internal

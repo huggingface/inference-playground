@@ -26,7 +26,7 @@
 
 	let { onModelSelect, onClose, conversation }: Props = $props();
 
-	const combobox = new Combobox({
+	const combobox = new Combobox<string | undefined>({
 		onOpenChange(o) {
 			if (!o) onClose?.();
 		},
@@ -182,7 +182,7 @@
 			{/if}
 			<div
 				class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 data-[highlighted]:bg-blue-500/15 data-[highlighted]:text-blue-600 dark:text-gray-400 dark:data-[highlighted]:text-blue-300"
-				{...combobox.getOption("__custom__", () => {
+				{...combobox.getOption("__custom__", "custom", () => {
 					onClose?.();
 					openCustomModelConfig({
 						onSubmit: model => {

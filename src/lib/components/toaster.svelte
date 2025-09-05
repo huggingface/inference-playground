@@ -46,7 +46,7 @@
 
 <div
 	{...omit(toaster.root, "popover")}
-	class={["absolute right-2 bottom-23 flex w-[300px] flex-col ", !isComparing && "md:right-0"]}
+	class={["absolute right-2 bottom-40 flex w-[300px] flex-col ", !isComparing && "md:right-0"]}
 	style:--toasts={toaster.toasts.length}
 	style={getRootStyle()}
 >
