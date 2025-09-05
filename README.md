@@ -69,5 +69,28 @@ Follow these steps to get the Inference Playground running on your local machine
 - **Configuration:** Adjust generation parameters like temperature, max tokens, and top-p.
 - **Session Management:** Save and load your conversation setups using Projects and Checkpoints.
 - **Code Snippets:** Generate code snippets for various languages to replicate your inference calls.
+- **Organization Billing:** Specify an organization to bill usage to for Team and Enterprise accounts.
+
+## Organization Billing
+
+For Team and Enterprise Hugging Face Hub organizations, you can centralize billing for all users by specifying an organization to bill usage to. This feature allows:
+
+- **Centralized Billing:** All inference requests can be billed to your organization instead of individual user accounts
+- **Usage Tracking:** Track inference usage across your organization from the organization's billing page
+- **Spending Controls:** Organization administrators can set spending limits and manage provider access
+
+### How to Use Organization Billing
+
+1. **In the UI:** Navigate to the settings panel and enter your organization name in the "Billing Organization" field
+2. **In Code Snippets:** Generated code examples will automatically include the billing organization parameter
+3. **API Integration:** The playground will include the `X-HF-Bill-To` header in API requests when an organization is specified
+
+### Requirements
+
+- You must be a member of a Team or Enterprise Hugging Face Hub organization
+- The organization must have billing enabled
+- You need appropriate permissions to bill usage to the organization
+
+For more information about organization billing, see the [Hugging Face documentation](https://huggingface.co/docs/inference-providers/pricing#billing-for-team-and-enterprise-organizations).
 
 We hope you find the Inference Playground useful for exploring and experimenting with language models!

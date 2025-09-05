@@ -57,14 +57,14 @@ interface ApiQueryParams {
 	pipeline_tag?: "text-generation" | "image-text-to-text";
 	filter: string;
 	inference_provider: string;
-	limit: number;
+	limit?: number;
+	skip?: number;
 	expand: string[];
 }
 
 const queryParams: ApiQueryParams = {
 	filter: "conversational",
 	inference_provider: "all",
-	limit: 100,
 	expand: ["inferenceProviderMapping", "config", "library_name", "pipeline_tag", "tags", "mask_token", "trendingScore"],
 };
 
@@ -75,7 +75,7 @@ function buildApiUrl(params: ApiQueryParams): string {
 
 	// Add simple params
 	Object.entries(params).forEach(([key, value]) => {
-		if (!Array.isArray(value)) {
+		if (!Array.isArray(value) && value !== undefined) {
 			url.searchParams.append(key, String(value));
 		}
 	});
@@ -86,6 +86,44 @@ function buildApiUrl(params: ApiQueryParams): string {
 	});
 
 	return url.toString();
+}
+
+async function fetchAllModelsWithPagination(
+	pipeline_tag: "text-generation" | "image-text-to-text",
+	fetch: typeof globalThis.fetch,
+): Promise<Model[]> {
+	const allModels: Model[] = [];
+	let skip = 0;
+	const batchSize = 1000;
+
+	while (true) {
+		const url = buildApiUrl({
+			...queryParams,
+			pipeline_tag,
+			limit: batchSize,
+			skip,
+		});
+
+		const response = await fetch(url, requestInit);
+
+		if (!response.ok) {
+			break;
+		}
+
+		const models: Model[] = await response.json();
+
+		if (models.length === 0) {
+			break; // No more models to fetch
+		}
+
+		allModels.push(...models);
+		skip += batchSize;
+
+		// Optional: Add a small delay to be respectful to the API
+		await new Promise(resolve => setTimeout(resolve, 100));
+	}
+
+	return allModels;
 }
 
 export type ApiModelsResponse = {
@@ -134,31 +172,30 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		let imgText2TextModels: Model[] = [];
 
 		// Make the needed API calls in parallel
-		const apiPromises: Promise<Response | void>[] = [];
+		const apiPromises: Promise<void>[] = [];
 		if (needTextGenFetch) {
-			const url = buildApiUrl({ ...queryParams, pipeline_tag: "text-generation" });
 			apiPromises.push(
-				fetch(url, requestInit).then(async response => {
-					if (!response.ok) {
-						console.error(`Error fetching text-generation models`, response.status, response.statusText);
+				fetchAllModelsWithPagination("text-generation", fetch)
+					.then(models => {
+						textGenModels = models;
+					})
+					.catch(error => {
+						console.error(`Error fetching text-generation models:`, error);
 						newFailedApiCalls.textGeneration = true;
-					} else {
-						textGenModels = await response.json();
-					}
-				})
+					}),
 			);
 		}
 
 		if (needImgTextFetch) {
 			apiPromises.push(
-				fetch(buildApiUrl({ ...queryParams, pipeline_tag: "image-text-to-text" }), requestInit).then(async response => {
-					if (!response.ok) {
-						console.error(`Error fetching image-text-to-text models`, response.status, response.statusText);
+				fetchAllModelsWithPagination("image-text-to-text", fetch)
+					.then(models => {
+						imgText2TextModels = models;
+					})
+					.catch(error => {
+						console.error(`Error fetching image-text-to-text models:`, error);
 						newFailedApiCalls.imageTextToText = true;
-					} else {
-						imgText2TextModels = await response.json();
-					}
-				})
+					}),
 			);
 		}
 
@@ -191,7 +228,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		}
 
 		const models: Model[] = [...textGenModels, ...imgText2TextModels].filter(
-			m => m.inferenceProviderMapping.length > 0
+			m => m.inferenceProviderMapping.length > 0,
 		);
 		models.sort((a, b) => a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
 
@@ -209,7 +246,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		console.log(
 			`Cache updated: ${models.length} models, status: ${cacheStatus}, ` +
 				`failed tokenizers: ${newFailedTokenizers.length}, ` +
-				`API failures: text=${newFailedApiCalls.textGeneration}, img=${newFailedApiCalls.imageTextToText}`
+				`API failures: text=${newFailedApiCalls.textGeneration}, img=${newFailedApiCalls.imageTextToText}`,
 		);
 
 		return createResponse({ models });

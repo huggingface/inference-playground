@@ -7,6 +7,7 @@
  **/
 
 import ctxLengthData from "$lib/data/context_length.json";
+import { pricing } from "$lib/state/pricing.svelte.js";
 import { snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
@@ -21,16 +22,15 @@ import {
 	type Model,
 } from "$lib/types.js";
 import { safeParse } from "$lib/utils/json.js";
-import { omit, tryGet } from "$lib/utils/object.svelte.js";
-import { type InferenceProvider } from "@huggingface/inference";
+import { omit } from "$lib/utils/object.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
 import { images } from "$lib/state/images.svelte.js";
 import { projects } from "$lib/state/projects.svelte.js";
 import { mcpServers } from "$lib/state/mcps.svelte.js";
-import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
 import { modifySnippet } from "$lib/utils/snippets.js";
+import { models } from "$lib/state/models.svelte";
 import { StreamReader } from "$lib/utils/stream.js";
 
 type ChatCompletionInputMessageChunk =
@@ -59,28 +59,29 @@ async function parseMessage(message: ConversationMessage): Promise<ChatCompletio
 }
 
 export function maxAllowedTokens(conversation: ConversationClass) {
-	const ctxLength = (() => {
-		const model = conversation.model;
-		const { provider } = conversation.data;
+	const model = conversation.model;
+	const { provider } = conversation.data;
 
-		if (!provider || !isHFModel(model)) return;
+	if (!provider || !isHFModel(model)) {
+		return customMaxTokens[conversation.model.id] ?? 100000;
+	}
 
-		const idOnProvider = model.inferenceProviderMapping.find(data => data.provider === provider)?.providerId;
-		if (!idOnProvider) return;
+	// Try to get context length from pricing/router data first
+	const ctxLength = pricing.getContextLength(model.id, provider);
+	if (ctxLength) return ctxLength;
 
-		const models = tryGet(ctxLengthData, provider);
-		if (!models) return;
+	// Fall back to local context length data if available
+	const providerData = ctxLengthData[provider as keyof typeof ctxLengthData] as Record<string, number> | undefined;
+	const localCtxLength = providerData?.[model.id];
+	if (localCtxLength) return localCtxLength;
 
-		return tryGet(models, idOnProvider) as number | undefined;
-	})();
-
-	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
-	return ctxLength;
+	// Final fallback to custom max tokens
+	return customMaxTokens[conversation.model.id] ?? 100000;
 }
 
 function getEnabledMCPs() {
 	if (!isMcpEnabled()) return [];
-	
+
 	return mcpServers.enabled.map(server => ({
 		id: server.id,
 		name: server.name,
@@ -93,8 +94,7 @@ function getEnabledMCPs() {
 function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const json = safeParse(data.structuredOutput?.schema ?? "");
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if (json && data.structuredOutput?.enabled && !structuredForbiddenProviders.includes(data.provider as any)) {
+	if (json && data.structuredOutput?.enabled && models.supportsStructuredOutput(conversation.model, data.provider)) {
 		switch (data.provider) {
 			case "cohere": {
 				return {
@@ -121,7 +121,7 @@ function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 export async function handleStreamingResponse(
 	conversation: ConversationClass | Conversation,
 	onChunk: (content: string) => void,
-	abortController: AbortController
+	abortController: AbortController,
 ): Promise<void> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
@@ -170,7 +170,7 @@ export async function handleStreamingResponse(
 }
 
 export async function handleNonStreamingResponse(
-	conversation: ConversationClass | Conversation
+	conversation: ConversationClass | Conversation,
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
@@ -288,19 +288,20 @@ export type GetInferenceSnippetReturn = InferenceSnippet[];
 export function getInferenceSnippet(
 	conversation: ConversationClass,
 	language: InferenceSnippetLanguage,
-	accessToken: string,
 	opts?: {
+		accessToken?: string;
 		messages?: ConversationEntityMembers["messages"];
 		streaming?: ConversationEntityMembers["streaming"];
 		max_tokens?: ConversationEntityMembers["config"]["max_tokens"];
 		temperature?: ConversationEntityMembers["config"]["temperature"];
 		top_p?: ConversationEntityMembers["config"]["top_p"];
 		structured_output?: ConversationEntityMembers["structuredOutput"];
-	}
+		billTo?: string;
+	},
 ): GetInferenceSnippetReturn {
 	const model = conversation.model;
 	const data = conversation.data;
-	const provider = (isCustomModel(model) ? "hf-inference" : data.provider) as InferenceProvider;
+	const provider = (isCustomModel(model) ? "hf-inference" : data.provider) as Provider;
 
 	// If it's a custom model, we don't generate inference snippets
 	if (isCustomModel(model)) {
@@ -308,20 +309,23 @@ export function getInferenceSnippet(
 	}
 
 	const providerMapping = model.inferenceProviderMapping.find(p => p.provider === provider);
-	if (!providerMapping) return [];
+	if (!providerMapping && provider !== "auto") return [];
 	const allSnippets = snippets.getInferenceSnippets(
 		{ ...model, inference: "" },
-		accessToken,
 		provider,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		{ ...providerMapping, hfModelId: model.id } as any,
-		opts
+		{ ...opts, directRequest: false },
 	);
 
 	return allSnippets
 		.filter(s => s.language === language)
 		.map(s => {
-			if (opts?.structured_output && !structuredForbiddenProviders.includes(provider as Provider)) {
+			if (
+				opts?.structured_output?.schema &&
+				opts.structured_output.enabled &&
+				models.supportsStructuredOutput(conversation.model, provider)
+			) {
 				return {
 					...s,
 					content: modifySnippet(s.content, {
@@ -333,6 +337,7 @@ export function getInferenceSnippet(
 		});
 }
 
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
 const tokenizers = new Map<string, PreTrainedTokenizer | null>();
 
 export async function getTokenizer(model: Model) {
@@ -348,15 +353,16 @@ export async function getTokenizer(model: Model) {
 }
 
 // When you don't have access to a tokenizer, guesstimate
-export function estimateTokens(conversation: Conversation) {
-	const content = conversation.messages.reduce((acc, curr) => {
+export function estimateTokens(conversation: ConversationClass) {
+	if (!conversation.data.messages) return 0;
+	const content = conversation.data.messages?.reduce((acc, curr) => {
 		return acc + (curr?.content ?? "");
 	}, "");
 
 	return content.length / 4; // 1 token ~ 4 characters
 }
 
-export async function getTokens(conversation: Conversation): Promise<number> {
+export async function getTokens(conversation: ConversationClass): Promise<number> {
 	const model = conversation.model;
 	if (isCustomModel(model)) return estimateTokens(conversation);
 	const tokenizer = await getTokenizer(model);
@@ -365,7 +371,7 @@ export async function getTokens(conversation: Conversation): Promise<number> {
 	// This is a simplified version - you might need to adjust based on your exact needs
 	let formattedText = "";
 
-	conversation.messages.forEach((message, index) => {
+	conversation.data.messages?.forEach((message, index) => {
 		let content = `<|start_header_id|>${message.role}<|end_header_id|>\n\n${message.content?.trim()}<|eot_id|>`;
 
 		// Add BOS token to the first message

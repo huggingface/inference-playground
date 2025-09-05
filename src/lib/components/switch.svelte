@@ -43,7 +43,7 @@
 	class={classes(
 		"relative h-5 w-10 shrink-0 rounded-full bg-neutral-500 transition-all",
 		{ "bg-blue-500": toggle.value },
-		className
+		className,
 	)}
 >
 	<span

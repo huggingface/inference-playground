@@ -4,10 +4,11 @@ import {
 } from "$lib/components/inference-playground/generation-config-settings.js";
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
-import { PipelineTag, Provider, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
-import { handleNonStreamingResponse, handleStreamingResponse } from "$lib/utils/business.svelte.js";
+import { PipelineTag, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
+import { handleNonStreamingResponse, handleStreamingResponse, estimateTokens } from "$lib/utils/business.svelte.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
-import { models, structuredForbiddenProviders } from "./models.svelte";
+import { models } from "./models.svelte";
+import { pricing } from "./pricing.svelte.js";
 import { DEFAULT_PROJECT_ID, ProjectEntity, projects } from "./projects.svelte";
 import { token } from "./token.svelte";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -29,10 +30,16 @@ export class ConversationEntity {
 	config: GenerationConfig = {};
 
 	@Fields.json()
+	extraParams?: Record<string, string>;
+
+	@Fields.json()
 	structuredOutput?: {
 		enabled?: boolean;
 		schema?: string;
 	};
+
+	@Fields.boolean()
+	parseMarkdown = false;
 
 	@Fields.json()
 	messages?: ConversationMessage[];
@@ -57,8 +64,6 @@ export type ConversationEntityMembers = MembersOnly<ConversationEntity>;
 
 const conversationsRepo = repo(ConversationEntity, idb);
 
-const startMessageUser: ConversationMessage = { role: "user", content: "" };
-
 export const emptyModel: Model = {
 	_id: "",
 	inferenceProviderMapping: [],
@@ -78,8 +83,9 @@ function getDefaultConversation(projectId: string) {
 		projectId,
 		modelId: models.trending[0]?.id ?? models.remote[0]?.id ?? emptyModel.id,
 		config: { ...defaultGenerationConfig },
-		messages: [{ ...startMessageUser }],
+		messages: [],
 		streaming: true,
+		parseMarkdown: false,
 		createdAt: new Date(),
 	} satisfies Partial<ConversationEntityMembers>;
 }
@@ -89,7 +95,7 @@ export class ConversationClass {
 	readonly model = $derived(models.all.find(m => m.id === this.data.modelId) ?? emptyModel);
 
 	abortManager = new AbortManager();
-	generationStats = $state({ latency: 0, tokens: 0 }) as GenerationStatistics;
+	generationStats = $state({ latency: 0, tokens: 0, cost: 0 }) as GenerationStatistics;
 	generating = $state(false);
 
 	constructor(data: ConversationEntityMembers) {
@@ -101,13 +107,15 @@ export class ConversationClass {
 	}
 
 	get isStructuredOutputAllowed() {
-		const forbiddenProvider =
-			this.data.provider && structuredForbiddenProviders.includes(this.data.provider as Provider);
-		return !forbiddenProvider;
+		return models.supportsStructuredOutput(this.model, this.data.provider);
 	}
 
 	get isStructuredOutputEnabled() {
 		return this.isStructuredOutputAllowed && this.data.structuredOutput?.enabled;
+	}
+
+	get supportsImgUpload() {
+		return this.model.pipeline_tag === PipelineTag.ImageTextToText;
 	}
 
 	update = async (data: Partial<ConversationEntityMembers>) => {
@@ -125,7 +133,7 @@ export class ConversationClass {
 	};
 
 	addMessage = async (message: ConversationMessage) => {
-		this.update({
+		await this.update({
 			...this.data,
 			messages: [...(this.data.messages || []), snapshot(message)],
 		});
@@ -147,9 +155,24 @@ export class ConversationClass {
 		});
 	};
 
+	checkAndClearBranchStatus = async (deletionIndex: number) => {
+		const currentProject = projects.current;
+
+		if (!currentProject?.branchedFromId || typeof currentProject?.branchedFromMessageIndex !== "number") return;
+
+		// If we're deleting messages at or before the branch point, clear branch status
+		if (deletionIndex <= currentProject.branchedFromMessageIndex) {
+			await projects.clearBranchStatus(currentProject.id);
+		}
+	};
+
 	deleteMessage = async (idx: number) => {
 		if (!this.data.messages) return;
 		const imgKeys = this.data.messages.flatMap(m => m.images).filter(isString);
+
+		// Check if we need to clear branch status
+		await this.checkAndClearBranchStatus(idx);
+
 		await Promise.all([
 			...imgKeys.map(k => images.delete(k)),
 			this.update({
@@ -164,6 +187,9 @@ export class ConversationClass {
 		const sliced = this.data.messages.slice(0, from);
 		const notSliced = this.data.messages.slice(from);
 
+		// Check if we need to clear branch status
+		await this.checkAndClearBranchStatus(from);
+
 		const imgKeys = notSliced.flatMap(m => m.images).filter(isString);
 		await Promise.all([
 			...imgKeys.map(k => images.delete(k)),
@@ -175,6 +201,11 @@ export class ConversationClass {
 	};
 
 	genNextMessage = async () => {
+		if (!token.value) {
+			token.showModal = true;
+			return;
+		}
+
 		this.generating = true;
 		const startTime = performance.now();
 
@@ -197,7 +228,7 @@ export class ConversationClass {
 							this.updateMessage({ index, message: streamingMessage });
 						}
 					},
-					this.abortManager.createController()
+					this.abortManager.createController(),
 				);
 			} else {
 				const { message: newMessage, completion_tokens: newTokensCount } = await handleNonStreamingResponse(this);
@@ -206,10 +237,10 @@ export class ConversationClass {
 			}
 		} catch (error) {
 			if (error instanceof Error) {
-				const msg = error.message;
-				if (msg.toLowerCase().includes("montly") || msg.toLowerCase().includes("pro")) {
-					showQuotaModal();
-				}
+				// const msg = error.message;
+				// if (msg.toLowerCase().includes("monthly") || msg.toLowerCase().includes("pro")) {
+				// 	showQuotaModal();
+				// }
 
 				if (error.message.includes("token seems invalid")) {
 					token.reset();
@@ -225,6 +256,17 @@ export class ConversationClass {
 
 		const endTime = performance.now();
 		this.generationStats.latency = Math.round(endTime - startTime);
+
+		// Calculate cost if we have pricing data
+		if (this.data.provider && this.data.provider !== "auto") {
+			const inputTokens = estimateTokens(this);
+			const outputTokens = this.generationStats.tokens;
+			const costEstimate = pricing.estimateCost(this.model.id, this.data.provider, inputTokens, outputTokens);
+			if (costEstimate) {
+				this.generationStats.cost = costEstimate.total;
+			}
+		}
+
 		this.generating = false;
 	};
 
@@ -260,6 +302,8 @@ class Conversations {
 			.then(res => {
 				this.#conversations = { ...this.#conversations, [DEFAULT_PROJECT_ID]: [new ConversationClass(res)] };
 			});
+
+		projects.activeId = DEFAULT_PROJECT_ID;
 	});
 
 	get conversations() {
@@ -275,7 +319,7 @@ class Conversations {
 	}
 
 	create = async (
-		args: { projectId: ProjectEntity["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>
+		args: { projectId: ProjectEntity["id"]; modelId?: Model["id"] } & Partial<ConversationEntityMembers>,
 	) => {
 		const conv = snapshot({
 			...getDefaultConversation(args.projectId),
@@ -350,8 +394,44 @@ class Conversations {
 		await Promise.allSettled(
 			fromArr.map(async c => {
 				conversations.create({ ...c.data, projectId: to });
-			})
+			}),
 		);
+	};
+
+	duplicateUpToMessage = async (from: ProjectEntity["id"], to: ProjectEntity["id"], messageIndex: number) => {
+		const fromArr = this.#conversations[from] ?? [];
+
+		// Clear any existing conversations for the target project first
+		this.#conversations[to] = [];
+
+		// Delete any existing conversations in the database for this project
+		const existingConversations = await conversationsRepo.find({ where: { projectId: to } });
+		await Promise.all(existingConversations.map(c => conversationsRepo.delete(c.id)));
+
+		const newConversations: ConversationClass[] = [];
+
+		for (const c of fromArr) {
+			// Copy only messages up to the specified index with deep clone
+			const truncatedMessages =
+				c.data.messages?.slice(0, messageIndex + 1).map(msg => ({
+					...msg,
+					images: msg.images ? [...msg.images] : undefined,
+				})) || [];
+
+			const conversationData = {
+				...snapshot(c.data),
+				projectId: to,
+				messages: truncatedMessages,
+				id: undefined, // Let the database generate a new ID
+			};
+
+			// Use conversationsRepo directly to avoid default conversation merging
+			const saved = await conversationsRepo.save(conversationData);
+			newConversations.push(new ConversationClass(saved));
+		}
+
+		// Update the in-memory cache
+		this.#conversations[to] = newConversations;
 	};
 
 	genNextMessages = async (conv: "left" | "right" | "both" | ConversationClass = "both") => {

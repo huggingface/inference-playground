@@ -43,7 +43,7 @@ export class TextareaAutosize {
 
 		watch(
 			() => this.textareaHeight,
-			() => options?.onResize?.()
+			() => options?.onResize?.(),
 		);
 
 		useResizeObserver(
@@ -55,7 +55,7 @@ export class TextareaAutosize {
 
 				this.textareaOldWidth = contentRect.width;
 				this.triggerResize();
-			}
+			},
 		);
 
 		onDestroy(() => {
@@ -150,7 +150,7 @@ export class TextareaAutosize {
 		}
 
 		// Only update if height actually changed
-		if (this.textareaHeight !== newHeight) {
+		if (this.textareaHeight !== newHeight || !this.element.style[this.styleProp]) {
 			this.textareaHeight = newHeight;
 			this.element.style[this.styleProp] = `${newHeight}px`;
 		}

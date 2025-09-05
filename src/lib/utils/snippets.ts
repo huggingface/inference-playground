@@ -64,7 +64,7 @@ function insertPropertiesInternal(
 	openChar: string, // The opening character, e.g., '{' or '('
 	closeChar: string, // The closing character, e.g., '}' or ')'
 	propFormatter: (key: string, formattedValue: string, indent: string) => string,
-	valueFormatter: (value: unknown, baseIndent: string) => string
+	valueFormatter: (value: unknown, baseIndent: string) => string,
 ): string {
 	if (Object.keys(newProperties).length === 0) {
 		return snippet;
@@ -215,7 +215,7 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			"{", // The parameters are in an object literal
 			"}",
 			(key, value, indent) => `${indent}${key}: ${value},\n`, // JS object literal style
-			formatJsJsonValue
+			formatJsJsonValue,
 		);
 	}
 	// JS: HuggingFace InferenceClient (non-streaming)
@@ -228,7 +228,7 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			"{", // The parameters are in an object literal
 			"}",
 			(key, value, indent) => `${indent}${key}: ${value},\n`, // JS object literal style
-			formatJsJsonValue
+			formatJsJsonValue,
 		);
 	}
 	// JS: OpenAI Client
@@ -244,7 +244,7 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			"{", // The parameters are in an object literal
 			"}",
 			(key, value, indent) => `${indent}${key}: ${value},\n`,
-			formatJsJsonValue
+			formatJsJsonValue,
 		);
 	}
 	// Python: OpenAI or HuggingFace Client using client.chat.completions.create
@@ -259,7 +259,7 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 				const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
 				return `${indent}${snakeKey}=${value},\n`;
 			},
-			formatPythonValue
+			formatPythonValue,
 		);
 	}
 	// Python: requests example with query({...})
@@ -272,7 +272,7 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 			"}",
 			// Python dict keys are strings, values formatted for Python
 			(key, formattedValue, indent) => `${indent}"${key}": ${formattedValue},\n`,
-			formatPythonValue // Use formatPythonValue for the values themselves
+			formatPythonValue, // Use formatPythonValue for the values themselves
 		);
 	}
 	// Shell/curl (JSON content)
@@ -287,7 +287,7 @@ export function modifySnippet(snippet: string, newProperties: Record<string, unk
 				const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
 				return `${indent}"${snakeKey}": ${value},\n`;
 			},
-			formatJsJsonValue
+			formatJsJsonValue,
 		);
 	}
 	return snippet;

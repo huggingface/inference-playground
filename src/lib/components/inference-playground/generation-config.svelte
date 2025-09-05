@@ -1,15 +1,16 @@
 <script lang="ts">
-import type { ConversationClass } from "$lib/state/conversations.svelte.js";
-import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
-import { maxAllowedTokens } from "$lib/utils/business.svelte.js";
-import { isNumber } from "$lib/utils/is.js";
-import { watch } from "runed";
-import IconX from "~icons/carbon/close";
-import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
-import MCPModal from "./mcp-modal.svelte";
-import StructuredOutputModal from "./structured-output-modal.svelte";
-import { mcpServers } from "$lib/state/mcps.svelte.js";
-import { isMcpEnabled } from "$lib/constants.js";
+	import type { ConversationClass } from "$lib/state/conversations.svelte.js";
+	import { maxAllowedTokens } from "$lib/utils/business.svelte.js";
+	import { cn } from "$lib/utils/cn.js";
+	import { isNumber } from "$lib/utils/is.js";
+	import { watch } from "runed";
+	import IconX from "~icons/carbon/close";
+	import ExtraParamsModal, { openExtraParamsModal } from "./extra-params-modal.svelte";
+	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
+	import MCPModal from "./mcp-modal.svelte";
+	import StructuredOutputModal, { openStructuredOutputModal } from "./structured-output-modal.svelte";
+	import { mcpServers } from "$lib/state/mcps.svelte.js";
+	import { isMcpEnabled } from "$lib/constants.js";
 	interface Props {
 		conversation: ConversationClass;
 		classNames?: string;
@@ -30,7 +31,7 @@ import { isMcpEnabled } from "$lib/constants.js";
 					max_tokens: maxTokens,
 				},
 			});
-		}
+		},
 	);
 
 	type Config = (typeof conversation)["data"]["config"];
@@ -44,8 +45,8 @@ import { isMcpEnabled } from "$lib/constants.js";
 		});
 	}
 
-	let editingStructuredOutput = $state(false);
 	let editingMCP = $state(false);
+	const extraParamsLen = $derived(Object.keys(conversation.data.extraParams ?? {}).length);
 </script>
 
 <div class="flex flex-col gap-y-7 {classNames}">
@@ -104,7 +105,7 @@ import { isMcpEnabled } from "$lib/constants.js";
 	</label>
 
 	<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
-	{#if !structuredForbiddenProviders.includes(conversation.data.provider as any)}
+	{#if conversation.isStructuredOutputAllowed}
 		<label class="mt-2 flex cursor-pointer items-center justify-between" for="structured-output">
 			<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Structured Output</span>
 			<div class="flex items-center gap-2">
@@ -118,7 +119,7 @@ import { isMcpEnabled } from "$lib/constants.js";
 					class="peer sr-only"
 					id="structured-output"
 				/>
-				<button class="btn-mini" type="button" onclick={() => (editingStructuredOutput = true)}> edit </button>
+				<button class="btn-mini" type="button" onclick={openStructuredOutputModal}> edit </button>
 				<div
 					class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
 				></div>
@@ -140,9 +141,35 @@ import { isMcpEnabled } from "$lib/constants.js";
 			</div>
 		</div>
 	{/if}
+
+	<div class="mt-2 flex items-center gap-2">
+		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Extra parameters</span>
+		<span
+			class={cn(
+				"rounded-md bg-black px-2 py-1 text-xs font-semibold text-white dark:bg-blue-600",
+				!extraParamsLen && "hidden",
+			)}
+		>
+			{extraParamsLen}
+		</span>
+		<button class="btn-mini ml-auto" type="button" onclick={openExtraParamsModal}>edit</button>
+	</div>
+
+	<label class="mt-2 flex cursor-pointer items-center justify-between">
+		<input
+			type="checkbox"
+			bind:checked={() => conversation.data.parseMarkdown, v => conversation.update({ parseMarkdown: v })}
+			class="peer sr-only"
+		/>
+		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Parse Markdown</span>
+		<div
+			class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
+		></div>
+	</label>
 </div>
 
-	<StructuredOutputModal {conversation} bind:open={editingStructuredOutput} />
-	{#if isMcpEnabled()}
-		<MCPModal bind:open={editingMCP} />
-	{/if}
+<StructuredOutputModal {conversation} />
+<ExtraParamsModal {conversation} />
+{#if isMcpEnabled()}
+	<MCPModal bind:open={editingMCP} />
+{/if}

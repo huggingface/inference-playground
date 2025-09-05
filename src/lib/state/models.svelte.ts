@@ -1,5 +1,5 @@
 import { page } from "$app/state";
-import { Provider, type CustomModel } from "$lib/types.js";
+import { type CustomModel, type Model } from "$lib/types.js";
 import { edit, randomPick } from "$lib/utils/array.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
@@ -9,13 +9,6 @@ import { conversations } from "./conversations.svelte";
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
 const pageData = $derived(page.data as PageData);
-
-export const structuredForbiddenProviders: Provider[] = [
-	Provider.Hyperbolic,
-	Provider.Nebius,
-	Provider.Novita,
-	Provider.Sambanova,
-];
 
 class Models {
 	remote = $derived(pageData.models);
@@ -73,6 +66,13 @@ class Models {
 			if (c.model._id !== uuid) return;
 			c.update({ modelId: randomPick(models.trending)?.id });
 		});
+	}
+
+	supportsStructuredOutput(model: Model | CustomModel, provider?: string) {
+		if (typia.is<CustomModel>(model)) return true;
+		const routerDataEntry = pageData.routerData.data.find(d => d.id === model.id);
+		if (!routerDataEntry) return false;
+		return routerDataEntry.providers.find(p => p.provider === provider)?.supports_structured_output ?? false;
 	}
 }
 

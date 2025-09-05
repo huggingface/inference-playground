@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { type ConversationClass } from "$lib/state/conversations.svelte";
-	import { structuredForbiddenProviders } from "$lib/state/models.svelte";
 	import { token } from "$lib/state/token.svelte.js";
+	import { billing } from "$lib/state/billing.svelte";
 	import { isCustomModel } from "$lib/types.js";
 	import {
 		getInferenceSnippet,
@@ -40,7 +40,7 @@
 	let showToken = $state(false);
 
 	type GetSnippetArgs = {
-		tokenStr: string;
+		tokenStr?: string;
 		conversation: ConversationClass;
 		lang: InferenceSnippetLanguage;
 	};
@@ -53,15 +53,16 @@
 			max_tokens: data.config.max_tokens,
 			temperature: data.config.temperature,
 			top_p: data.config.top_p,
+			accessToken: tokenStr,
+			billTo: billing.organization || undefined,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		if (data.structuredOutput && !structuredForbiddenProviders.includes(conversation.data.provider as any)) {
+		if (data.structuredOutput && conversation.isStructuredOutputAllowed) {
 			opts.structured_output = data.structuredOutput;
 		}
 
 		if (isCustomModel(model)) {
-			const snippets = getInferenceSnippet(conversation, lang, tokenStr, opts);
+			const snippets = getInferenceSnippet(conversation, lang, opts);
 			return snippets
 				.filter(s => s.client.startsWith("open") || lang === "sh")
 				.map(s => {
@@ -74,7 +75,7 @@
 				});
 		}
 
-		return getInferenceSnippet(conversation, lang, tokenStr, opts);
+		return getInferenceSnippet(conversation, lang, opts);
 	}
 
 	// { javascript: 0, python: 0, http: 0 } at first
@@ -82,8 +83,8 @@
 		fromEntries(
 			keys(labelsByLanguage).map(lang => {
 				return [lang, 0];
-			})
-		)
+			}),
+		),
 	);
 
 	type InstallInstructions = {
@@ -101,10 +102,10 @@
 		if (isCustomModel(conversation.model)) {
 			const t = conversation.model.accessToken;
 
-			return t && showToken ? t : "YOUR_ACCESS_TOKEN";
+			return t && showToken ? t : undefined;
 		}
 
-		return token.value && showToken ? token.value : "YOUR_HF_TOKEN";
+		return token.value && showToken ? token.value : undefined;
 	});
 
 	const snippetsByLang = $derived({
@@ -112,6 +113,18 @@
 		python: getSnippet({ lang: "python", tokenStr, conversation }),
 		http: getSnippet({ lang: "sh", tokenStr, conversation }),
 	} as Record<Language, GetInferenceSnippetReturn>);
+
+	// Auto-switch to available language if current one has no snippets
+	$effect(() => {
+		const currentSnippets = snippetsByLang[lang];
+		if (currentSnippets.length) return;
+
+		// Find first language with available snippets
+		const availableLanguage = keys(labelsByLanguage).find(l => snippetsByLang[l] && snippetsByLang[l].length > 0);
+		if (availableLanguage) {
+			lang = availableLanguage;
+		}
+	});
 
 	const selectedSnippet = $derived(snippetsByLang[lang][selectedSnippetIdxByLang[lang]]);
 
@@ -147,7 +160,9 @@
 		class="border-b border-gray-200 text-center text-sm font-medium text-gray-500 dark:border-gray-700 dark:text-gray-400"
 	>
 		<ul class="-mb-px flex flex-wrap">
-			{#each entries(labelsByLanguage) as [language, label]}
+			{#each entries(labelsByLanguage).filter(([lang]) => {
+				return snippetsByLang[lang]?.length;
+			}) as [language, label]}
 				<li>
 					<button
 						onclick={() => (lang = language)}
@@ -218,7 +233,7 @@
 		<pre
 			class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-xs dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
 				installInstructions.content,
-				selectedSnippet?.language
+				selectedSnippet?.language,
 			)}</pre>
 	{/if}
 
@@ -253,6 +268,6 @@
 	<pre
 		class="overflow-x-auto rounded-lg border border-gray-200/80 bg-white px-4 py-6 text-sm shadow-xs dark:border-gray-800 dark:bg-gray-800/50">{@html highlight(
 			selectedSnippet?.content,
-			selectedSnippet?.language
+			selectedSnippet?.language,
 		)}</pre>
 </div>

@@ -46,7 +46,7 @@ async function generateLoop({ args, getAssistantResponse, connections }: Generat
 						const response = await executeMcpTool(connections, toolCall as any);
 						debugLog("Tool call response", response);
 						args.messages.push(response);
-					})
+					}),
 				);
 
 				finish_reason = null;

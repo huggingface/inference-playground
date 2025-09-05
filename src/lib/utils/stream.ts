@@ -110,7 +110,7 @@ export class StreamWriter {
 
 export async function streamFromAsyncIterable<T>(
 	iterable: AsyncIterable<T>,
-	transform: (item: T) => StreamChunk
+	transform: (item: T) => StreamChunk,
 ): Promise<ReadableStream<Uint8Array>> {
 	const writer = new StreamWriter();
 

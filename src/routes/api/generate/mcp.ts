@@ -52,7 +52,7 @@ export const connectToMCPServers = async (servers: MCPServerConfig[]): Promise<M
 			} catch (error) {
 				debugError(`Failed to connect to MCP server ${server.name}:`, error);
 			}
-		})
+		}),
 	);
 
 	return connections;
@@ -60,7 +60,7 @@ export const connectToMCPServers = async (servers: MCPServerConfig[]): Promise<M
 
 export const executeMcpTool = async (
 	connections: MCPServerConnection[],
-	toolCall: { id: string; function: { name: string; arguments: string } }
+	toolCall: { id: string; function: { name: string; arguments: string } },
 ) => {
 	try {
 		debugLog(`Executing tool: ${toolCall.function.name}`);

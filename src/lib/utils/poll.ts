@@ -6,7 +6,7 @@
  */
 export async function poll<T>(
 	predicate: () => T | Promise<T>,
-	options: { interval?: number; maxAttempts?: number } = {}
+	options: { interval?: number; maxAttempts?: number } = {},
 ): Promise<T | undefined> {
 	const { interval = 10, maxAttempts = 200 } = options;
 

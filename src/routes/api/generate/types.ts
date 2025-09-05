@@ -1,5 +1,5 @@
 import type { ChatCompletionInputMessage } from "@huggingface/tasks";
-import type { ChatCompletion, ChatCompletionChunk } from "openai/resources/index.mjs";
+import type { ChatCompletionChunk } from "openai/resources/index.mjs";
 
 export interface MCPServerConfig {
 	id: string;

@@ -18,6 +18,12 @@ export class ProjectEntity {
 
 	@Fields.json()
 	enabledMCPs?: string[];
+
+	@Fields.string()
+	branchedFromId?: string | null;
+
+	@Fields.number()
+	branchedFromMessageIndex?: number | null;
 }
 
 export type ProjectEntityMembers = MembersOnly<ProjectEntity>;
@@ -75,14 +81,6 @@ class Projects {
 		return id;
 	};
 
-	setCurrent = async (id: string) => {
-		await checkpoints.migrate(id, this.activeId);
-		conversations.migrate(this.activeId, id).then(() => {
-			this.#activeId.current = id;
-		});
-		this.activeId = id;
-	};
-
 	get current() {
 		return this.#projects[this.activeId];
 	}
@@ -108,6 +106,46 @@ class Projects {
 			this.activeId = DEFAULT_PROJECT_ID;
 		}
 	}
+
+	branch = async (fromProjectId: string, messageIndex: number): Promise<string> => {
+		const fromProject = this.#projects[fromProjectId];
+		if (!fromProject) throw new Error("Source project not found");
+
+		// Create new project with branching info
+		const newProjectId = await this.create({
+			name: `${fromProject.name} (branch)`,
+			systemMessage: fromProject.systemMessage,
+			branchedFromId: fromProjectId,
+			branchedFromMessageIndex: messageIndex,
+		});
+
+		// Copy conversations up to the specified message index
+		await conversations.duplicateUpToMessage(fromProjectId, newProjectId, messageIndex);
+
+		// Switch to the new project
+		this.activeId = newProjectId;
+
+		return newProjectId;
+	};
+
+	getBranchedFromProject = (projectId: string) => {
+		const project = this.#projects[projectId];
+		if (!project?.branchedFromId) return null;
+
+		const originalProject = this.#projects[project.branchedFromId];
+		return originalProject;
+	};
+
+	clearBranchStatus = async (projectId: string) => {
+		const project = this.#projects[projectId];
+		if (!project?.branchedFromId) return;
+
+		await this.update({
+			...project,
+			branchedFromId: null,
+			branchedFromMessageIndex: null,
+		});
+	};
 }
 
 export const projects = new Projects();

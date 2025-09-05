@@ -10,6 +10,7 @@
 	import IconHistory from "~icons/carbon/recently-viewed";
 	import IconSave from "~icons/carbon/save";
 	import IconDelete from "~icons/carbon/trash-can";
+	import ArrowSplitRounded from "~icons/material-symbols/arrow-split-rounded";
 	import Dialog from "../dialog.svelte";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
@@ -67,7 +68,7 @@
 		{...select.trigger}
 		class={cn(
 			"relative flex grow items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
-			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110"
+			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
 		)}
 	>
 		<div class="flex items-center gap-1 text-sm">
@@ -114,7 +115,21 @@
 			>
 				<div class="flex items-center gap-2">
 					{name}
-					{#if hasCheckpoints}
+					{#if projects.all.find(p => p.id === id)?.branchedFromId}
+						{@const originalProject = projects.getBranchedFromProject(id)}
+						<Tooltip>
+							{#snippet trigger(tooltip)}
+								<div
+									class="text-3xs grid aspect-square place-items-center rounded bg-blue-300 p-0.5 text-blue-700 dark:bg-blue-400/25 dark:text-blue-400"
+									aria-label="Branched project"
+									{...tooltip.trigger}
+								>
+									<ArrowSplitRounded />
+								</div>
+							{/snippet}
+							Branched from {originalProject?.name || "unknown project"}
+						</Tooltip>
+					{:else if hasCheckpoints}
 						<div
 							class="text-3xs grid aspect-square place-items-center rounded bg-yellow-300 p-0.5 text-yellow-700 dark:bg-yellow-400/25 dark:text-yellow-400"
 							aria-label="Project has checkpoints"
