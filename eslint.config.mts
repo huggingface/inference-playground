@@ -92,6 +92,7 @@ export default ts.config(
 			"**/package-lock.json",
 			"**/yarn.lock",
 			"context_length.json",
+			".claude/**/*",
 		],
 	},
 	{

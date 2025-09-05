@@ -11,6 +11,8 @@ import { InferenceClient, snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
 import { billing } from "$lib/state/billing.svelte";
+import { mcpServers } from "$lib/state/mcps.svelte.js";
+import { isMcpEnabled } from "$lib/constants.js";
 import {
 	isCustomModel,
 	isHFModel,
@@ -85,6 +87,18 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 	return ctxLength;
 }
 
+function getEnabledMCPs() {
+	if (!isMcpEnabled()) return [];
+
+	return mcpServers.enabled.map(server => ({
+		id: server.id,
+		name: server.name,
+		url: server.url,
+		protocol: server.protocol,
+		headers: server.headers,
+	}));
+}
+
 function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const json = safeParse(data.structuredOutput?.schema ?? "");
@@ -144,6 +158,7 @@ async function getCompletionMetadata(
 		messages: parsed,
 		model: model.id,
 		response_format: getResponseFormatObj(conversation),
+		enabledMCPs: getEnabledMCPs(),
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} as any;
 

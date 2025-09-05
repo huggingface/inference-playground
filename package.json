@@ -12,8 +12,9 @@
 		"lint": "prettier . --check . && eslint src/",
 		"format": "prettier . --write .",
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
+		"update-ctx-length": "jiti scripts/update-ctx-length.ts",
 		"test:unit": "vitest --browser.headless",
-		"test": "npm run test:unit",
+		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
@@ -74,11 +75,14 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.13.3",
+		"@sentry/sveltekit": "^9.34.0",
 		"@tailwindcss/typography": "^0.5.16",
 		"dequal": "^2.0.3",
 		"eslint-plugin-svelte": "^3.11.0",
 		"marked": "^16.1.2",
 		"remult": "^3.0.2",
+		"tailwindcss-spring": "^1.0.1",
 		"typia": "^8.0.0"
 	},
 	"pnpm": {
