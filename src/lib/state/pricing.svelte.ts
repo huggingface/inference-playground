@@ -1,6 +1,5 @@
-import { page } from "$app/state";
 import { atLeastNDecimals } from "$lib/utils/number.js";
-import type { PageData } from "../../routes/$types.js";
+import { models } from "./models.svelte.js";
 
 interface RouterProvider {
 	provider: string;
@@ -19,17 +18,9 @@ interface RouterModel {
 	providers: RouterProvider[];
 }
 
-interface RouterData {
-	data: RouterModel[];
-}
-
-const pageData = $derived(page.data as PageData & { routerData: RouterData });
-
 class Pricing {
-	routerData = $derived(pageData.routerData as RouterData);
-
 	getPricing(modelId: string, provider: string) {
-		const model = this.routerData?.data?.find((m: RouterModel) => m.id === modelId);
+		const model = models.routerData?.data?.find((m: RouterModel) => m.id === modelId);
 		if (!model) return null;
 
 		const providerData = model.providers.find((p: RouterProvider) => p.provider === provider);
@@ -37,7 +28,7 @@ class Pricing {
 	}
 
 	getContextLength(modelId: string, provider: string) {
-		const model = this.routerData?.data?.find((m: RouterModel) => m.id === modelId);
+		const model = models.routerData?.data?.find((m: RouterModel) => m.id === modelId);
 		if (!model) return null;
 
 		const providerData = model.providers.find((p: RouterProvider) => p.provider === provider);
