@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getAvatarUrl } from "$lib/remote/avatar.remote";
 	import { isCustomModel, type CustomModel, type Model } from "$lib/types.js";
 	import IconCube from "~icons/carbon/cube";
 
@@ -8,24 +9,17 @@
 		size?: "sm" | "md";
 	}
 
-	let { model, orgName = undefined, size = "md" }: Props = $props();
+	let { model, orgName: _orgName = undefined, size = "md" }: Props = $props();
 
 	let sizeClass = $derived(size === "sm" ? "size-3" : "size-4");
 	let isCustom = $derived(isCustomModel(model));
-	let _orgName = $derived(orgName ?? (!isCustom ? model.id.split("/")[0] : undefined));
+	let orgName = $derived(_orgName ?? (!isCustom ? model.id.split("/")[0] : undefined));
+	let avatarUrl = $state<string>();
 
-	async function getAvatarUrl(orgName?: string) {
-		if (!orgName) return;
-		const url = `https://huggingface.co/api/organizations/${orgName}/avatar`;
-		const res = await fetch(url);
-		if (!res.ok) {
-			console.error(`Error getting avatar url for org: ${orgName}`, res.status, res.statusText);
-			return;
-		}
-		const json = await res.json();
-		const { avatarUrl } = json;
-		return avatarUrl;
-	}
+	$effect(() => {
+		avatarUrl = undefined;
+		getAvatarUrl(orgName).then(url => (avatarUrl = url));
+	});
 </script>
 
 {#if isCustom}
@@ -34,16 +28,8 @@
 	>
 		<IconCube class="size-full p-0.5" />
 	</div>
+{:else if avatarUrl}
+	<img class="{sizeClass} flex-none rounded-sm bg-gray-200 object-cover" src={avatarUrl} alt="{orgName} avatar" />
 {:else}
-	{#await getAvatarUrl(_orgName)}
-		<div class="{sizeClass} flex-none rounded-sm bg-gray-200"></div>
-	{:then avatarUrl}
-		{#if avatarUrl}
-			<img class="{sizeClass} flex-none rounded-sm bg-gray-200 object-cover" src={avatarUrl} alt="{_orgName} avatar" />
-		{:else}
-			<div class="{sizeClass} flex-none rounded-sm bg-gray-200"></div>
-		{/if}
-	{:catch}
-		<div class="{sizeClass} flex-none rounded-sm bg-gray-200"></div>
-	{/await}
+	<div class="{sizeClass} flex-none rounded-sm bg-gray-200"></div>
 {/if}

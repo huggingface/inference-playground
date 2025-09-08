@@ -29,8 +29,8 @@
 		"@iconify-json/lucide": "^1.2.45",
 		"@iconify-json/material-symbols": "^1.2.15",
 		"@playwright/test": "^1.49.1",
-		"@ryoppippi/unplugin-typia": "^1.0.0",
-		"@samchon/openapi": "^3.0.0",
+		"@ryoppippi/unplugin-typia": "^2.6.5",
+		"@samchon/openapi": "^4.7.1",
 		"@sveltejs/adapter-auto": "^3.3.1",
 		"@sveltejs/adapter-node": "^5.3.1",
 		"@sveltejs/kit": "^2.37.1",
@@ -82,7 +82,7 @@
 		"marked": "^16.1.2",
 		"remult": "^3.0.2",
 		"tailwindcss-spring": "^1.0.1",
-		"typia": "^8.0.0"
+		"typia": "^9.7.2"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
