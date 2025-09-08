@@ -65,7 +65,7 @@
 	<div class="flex justify-between">
 		<div>
 			<div class="flex items-center gap-1">
-				<img src={getFaviconUrl(server.url)} alt="Server Icon" class="size-4 rounded-full" />
+				<img src={getFaviconUrl(server.url)} alt="Server Icon" class="size-4 rounded p-0.5 dark:bg-gray-500" />
 				<span class="font-bold">{server.name}</span>
 			</div>
 			<p class="mt-1 truncate text-sm dark:text-neutral-300">
