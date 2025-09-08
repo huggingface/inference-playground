@@ -1,22 +1,27 @@
-import { page } from "$app/state";
 import { type CustomModel, type Model } from "$lib/types.js";
 import { edit, randomPick } from "$lib/utils/array.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
-import type { PageData } from "../../routes/$types.js";
 import { conversations } from "./conversations.svelte";
+import { getModels, getRouterData, type RouterData } from "$lib/remote/models.remote";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
-const pageData = $derived(page.data as PageData);
-
 class Models {
-	remote = $derived(pageData.models);
+	routerData = $state<RouterData>();
+	remote: Model[] = $state([]);
 	trending = $derived(this.remote.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
 	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)));
 	all = $derived([...this.remote, ...this.custom]);
 
 	constructor() {
+		getModels().then(models => {
+			this.remote = models;
+		});
+		getRouterData().then(data => {
+			this.routerData = data;
+		});
+
 		const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
 		if (!savedData) return;
 
@@ -69,8 +74,9 @@ class Models {
 	}
 
 	supportsStructuredOutput(model: Model | CustomModel, provider?: string) {
+		if (!this.routerData) return false;
 		if (typia.is<CustomModel>(model)) return true;
-		const routerDataEntry = pageData.routerData.data.find(d => d.id === model.id);
+		const routerDataEntry = this.routerData?.data.find(d => d.id === model.id);
 		if (!routerDataEntry) return false;
 		return routerDataEntry.providers.find(p => p.provider === provider)?.supports_structured_output ?? false;
 	}
