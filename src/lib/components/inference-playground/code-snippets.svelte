@@ -206,6 +206,7 @@
 				<a
 					href={installInstructions.docs}
 					target="_blank"
+					rel="external"
 					class="relative -bottom-[1px] flex items-center gap-1 text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 				>
 					<IconExternal class="text-xs" />
