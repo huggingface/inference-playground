@@ -16,6 +16,9 @@ export class ProjectEntity {
 	@Fields.string()
 	systemMessage?: string;
 
+	@Fields.json()
+	enabledMCPs?: string[];
+
 	@Fields.string()
 	branchedFromId?: string | null;
 

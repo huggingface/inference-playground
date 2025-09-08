@@ -7,8 +7,10 @@
 	import IconX from "~icons/carbon/close";
 	import ExtraParamsModal, { openExtraParamsModal } from "./extra-params-modal.svelte";
 	import { GENERATION_CONFIG_KEYS, GENERATION_CONFIG_SETTINGS } from "./generation-config-settings.js";
+	import MCPModal from "./mcp-modal.svelte";
 	import StructuredOutputModal, { openStructuredOutputModal } from "./structured-output-modal.svelte";
-
+	import { mcpServers } from "$lib/state/mcps.svelte.js";
+	import { isMcpEnabled } from "$lib/constants.js";
 	interface Props {
 		conversation: ConversationClass;
 		classNames?: string;
@@ -43,6 +45,7 @@
 		});
 	}
 
+	let editingMCP = $state(false);
 	const extraParamsLen = $derived(Object.keys(conversation.data.extraParams ?? {}).length);
 </script>
 
@@ -124,6 +127,21 @@
 		</label>
 	{/if}
 
+	<!-- MCP Servers -->
+	{#if isMcpEnabled()}
+		<div class="mt-2 flex cursor-pointer items-center justify-between">
+			<span class="text-sm font-medium text-gray-900 dark:text-gray-300">MCP Servers</span>
+			<div class="flex items-center gap-2">
+				{#if mcpServers.enabled.length > 0}
+					<span class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+						{mcpServers.enabled.length} enabled
+					</span>
+				{/if}
+				<button class="btn-mini" type="button" onclick={() => (editingMCP = true)}> configure </button>
+			</div>
+		</div>
+	{/if}
+
 	<div class="mt-2 flex items-center gap-2">
 		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Extra parameters</span>
 		<span
@@ -152,3 +170,6 @@
 
 <StructuredOutputModal {conversation} />
 <ExtraParamsModal {conversation} />
+{#if isMcpEnabled()}
+	<MCPModal bind:open={editingMCP} />
+{/if}
