@@ -152,7 +152,12 @@ export const POST: RequestHandler = async ({ request }) => {
 					debugLog(JSON.stringify(res.message, null, 2));
 					return res;
 				},
-			}).then(() => writer.end());
+			})
+				.then(() => writer.end())
+				.catch(error => {
+					console.error("Generation loop error:", error);
+					writer.error(error instanceof Error ? error : new Error(String(error)));
+				});
 
 			debugLog("Creating response...");
 

@@ -71,11 +71,15 @@ export class StreamWriter {
 
 	write(chunk: StreamChunk): void {
 		if (!this.controller) {
-			throw new Error("Stream not initialized");
+			return;
 		}
 
-		const data = JSON.stringify(chunk);
-		this.controller.enqueue(this.encoder.encode(`data: ${data}\n\n`));
+		try {
+			const data = JSON.stringify(chunk);
+			this.controller.enqueue(this.encoder.encode(`data: ${data}\n\n`));
+		} catch {
+			// Controller might be closed
+		}
 	}
 
 	writeChunk(content: string): void {
@@ -88,13 +92,24 @@ export class StreamWriter {
 
 	end(): void {
 		if (!this.controller) return;
-		this.write({ type: "done" });
-		this.controller.close();
+		try {
+			this.write({ type: "done" });
+			this.controller.close();
+		} catch {
+			// Controller might already be closed
+		}
+		this.controller = undefined;
 	}
 
 	error(error: Error): void {
 		if (!this.controller) return;
-		this.controller.error(error);
+		try {
+			this.writeError(error.message);
+			this.controller.close();
+		} catch {
+			// Controller might already be closed
+		}
+		this.controller = undefined;
 	}
 
 	createResponse(): Response {
