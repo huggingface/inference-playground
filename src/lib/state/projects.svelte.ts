@@ -4,6 +4,7 @@ import { Entity, Fields, repo, type MembersOnly } from "remult";
 import { PersistedState } from "runed";
 import { checkpoints } from "./checkpoints.svelte";
 import { conversations } from "./conversations.svelte";
+import { createInit } from "$lib/spells/create-init.svelte";
 
 @Entity("project")
 export class ProjectEntity {
@@ -46,16 +47,15 @@ class Projects {
 		this.#activeId.current = id;
 	}
 
-	constructor() {
-		projectsRepo.find().then(res => {
-			if (!res.some(p => p.id === this.activeId)) this.activeId === DEFAULT_PROJECT_ID;
+	init = createInit(async () => {
+		const res = await projectsRepo.find();
+		if (!res.some(p => p.id === this.activeId)) this.activeId === DEFAULT_PROJECT_ID;
 
-			res.forEach(p => {
-				if (dequal(this.#projects[p.id], p)) return;
-				this.#projects[p.id] = p;
-			});
+		res.forEach(p => {
+			if (dequal(this.#projects[p.id], p)) return;
+			this.#projects[p.id] = p;
 		});
-	}
+	});
 
 	async create(args: Omit<ProjectEntity, "id">): Promise<string> {
 		const p = await projectsRepo.save({ ...args });

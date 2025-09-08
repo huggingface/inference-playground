@@ -5,7 +5,6 @@
 	import Prompts from "$lib/components/prompts.svelte";
 	import QuotaModal from "$lib/components/quota-modal.svelte";
 	import ShareModal from "$lib/components/share-modal.svelte";
-	import { conversations } from "$lib/state/conversations.svelte";
 	import "../app.css";
 
 	interface Props {
@@ -13,13 +12,12 @@
 	}
 
 	let { children }: Props = $props();
-	conversations.init();
 </script>
 
 <svelte:boundary>
 	{@render children?.()}
 	{#snippet pending()}
-		<!-- pending -->
+		<p class="abs-center absolute dark:text-white">🤗</p>
 	{/snippet}
 </svelte:boundary>
 

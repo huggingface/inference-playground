@@ -15,13 +15,6 @@ class Models {
 	all = $derived([...this.remote, ...this.custom]);
 
 	constructor() {
-		getModels().then(models => {
-			this.remote = models;
-		});
-		getRouterData().then(data => {
-			this.routerData = data;
-		});
-
 		const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
 		if (!savedData) return;
 
@@ -32,6 +25,13 @@ class Models {
 		} else {
 			localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
 		}
+	}
+
+	async load() {
+		await Promise.all([getModels(), getRouterData()]).then(([models, data]) => {
+			this.remote = models;
+			this.routerData = data;
+		});
 	}
 
 	#custom = $state.raw<CustomModel[]>([]);

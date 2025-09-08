@@ -283,7 +283,19 @@ class Conversations {
 
 	#active = $derived.by(() => this.for(projects.activeId));
 
-	init = createInit(() => {
+	init = createInit(async () => {
+		// Load all conversations from all projects
+		await Promise.all(
+			projects.all.map(async p => {
+				const c = await conversationsRepo.find({ where: { projectId: p.id } });
+				if (!c.length) {
+					const dc = conversationsRepo.create(getDefaultConversation(p.id));
+					c.push(dc);
+				}
+				this.#conversations = { ...this.#conversations, [p.id]: c.map(c => new ConversationClass(c)) };
+			}),
+		);
+
 		const searchParams = new URLSearchParams(window.location.search);
 		const searchProvider = searchParams.get("provider") ?? "";
 		const searchModelId = searchParams.get("modelId") ?? "";
@@ -291,7 +303,7 @@ class Conversations {
 		const searchModel = models.remote.find(m => m.id === searchModelId);
 		if (!searchModel) return;
 
-		conversationsRepo
+		await conversationsRepo
 			.upsert({
 				where: { projectId: DEFAULT_PROJECT_ID },
 				set: {
@@ -338,17 +350,6 @@ class Conversations {
 	};
 
 	for = (projectId: ProjectEntity["id"]): ConversationClass[] => {
-		// Async load from db
-		if (!this.#conversations[projectId]?.length) {
-			conversationsRepo.find({ where: { projectId } }).then(c => {
-				if (!c.length) {
-					const dc = conversationsRepo.create(getDefaultConversation(projectId));
-					c.push(dc);
-				}
-				this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new ConversationClass(c)) };
-			});
-		}
-
 		let res = this.#conversations[projectId];
 		if (res?.length === 0 || !res) {
 			// We set id to -1 because it is temporary, there should always be a conversation.

@@ -1,10 +1,10 @@
-export function createInit(cb: () => void) {
+export function createInit(cb: () => void | Promise<void>) {
 	let called = $state(false);
 
-	function init() {
+	async function init() {
 		if (called) return;
 		called = true;
-		cb();
+		await cb();
 	}
 
 	return Object.defineProperties(init, {
