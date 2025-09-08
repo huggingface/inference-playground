@@ -14,7 +14,7 @@
 		"clean": "rm -rf ./node_modules/ && rm -rf ./.svelte-kit/ && ni && echo 'Project cleaned!'",
 		"update-ctx-length": "jiti scripts/update-ctx-length.ts",
 		"test:unit": "vitest --browser.headless",
-		"test": "npm run test:unit -- --run && npm run test:e2e",
+		"test": "npm run test:unit -- --run",
 		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
