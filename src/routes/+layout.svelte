@@ -5,6 +5,7 @@
 	import Prompts from "$lib/components/prompts.svelte";
 	import QuotaModal from "$lib/components/quota-modal.svelte";
 	import ShareModal from "$lib/components/share-modal.svelte";
+	import IconLoadingLoop from "~icons/line-md/loading-loop";
 	import "../app.css";
 
 	interface Props {
@@ -18,6 +19,7 @@
 	{@render children?.()}
 	{#snippet pending()}
 		<p class="abs-center absolute dark:text-white">🤗</p>
+		<IconLoadingLoop class="abs-center absolute text-6xl dark:text-blue-300" />
 	{/snippet}
 </svelte:boundary>
 
