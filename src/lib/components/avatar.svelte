@@ -16,7 +16,7 @@
 	let orgName = $derived(_orgName ?? (!isCustom ? model.id.split("/")[0] : undefined));
 	let avatarUrl = $state<string>();
 
-	$effect(() => {
+	$effect.pre(() => {
 		avatarUrl = undefined;
 		getAvatarUrl(orgName).then(url => (avatarUrl = url));
 	});

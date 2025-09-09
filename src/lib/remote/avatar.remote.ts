@@ -1,4 +1,5 @@
 import { query } from "$app/server";
+import { withCache } from "$lib/utils/cache.js";
 import typia from "typia";
 
 type AvatarJson = {
@@ -7,9 +8,10 @@ type AvatarJson = {
 
 export const getAvatarUrl = query(
 	typia.createValidate<string | undefined>(),
-	async (orgName): Promise<string | undefined> => {
+	withCache(async (orgName): Promise<string | undefined> => {
 		if (!orgName) return;
 		const url = `https://huggingface.co/api/organizations/${orgName}/avatar`;
+
 		const res = await fetch(url);
 		if (!res.ok) {
 			throw new Error(`Error getting avatar url for org: ${orgName}`);
@@ -19,5 +21,5 @@ export const getAvatarUrl = query(
 		typia.assert<AvatarJson>(json);
 		const { avatarUrl } = json;
 		return avatarUrl;
-	},
+	}),
 );
