@@ -62,6 +62,34 @@ export class VirtualScroll {
 		}));
 	}
 
+	scrollToIndex(index: number) {
+		const { start, end } = this.visibleRange;
+
+		// Only scroll if the index is not currently visible
+		if (index >= start && index <= end) {
+			return; // Already visible, no need to scroll
+		}
+
+		let targetScrollTop: number;
+
+		if (index < start) {
+			// Scrolling up - position item at top with some buffer
+			targetScrollTop = (index - this.overscan) * this.itemHeight;
+		} else {
+			// Scrolling down - position item at bottom with some buffer
+			const visibleItems = Math.floor(this.#containerSize.height / this.itemHeight);
+			targetScrollTop = (index - visibleItems + 1 + this.overscan) * this.itemHeight;
+		}
+
+		const maxScrollTop = this.totalHeight - this.#containerSize.height;
+		this.#scrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+
+		// Update the actual scroll container
+		if (this.#containerEl) {
+			this.#containerEl.scrollTop = this.#scrollTop;
+		}
+	}
+
 	#attachmentKey = createAttachmentKey();
 	get container() {
 		return {

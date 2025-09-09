@@ -92,14 +92,33 @@
 			onClose?.();
 		},
 		onNavigate(current, direction) {
-			const currIdx = allFilteredModels.findIndex(item => item.type === "model" && item.content === current);
-			// TODO: get next/prev item, scroll to it, and return its content. Make sure
-			// to wrap around.
+			if (current === "__custom__") return null;
+			const modelItems = allFilteredModels.filter(item => item.type === "model");
+			const currIdx = modelItems.findIndex(item => typeof item.content === "object" && item.content.id === current);
+
+			let nextIdx: number;
 			if (direction === "next") {
+				nextIdx = currIdx === -1 ? 0 : (currIdx + 1) % modelItems.length;
+			} else {
+				nextIdx = currIdx === -1 ? modelItems.length - 1 : (currIdx - 1 + modelItems.length) % modelItems.length;
 			}
-			if (direction === "prev") {
+
+			const nextItem = modelItems[nextIdx];
+			if (!nextItem) return null;
+
+			// Scroll to the item
+			const allItems = allFilteredModels;
+			const actualIdx = allItems.findIndex(item => item === nextItem);
+			if (actualIdx !== -1) {
+				virtualScroll.scrollToIndex(actualIdx);
 			}
-			return null;
+
+			// Return the content for highlighting
+			return nextItem.content === "__custom__"
+				? "__custom__"
+				: typeof nextItem.content === "object"
+					? nextItem.content.id
+					: null;
 		},
 	});
 	$effect(() => {
