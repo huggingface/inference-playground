@@ -136,8 +136,8 @@ importers:
         specifier: ^26.0.0
         version: 26.1.0
       melt:
-        specifier: ^0.36.0
-        version: 0.36.0(@floating-ui/dom@1.6.13)(svelte@5.38.7)
+        specifier: ^0.40.0
+        version: 0.40.0(@floating-ui/dom@1.6.13)(svelte@5.38.7)
       openai:
         specifier: ^4.90.0
         version: 4.90.0(ws@8.18.2)(zod@3.25.76)
@@ -1833,6 +1833,9 @@ packages:
   flatted@3.3.3:
     resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
 
+  focus-trap@7.6.5:
+    resolution: {integrity: sha512-7Ke1jyybbbPZyZXFxEftUtxFGLMpE2n6A+z//m4CRDlj0hW+o3iYSmh8nFlYMurOiJVDmJRilUQtJr08KfIxlg==}
+
   form-data-encoder@1.7.2:
     resolution: {integrity: sha512-qfqtYan3rxrnCk1VYaA4H+Ms9xdpPqvLZa6xmMgFvhO32x7/3J/ExcTd6qpxM0vH2GdMI+poehyBZvqfMTto8A==}
 
@@ -2278,8 +2281,8 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
-  melt@0.36.0:
-    resolution: {integrity: sha512-lJdUuPvsCZs7zpcL2iSvxerHxv3QuM91FoTbdsliOQ2+J3fR4ADqUN878J4kkQSzzHlWqyedQmEBDP6U3iEWgA==}
+  melt@0.40.0:
+    resolution: {integrity: sha512-G+urf5f2Cy62cXiPQ+nf3muscjIE9e38kjDWZckU4x08bDaP+hryJ9rrsu81V1x0ZAgEwnMAMKVAFrEdomOYWw==}
     peerDependencies:
       '@floating-ui/dom': ^1.6.0
       svelte: ^5.30.1
@@ -2378,11 +2381,6 @@ packages:
   nanoid@3.3.8:
     resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
-  nanoid@5.1.5:
-    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
-    engines: {node: ^18 || >=20}
     hasBin: true
 
   natural-compare@1.4.0:
@@ -2989,6 +2987,9 @@ packages:
   synckit@0.9.2:
     resolution: {integrity: sha512-vrozgXDQwYO72vHjUb/HnFbQx1exDjoKzqx23aXEg2a9VIg2TSFZ8FmeZpTjUCFMYw7mpX4BE2SFu8wI7asYsw==}
     engines: {node: ^14.18.0 || >=16.0.0}
+
+  tabbable@6.2.0:
+    resolution: {integrity: sha512-Cat63mxsVJlzYvN51JmVXIgNoUokrIaT2zLclCXjRd8boZ0004U4KCs/sToJ75C6sdlByWxpYnb5Boif1VSFew==}
 
   tailwind-merge@3.0.2:
     resolution: {integrity: sha512-l7z+OYZ7mu3DTqrL88RiKrKIqO3NcpEO8V/Od04bNpvk0kiIFndGEoqfuzvj4yuhRkHKjRkII2z+KS2HfPcSxw==}
@@ -4954,6 +4955,10 @@ snapshots:
 
   flatted@3.3.3: {}
 
+  focus-trap@7.6.5:
+    dependencies:
+      tabbable: 6.2.0
+
   form-data-encoder@1.7.2: {}
 
   form-data@4.0.2:
@@ -5394,12 +5399,12 @@ snapshots:
 
   media-typer@1.1.0: {}
 
-  melt@0.36.0(@floating-ui/dom@1.6.13)(svelte@5.38.7):
+  melt@0.40.0(@floating-ui/dom@1.6.13)(svelte@5.38.7):
     dependencies:
       '@floating-ui/dom': 1.6.13
       dequal: 2.0.3
+      focus-trap: 7.6.5
       jest-axe: 9.0.0
-      nanoid: 5.1.5
       runed: 0.23.4(svelte@5.38.7)
       svelte: 5.38.7
 
@@ -5479,8 +5484,6 @@ snapshots:
   mute-stream@0.0.8: {}
 
   nanoid@3.3.8: {}
-
-  nanoid@5.1.5: {}
 
   natural-compare@1.4.0: {}
 
@@ -6119,6 +6122,8 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.1.1
       tslib: 2.8.1
+
+  tabbable@6.2.0: {}
 
   tailwind-merge@3.0.2: {}
 
