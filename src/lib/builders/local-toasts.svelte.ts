@@ -72,8 +72,8 @@ export class LocalToasts {
 						}).then(({ x, y, placement: _placement }) => {
 							placement = _placement;
 							Object.assign(node.style, {
-								left: placement === "top" ? `${x}px` : `${x - 4}px`,
-								top: placement === "top" ? `${y - 6}px` : `${y}px`,
+								left: placement.startsWith("top") ? `${x}px` : `${x - 4}px`,
+								top: placement.startsWith("top") ? `${y - 6}px` : `${y}px`,
 							});
 
 							// Animate
@@ -82,19 +82,16 @@ export class LocalToasts {
 
 							// Determine animation direction based on placement
 							let keyframes: Keyframe[] = [];
-							switch (placement) {
-								case "top":
-									keyframes = [
-										{ opacity: 0, transform: "translateY(8px)", scale: "0.8" },
-										{ opacity: 1, transform: "translateY(0)", scale: "1" },
-									];
-									break;
-								case "left":
-									keyframes = [
-										{ opacity: 0, transform: "translateX(8px)", scale: "0.8" },
-										{ opacity: 1, transform: "translateX(0)", scale: "1" },
-									];
-									break;
+							if (placement.startsWith("top")) {
+								keyframes = [
+									{ opacity: 0, transform: "translateX(var(--tx, 0)) translateY(8px)", scale: "0.8" },
+									{ opacity: 1, transform: "translateX(var(--tx, 0)) translateY(0)", scale: "1" },
+								];
+							} else if (placement.startsWith("left")) {
+								keyframes = [
+									{ opacity: 0, transform: "translateX(8px)", scale: "0.8" },
+									{ opacity: 1, transform: "translateX(0)", scale: "1" },
+								];
 							}
 
 							node.animate(keyframes, {
@@ -123,21 +120,17 @@ export class LocalToasts {
 
 							// Determine animation direction based on placement
 							let keyframes: Keyframe[] = [];
-							switch (placement) {
-								case "top":
-									keyframes = [
-										{ opacity: 1, transform: "translateY(0)" },
-										{ opacity: 0, transform: "translateY(-8px)" },
-									];
-									break;
-								case "left":
-									keyframes = [
-										{ opacity: 1, transform: "translateX(0)" },
-										{ opacity: 0, transform: "translateX(-8px)" },
-									];
-									break;
+							if (placement.startsWith("top")) {
+								keyframes = [
+									{ opacity: 1, transform: "translateX(var(--tx, 0)) translateY(0)" },
+									{ opacity: 0, transform: "translateX(var(--tx, 0)) translateY(-8px)" },
+								];
+							} else if (placement.startsWith("left")) {
+								keyframes = [
+									{ opacity: 1, transform: "translateX(0)" },
+									{ opacity: 0, transform: "translateX(-8px)" },
+								];
 							}
-
 							await cloned.animate(keyframes, {
 								duration: 400,
 								easing: "cubic-bezier(0.22, 1, 0.36, 1)",
