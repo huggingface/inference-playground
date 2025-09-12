@@ -44,7 +44,18 @@
 	}
 
 	async function sendMessage() {
-		if (input.trim() === "" && fileUpload.selected.size === 0) {
+		const c = conversations.active;
+		const hasEmptyInput = input.trim() === "" && fileUpload.selected.size === 0;
+		const lastMessageIsUser = c.some(conv => conv.data.messages?.at(-1)?.role === "user");
+
+		// If input is empty and last message is user, just re-run the conversation
+		if (hasEmptyInput && lastMessageIsUser) {
+			conversations.genNextMessages();
+			return;
+		}
+
+		// If input is empty but last message is not user, show warning
+		if (hasEmptyInput) {
 			localToasts.addToast({
 				data: {
 					content: "Please enter a message",
@@ -54,8 +65,7 @@
 			return;
 		}
 
-		const c = conversations.active;
-
+		// Normal flow: add user message and generate response
 		let images: string[] | undefined;
 		if (canUploadImgs) {
 			images = await uploadImages();
