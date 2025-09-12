@@ -2,6 +2,7 @@
 	import { autofocus } from "$lib/attachments/autofocus.js";
 	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte.js";
+	import { VirtualScroll } from "$lib/spells/virtual-scroll.svelte.js";
 	import type { CustomModel, Model } from "$lib/types.js";
 	import { noop } from "$lib/utils/noop.js";
 	import fuzzysearch from "$lib/utils/search.js";
@@ -26,6 +27,56 @@
 
 	let { onModelSelect, onClose, conversation }: Props = $props();
 
+	let backdropEl = $state<HTMLDivElement>();
+	let query = $state("");
+
+	const trending = $derived(fuzzysearch({ needle: query, haystack: models.trending, property: "id" }));
+	const other = $derived(fuzzysearch({ needle: query, haystack: models.nonTrending, property: "id" }));
+	const custom = $derived(fuzzysearch({ needle: query, haystack: models.custom, property: "id" }));
+
+	// Combine all filtered models into sections for virtualization
+	type SectionItem =
+		| { type: "header"; content: string }
+		| { type: "model"; content: Model | CustomModel | "__custom__"; trending?: boolean };
+
+	const allFilteredModels = $derived.by((): SectionItem[] => {
+		const sections: SectionItem[] = [];
+
+		if (trending.length > 0) {
+			sections.push({ type: "header", content: "Trending" });
+			trending.forEach(model => sections.push({ type: "model", content: model, trending: true }));
+		}
+
+		sections.push({ type: "header", content: "Custom endpoints" });
+		custom.forEach(model => sections.push({ type: "model", content: model }));
+		sections.push({ type: "model", content: "__custom__" }); // Add custom button
+
+		if (other.length > 0) {
+			sections.push({ type: "header", content: "Other models" });
+			other.forEach(model => sections.push({ type: "model", content: model }));
+		}
+
+		return sections;
+	});
+
+	const virtualScroll = new VirtualScroll({
+		itemHeight: 30, // Approximate height of each item
+		overscan: 5,
+		totalItems: () => allFilteredModels.length,
+	});
+
+	function handleBackdropClick(event: MouseEvent) {
+		event.stopPropagation();
+		if (window?.getSelection()?.toString()) {
+			return;
+		}
+		if (event.target === backdropEl) {
+			onClose?.();
+		}
+	}
+
+	const isCustom = typia.createIs<CustomModel>();
+
 	const combobox = new Combobox<string | undefined>({
 		onOpenChange(o) {
 			if (!o) onClose?.();
@@ -40,6 +91,35 @@
 			onModelSelect?.(modelId);
 			onClose?.();
 		},
+		onNavigate(current, direction) {
+			if (current === "__custom__") return null;
+			const modelItems = allFilteredModels.filter(item => item.type === "model");
+			const currIdx = modelItems.findIndex(item => typeof item.content === "object" && item.content.id === current);
+
+			let nextIdx: number;
+			if (direction === "next") {
+				nextIdx = currIdx === -1 ? 0 : (currIdx + 1) % modelItems.length;
+			} else {
+				nextIdx = currIdx === -1 ? modelItems.length - 1 : (currIdx - 1 + modelItems.length) % modelItems.length;
+			}
+
+			const nextItem = modelItems[nextIdx];
+			if (!nextItem) return null;
+
+			// Scroll to the item
+			const allItems = allFilteredModels;
+			const actualIdx = allItems.findIndex(item => item === nextItem);
+			if (actualIdx !== -1) {
+				virtualScroll.scrollToIndex(actualIdx);
+			}
+
+			// Return the content for highlighting
+			return nextItem.content === "__custom__"
+				? "__custom__"
+				: typeof nextItem.content === "object"
+					? nextItem.content.id
+					: null;
+		},
 	});
 	$effect(() => {
 		untrack(() => combobox.highlight(conversation.model.id));
@@ -48,25 +128,6 @@
 			combobox.open = true;
 		});
 	});
-
-	let backdropEl = $state<HTMLDivElement>();
-	let query = $state("");
-
-	const trending = $derived(fuzzysearch({ needle: query, haystack: models.trending, property: "id" }));
-	const other = $derived(fuzzysearch({ needle: query, haystack: models.nonTrending, property: "id" }));
-	const custom = $derived(fuzzysearch({ needle: query, haystack: models.custom, property: "id" }));
-
-	function handleBackdropClick(event: MouseEvent) {
-		event.stopPropagation();
-		if (window?.getSelection()?.toString()) {
-			return;
-		}
-		if (event.target === backdropEl) {
-			onClose?.();
-		}
-	}
-
-	const isCustom = typia.createIs<CustomModel>();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -91,6 +152,7 @@
 			class="max-h-[220px] overflow-x-hidden overflow-y-auto md:max-h-[300px]"
 			{...combobox.content}
 			popover={undefined}
+			{...virtualScroll.container}
 		>
 			{#snippet modelEntry(model: Model | CustomModel, trending?: boolean)}
 				{@const [nameSpace, modelName] = model.id.split("/")}
@@ -168,38 +230,34 @@
 					{/if}
 				</div>
 			{/snippet}
-			{#if trending.length > 0}
-				<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Trending</div>
-				{#each trending as model}
-					{@render modelEntry(model, true)}
-				{/each}
-			{/if}
-			<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Custom endpoints</div>
-			{#if custom.length > 0}
-				{#each custom as model}
-					{@render modelEntry(model, false)}
-				{/each}
-			{/if}
-			<div
-				class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 data-[highlighted]:bg-blue-500/15 data-[highlighted]:text-blue-600 dark:text-gray-400 dark:data-[highlighted]:text-blue-300"
-				{...combobox.getOption("__custom__", "custom", () => {
-					onClose?.();
-					openCustomModelConfig({
-						onSubmit: model => {
-							onModelSelect?.(model.id);
-						},
-					});
-				})}
-			>
-				<IconAdd class="rounded bg-blue-500/10 text-blue-600" />
-				Add a custom endpoint
+
+			<!-- Virtual scroll container -->
+			<div style="height: {virtualScroll.totalHeight}px; position: relative;">
+				<div style="transform: translateY({virtualScroll.offsetY}px);">
+					{#each virtualScroll.getVisibleItems(allFilteredModels) as { item }}
+						{#if item.type === "header"}
+							<div class="px-2 py-1.5 text-xs font-medium text-gray-500">{item.content}</div>
+						{:else if item.content === "__custom__"}
+							<div
+								class="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-gray-500 data-[highlighted]:bg-blue-500/15 data-[highlighted]:text-blue-600 dark:text-gray-400 dark:data-[highlighted]:text-blue-300"
+								{...combobox.getOption("__custom__", "custom", () => {
+									onClose?.();
+									openCustomModelConfig({
+										onSubmit: model => {
+											onModelSelect?.(model.id);
+										},
+									});
+								})}
+							>
+								<IconAdd class="rounded bg-blue-500/10 text-blue-600" />
+								Add a custom endpoint
+							</div>
+						{:else}
+							{@render modelEntry(item.content, item.trending)}
+						{/if}
+					{/each}
+				</div>
 			</div>
-			{#if other.length > 0}
-				<div class="px-2 py-1.5 text-xs font-medium text-gray-500">Other models</div>
-				{#each other as model}
-					{@render modelEntry(model, false)}
-				{/each}
-			{/if}
 		</div>
 	</div>
 </div>

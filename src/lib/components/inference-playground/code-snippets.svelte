@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { type ConversationClass } from "$lib/state/conversations.svelte";
-	import { structuredForbiddenProviders } from "$lib/state/models.svelte";
 	import { token } from "$lib/state/token.svelte.js";
 	import { billing } from "$lib/state/billing.svelte";
 	import { isCustomModel } from "$lib/types.js";
@@ -58,8 +57,7 @@
 			billTo: billing.organization || undefined,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		if (data.structuredOutput && !structuredForbiddenProviders.includes(conversation.data.provider as any)) {
+		if (data.structuredOutput && conversation.isStructuredOutputAllowed) {
 			opts.structured_output = data.structuredOutput;
 		}
 
@@ -208,6 +206,7 @@
 				<a
 					href={installInstructions.docs}
 					target="_blank"
+					rel="external"
 					class="relative -bottom-[1px] flex items-center gap-1 text-sm font-normal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 				>
 					<IconExternal class="text-xs" />

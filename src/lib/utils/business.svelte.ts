@@ -6,11 +6,12 @@
  *
  **/
 
+import ctxLengthData from "$lib/data/context_length.json";
 import { pricing } from "$lib/state/pricing.svelte.js";
-import { InferenceClient, snippets } from "@huggingface/inference";
+import { snippets } from "@huggingface/inference";
 import { ConversationClass, type ConversationEntityMembers } from "$lib/state/conversations.svelte";
 import { token } from "$lib/state/token.svelte";
-import { billing } from "$lib/state/billing.svelte";
+import { isMcpEnabled } from "$lib/constants.js";
 import {
 	isCustomModel,
 	isHFModel,
@@ -25,11 +26,12 @@ import { omit } from "$lib/utils/object.svelte.js";
 import type { ChatCompletionInputMessage, InferenceSnippet } from "@huggingface/tasks";
 import { type ChatCompletionOutputMessage } from "@huggingface/tasks";
 import { AutoTokenizer, PreTrainedTokenizer } from "@huggingface/transformers";
-import OpenAI from "openai";
 import { images } from "$lib/state/images.svelte.js";
 import { projects } from "$lib/state/projects.svelte.js";
-import { structuredForbiddenProviders } from "$lib/state/models.svelte.js";
+import { mcpServers } from "$lib/state/mcps.svelte.js";
 import { modifySnippet } from "$lib/utils/snippets.js";
+import { models } from "$lib/state/models.svelte";
+import { StreamReader } from "$lib/utils/stream.js";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -56,20 +58,6 @@ async function parseMessage(message: ConversationMessage): Promise<ChatCompletio
 	};
 }
 
-type HFCompletionMetadata = {
-	type: "huggingface";
-	client: InferenceClient;
-	args: Parameters<InferenceClient["chatCompletion"]>[0];
-};
-
-type OpenAICompletionMetadata = {
-	type: "openai";
-	client: OpenAI;
-	args: OpenAI.ChatCompletionCreateParams;
-};
-
-type CompletionMetadata = HFCompletionMetadata | OpenAICompletionMetadata;
-
 export function maxAllowedTokens(conversation: ConversationClass) {
 	const model = conversation.model;
 	const { provider } = conversation.data;
@@ -78,18 +66,35 @@ export function maxAllowedTokens(conversation: ConversationClass) {
 		return customMaxTokens[conversation.model.id] ?? 100000;
 	}
 
-	// Try to get context length from router data
+	// Try to get context length from pricing/router data first
 	const ctxLength = pricing.getContextLength(model.id, provider);
+	if (ctxLength) return ctxLength;
 
-	if (!ctxLength) return customMaxTokens[conversation.model.id] ?? 100000;
-	return ctxLength;
+	// Fall back to local context length data if available
+	const providerData = ctxLengthData[provider as keyof typeof ctxLengthData] as Record<string, number> | undefined;
+	const localCtxLength = providerData?.[model.id];
+	if (localCtxLength) return localCtxLength;
+
+	// Final fallback to custom max tokens
+	return customMaxTokens[conversation.model.id] ?? 100000;
+}
+
+function getEnabledMCPs() {
+	if (!isMcpEnabled()) return [];
+
+	return mcpServers.enabled.map(server => ({
+		id: server.id,
+		name: server.name,
+		url: server.url,
+		protocol: server.protocol,
+		headers: server.headers,
+	}));
 }
 
 function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const json = safeParse(data.structuredOutput?.schema ?? "");
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if (json && data.structuredOutput?.enabled && !structuredForbiddenProviders.includes(data.provider as any)) {
+	if (json && data.structuredOutput?.enabled && models.supportsStructuredOutput(conversation.model, data.provider)) {
 		switch (data.provider) {
 			case "cohere": {
 				return {
@@ -113,10 +118,11 @@ function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 	}
 }
 
-async function getCompletionMetadata(
+export async function handleStreamingResponse(
 	conversation: ConversationClass | Conversation,
-	signal?: AbortSignal,
-): Promise<CompletionMetadata> {
+	onChunk: (content: string) => void,
+	abortController: AbortController,
+): Promise<void> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
 	const systemMessage = projects.current?.systemMessage;
@@ -127,98 +133,38 @@ async function getCompletionMetadata(
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));
 
-	const extraParams = data.extraParams
-		? Object.fromEntries(
-				Object.entries(data.extraParams).map(([key, value]) => {
-					try {
-						return [key, JSON.parse(value as string)];
-					} catch {
-						return [key, value];
-					}
-				}),
-			)
-		: {};
-
-	const baseArgs = {
-		...data.config,
-		...extraParams,
+	const requestBody = {
+		model: {
+			id: model.id,
+			isCustom: isCustomModel(model),
+			accessToken: isCustomModel(model) ? model.accessToken : undefined,
+			endpointUrl: isCustomModel(model) ? model.endpointUrl : undefined,
+		},
 		messages: parsed,
-		model: model.id,
-		response_format: getResponseFormatObj(conversation),
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	} as any;
-
-	// Handle OpenAI-compatible models
-	if (isCustomModel(model)) {
-		const openai = new OpenAI({
-			apiKey: model.accessToken,
-			baseURL: model.endpointUrl,
-			dangerouslyAllowBrowser: true,
-			fetch: (...args: Parameters<typeof fetch>) => {
-				return fetch(args[0], { ...args[1], signal });
-			},
-		});
-
-		const args = {
-			...baseArgs,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} as any;
-
-		return {
-			type: "openai",
-			client: openai,
-			args,
-		};
-	}
-	const args = {
-		...baseArgs,
+		config: data.config,
 		provider: data.provider,
-		// max_tokens: maxAllowedTokens(conversation) - currTokens,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	} as any;
-
-	// Handle HuggingFace models
-	const clientOptions: ConstructorParameters<typeof InferenceClient>[1] = {};
-	if (billing.organization) {
-		clientOptions.billTo = billing.organization;
-	}
-
-	return {
-		type: "huggingface",
-		client: new InferenceClient(token.value, clientOptions),
-		args,
+		streaming: true,
+		response_format: getResponseFormatObj(conversation),
+		accessToken: token.value,
+		enabledMCPs: getEnabledMCPs(),
 	};
-}
 
-export async function handleStreamingResponse(
-	conversation: ConversationClass | Conversation,
-	onChunk: (content: string) => void,
-	abortController: AbortController,
-): Promise<void> {
-	const metadata = await getCompletionMetadata(conversation, abortController.signal);
+	const reader = await StreamReader.fromFetch("/api/generate", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(requestBody),
+		signal: abortController.signal,
+	});
 
-	if (metadata.type === "openai") {
-		const stream = await metadata.client.chat.completions.create({
-			...metadata.args,
-			stream: true,
-		} as OpenAI.ChatCompletionCreateParamsStreaming);
-
-		let out = "";
-		for await (const chunk of stream) {
-			if (chunk.choices[0]?.delta?.content) {
-				out += chunk.choices[0].delta.content;
-				onChunk(out);
-			}
-		}
-		return;
-	}
-
-	// HuggingFace streaming
 	let out = "";
-	for await (const chunk of metadata.client.chatCompletionStream(metadata.args, { signal: abortController.signal })) {
-		if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0]?.delta?.content) {
-			out += chunk.choices[0].delta.content;
+	for await (const chunk of reader.read()) {
+		if (chunk.type === "chunk" && chunk.content) {
+			out += chunk.content;
 			onChunk(out);
+		} else if (chunk.type === "error") {
+			throw new Error(chunk.error || "Stream error");
 		}
 	}
 }
@@ -226,34 +172,46 @@ export async function handleStreamingResponse(
 export async function handleNonStreamingResponse(
 	conversation: ConversationClass | Conversation,
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
-	const metadata = await getCompletionMetadata(conversation);
+	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
+	const model = conversation.model;
+	const systemMessage = projects.current?.systemMessage;
 
-	if (metadata.type === "openai") {
-		const response = await metadata.client.chat.completions.create({
-			...metadata.args,
-			stream: false,
-		} as OpenAI.ChatCompletionCreateParamsNonStreaming);
+	const messages: ConversationMessage[] = [
+		...(isSystemPromptSupported(model) && systemMessage?.length ? [{ role: "system", content: systemMessage }] : []),
+		...(data.messages || []),
+	];
+	const parsed = await Promise.all(messages.map(parseMessage));
 
-		if (response.choices && response.choices.length > 0 && response.choices[0]?.message) {
-			return {
-				message: {
-					role: "assistant",
-					content: response.choices[0].message.content || "",
-				},
-				completion_tokens: response.usage?.completion_tokens || 0,
-			};
-		}
-		throw new Error("No response from the model");
+	const requestBody = {
+		model: {
+			id: model.id,
+			isCustom: isCustomModel(model),
+			accessToken: isCustomModel(model) ? model.accessToken : undefined,
+			endpointUrl: isCustomModel(model) ? model.endpointUrl : undefined,
+		},
+		messages: parsed,
+		config: data.config,
+		provider: data.provider,
+		streaming: false,
+		response_format: getResponseFormatObj(conversation),
+		accessToken: token.value,
+		enabledMCPs: getEnabledMCPs(),
+	};
+
+	const response = await fetch("/api/generate", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(requestBody),
+	});
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new Error(error.error || "Failed to generate response");
 	}
 
-	// HuggingFace non-streaming
-	const response = await metadata.client.chatCompletion(metadata.args);
-	if (response.choices && response.choices.length > 0) {
-		const { message } = response.choices[0]!;
-		const { completion_tokens } = response.usage;
-		return { message, completion_tokens };
-	}
-	throw new Error("No response from the model");
+	return await response.json();
 }
 
 export function isSystemPromptSupported(model: Model | CustomModel) {
@@ -366,7 +324,7 @@ export function getInferenceSnippet(
 			if (
 				opts?.structured_output?.schema &&
 				opts.structured_output.enabled &&
-				!structuredForbiddenProviders.includes(provider as Provider)
+				models.supportsStructuredOutput(conversation.model, provider)
 			) {
 				return {
 					...s,

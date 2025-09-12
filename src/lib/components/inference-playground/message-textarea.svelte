@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { autofocus } from "$lib/attachments/autofocus.js";
+	import { LocalToasts } from "$lib/builders/local-toasts.svelte.js";
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { images } from "$lib/state/images.svelte";
@@ -18,6 +19,8 @@
 	const loading = $derived(conversations.generating);
 
 	let input = $state("");
+
+	const localToasts = new LocalToasts({ placement: "top" });
 
 	async function onKeydown(event: KeyboardEvent) {
 		if (loading) return;
@@ -42,7 +45,27 @@
 
 	async function sendMessage() {
 		const c = conversations.active;
+		const hasEmptyInput = input.trim() === "" && fileUpload.selected.size === 0;
+		const lastMessageIsUser = c.some(conv => conv.data.messages?.at(-1)?.role === "user");
 
+		// If input is empty and last message is user, just re-run the conversation
+		if (hasEmptyInput && lastMessageIsUser) {
+			conversations.genNextMessages();
+			return;
+		}
+
+		// If input is empty but last message is not user, show warning
+		if (hasEmptyInput) {
+			localToasts.addToast({
+				data: {
+					content: "Please enter a message",
+					variant: "danger",
+				},
+			});
+			return;
+		}
+
+		// Normal flow: add user message and generate response
 		let images: string[] | undefined;
 		if (canUploadImgs) {
 			images = await uploadImages();
@@ -128,6 +151,7 @@
 					loading && "bg-red-900 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
 					!loading && "bg-black hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700",
 				]}
+				{...localToasts.trigger}
 			>
 				{#if loading}
 					<div class="flex flex-none items-center gap-[3px]">
@@ -182,4 +206,10 @@
 			{/each}
 		</div>
 	</label>
+
+	{#each localToasts.toasts as toast (toast.id)}
+		<div class={toast.class} {...toast.attrs} style="--tx: -10px; {toast.attrs.style}">
+			{toast.data.content}
+		</div>
+	{/each}
 </div>

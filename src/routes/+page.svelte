@@ -5,10 +5,14 @@
 	import Prompts from "$lib/components/prompts.svelte";
 	import QuotaModal from "$lib/components/quota-modal.svelte";
 	import ShareModal from "$lib/components/share-modal.svelte";
-	import { conversations } from "$lib/state/conversations.svelte";
 	import Playground from "$lib/components/inference-playground/playground.svelte";
+	import { conversations } from "$lib/state/conversations.svelte";
+	import { models } from "$lib/state/models.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 
-	conversations.init();
+	await models.load();
+	await projects.init();
+	await conversations.init();
 </script>
 
 <Playground />

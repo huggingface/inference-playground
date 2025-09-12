@@ -4,10 +4,10 @@ import {
 } from "$lib/components/inference-playground/generation-config-settings.js";
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
-import { PipelineTag, Provider, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
+import { PipelineTag, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
 import { handleNonStreamingResponse, handleStreamingResponse, estimateTokens } from "$lib/utils/business.svelte.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
-import { models, structuredForbiddenProviders } from "./models.svelte";
+import { models } from "./models.svelte";
 import { pricing } from "./pricing.svelte.js";
 import { DEFAULT_PROJECT_ID, ProjectEntity, projects } from "./projects.svelte";
 import { token } from "./token.svelte";
@@ -107,9 +107,7 @@ export class ConversationClass {
 	}
 
 	get isStructuredOutputAllowed() {
-		const forbiddenProvider =
-			this.data.provider && structuredForbiddenProviders.includes(this.data.provider as Provider);
-		return !forbiddenProvider;
+		return models.supportsStructuredOutput(this.model, this.data.provider);
 	}
 
 	get isStructuredOutputEnabled() {
@@ -285,7 +283,19 @@ class Conversations {
 
 	#active = $derived.by(() => this.for(projects.activeId));
 
-	init = createInit(() => {
+	init = createInit(async () => {
+		// Load all conversations from all projects
+		await Promise.all(
+			projects.all.map(async p => {
+				const c = await conversationsRepo.find({ where: { projectId: p.id } });
+				if (!c.length) {
+					const dc = conversationsRepo.create(getDefaultConversation(p.id));
+					c.push(dc);
+				}
+				this.#conversations = { ...this.#conversations, [p.id]: c.map(c => new ConversationClass(c)) };
+			}),
+		);
+
 		const searchParams = new URLSearchParams(window.location.search);
 		const searchProvider = searchParams.get("provider") ?? "";
 		const searchModelId = searchParams.get("modelId") ?? "";
@@ -293,7 +303,7 @@ class Conversations {
 		const searchModel = models.remote.find(m => m.id === searchModelId);
 		if (!searchModel) return;
 
-		conversationsRepo
+		await conversationsRepo
 			.upsert({
 				where: { projectId: DEFAULT_PROJECT_ID },
 				set: {
@@ -304,6 +314,8 @@ class Conversations {
 			.then(res => {
 				this.#conversations = { ...this.#conversations, [DEFAULT_PROJECT_ID]: [new ConversationClass(res)] };
 			});
+
+		projects.activeId = DEFAULT_PROJECT_ID;
 	});
 
 	get conversations() {
@@ -338,17 +350,6 @@ class Conversations {
 	};
 
 	for = (projectId: ProjectEntity["id"]): ConversationClass[] => {
-		// Async load from db
-		if (!this.#conversations[projectId]?.length) {
-			conversationsRepo.find({ where: { projectId } }).then(c => {
-				if (!c.length) {
-					const dc = conversationsRepo.create(getDefaultConversation(projectId));
-					c.push(dc);
-				}
-				this.#conversations = { ...this.#conversations, [projectId]: c.map(c => new ConversationClass(c)) };
-			});
-		}
-
 		let res = this.#conversations[projectId];
 		if (res?.length === 0 || !res) {
 			// We set id to -1 because it is temporary, there should always be a conversation.

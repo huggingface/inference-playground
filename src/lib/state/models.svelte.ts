@@ -1,26 +1,19 @@
-import { page } from "$app/state";
-import { Provider, type CustomModel } from "$lib/types.js";
+import { type CustomModel, type Model } from "$lib/types.js";
 import { edit, randomPick } from "$lib/utils/array.js";
 import { safeParse } from "$lib/utils/json.js";
 import typia from "typia";
-import type { PageData } from "../../routes/$types.js";
 import { conversations } from "./conversations.svelte";
+import { getModels, getRouterData, type RouterData } from "$lib/remote/models.remote";
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
-const pageData = $derived(page.data as PageData);
-
-export const structuredForbiddenProviders: Provider[] = [
-	Provider.Hyperbolic,
-	Provider.Nebius,
-	Provider.Novita,
-	Provider.Sambanova,
-];
+const trendingSort = (a: Model, b: Model) => b.trendingScore - a.trendingScore;
 
 class Models {
-	remote = $derived(pageData.models);
-	trending = $derived(this.remote.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
-	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)));
+	routerData = $state<RouterData>();
+	remote: Model[] = $state([]);
+	trending = $derived(this.remote.toSorted(trendingSort).slice(0, 5));
+	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)).toSorted(trendingSort));
 	all = $derived([...this.remote, ...this.custom]);
 
 	constructor() {
@@ -34,6 +27,13 @@ class Models {
 		} else {
 			localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
 		}
+	}
+
+	async load() {
+		await Promise.all([getModels(), getRouterData()]).then(([models, data]) => {
+			this.remote = models;
+			this.routerData = data;
+		});
 	}
 
 	#custom = $state.raw<CustomModel[]>([]);
@@ -73,6 +73,14 @@ class Models {
 			if (c.model._id !== uuid) return;
 			c.update({ modelId: randomPick(models.trending)?.id });
 		});
+	}
+
+	supportsStructuredOutput(model: Model | CustomModel, provider?: string) {
+		if (!this.routerData) return false;
+		if (typia.is<CustomModel>(model)) return true;
+		const routerDataEntry = this.routerData?.data.find(d => d.id === model.id);
+		if (!routerDataEntry) return false;
+		return routerDataEntry.providers.find(p => p.provider === provider)?.supports_structured_output ?? false;
 	}
 }
 

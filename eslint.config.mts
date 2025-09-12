@@ -66,6 +66,7 @@ export default ts.config(
 			"object-shorthand": ["error", "always"],
 			"svelte/no-at-html-tags": "off",
 			"svelte/require-each-key": "off",
+			"svelte/no-navigation-without-resolve": "off",
 			"local/enforce-ext": [
 				"error",
 				{
@@ -92,6 +93,7 @@ export default ts.config(
 			"**/package-lock.json",
 			"**/yarn.lock",
 			"context_length.json",
+			".claude/**/*",
 		],
 	},
 	{
