@@ -11,6 +11,7 @@
 	import IconAdd from "~icons/lucide/plus";
 	import IconX from "~icons/lucide/x";
 	import type { ChatCompletionInputMessage } from "@huggingface/tasks";
+	import ModelPicker from "./model-picker.svelte";
 
 	type Props = Omit<NodeProps, "data"> & { data: { query: string; response: string; modelId?: Model["id"] } };
 	let { id, data }: Props = $props();
@@ -104,17 +105,7 @@
 >
 	<!-- Model selector -->
 	<div class="mb-4">
-		<label class="mb-1.5 block text-xs font-medium text-gray-600"> Model </label>
-		<select
-			class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm
-			text-gray-900 transition-colors focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10
-			focus:outline-none"
-			bind:value={() => data.modelId, modelId => updateNodeData(id, { modelId })}
-		>
-			{#each models.all as model}
-				<option value={model.id}>{model.id}</option>
-			{/each}
-		</select>
+		<ModelPicker modelId={data.modelId} onModelSelect={modelId => updateNodeData(id, { modelId })} />
 	</div>
 
 	<form class="flex flex-col gap-4" onsubmit={handleSubmit}>

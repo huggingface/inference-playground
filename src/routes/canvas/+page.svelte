@@ -5,6 +5,11 @@
 	import { edges, nodes } from "./state.js";
 	import type { Node } from "@xyflow/svelte";
 	import IconAdd from "~icons/lucide/plus";
+	import { models } from "$lib/state/models.svelte";
+	import { projects } from "$lib/state/projects.svelte";
+
+	await models.load();
+	await projects.init();
 
 	const nodeTypes = { chat: ChatNode } as const;
 
