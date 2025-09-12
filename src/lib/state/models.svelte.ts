@@ -7,11 +7,13 @@ import { getModels, getRouterData, type RouterData } from "$lib/remote/models.re
 
 const LOCAL_STORAGE_KEY = "hf_inference_playground_custom_models";
 
+const trendingSort = (a: Model, b: Model) => b.trendingScore - a.trendingScore;
+
 class Models {
 	routerData = $state<RouterData>();
 	remote: Model[] = $state([]);
-	trending = $derived(this.remote.toSorted((a, b) => b.trendingScore - a.trendingScore).slice(0, 5));
-	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)));
+	trending = $derived(this.remote.toSorted(trendingSort).slice(0, 5));
+	nonTrending = $derived(this.remote.filter(m => !this.trending.includes(m)).toSorted(trendingSort));
 	all = $derived([...this.remote, ...this.custom]);
 
 	constructor() {
