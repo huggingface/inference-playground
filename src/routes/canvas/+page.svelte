@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { Background, Controls, MiniMap, SvelteFlow } from "@xyflow/svelte";
-	import "@xyflow/svelte/dist/style.css";
-	import ChatNode from "./chat-node.svelte";
-	import { edges, nodes } from "./state.js";
-	import type { Node } from "@xyflow/svelte";
-	import IconAdd from "~icons/lucide/plus";
 	import { models } from "$lib/state/models.svelte";
 	import { projects } from "$lib/state/projects.svelte";
+	import type { Node } from "@xyflow/svelte";
+	import { Background, Controls, MiniMap, SvelteFlow } from "@xyflow/svelte";
+	import "@xyflow/svelte/dist/style.css";
+	import { useDebounce } from "runed";
+	import IconAdd from "~icons/lucide/plus";
+	import ChatNode from "./chat-node.svelte";
+	import { edges, nodes } from "./state.js";
 
 	await models.load();
 	await projects.init();
@@ -31,6 +32,12 @@
 		};
 		nodes.current.push(newNode);
 	}
+
+	let derivedNodes = $derived(nodes.current);
+
+	const throttledSave = useDebounce((n: Node[]) => {
+		nodes.current = n;
+	}, 100);
 </script>
 
 <div class="h-screen w-screen bg-gray-50">
@@ -55,7 +62,13 @@
 	</header>
 
 	<SvelteFlow
-		bind:nodes={nodes.current}
+		bind:nodes={
+			() => derivedNodes,
+			v => {
+				derivedNodes = v;
+				throttledSave(v);
+			}
+		}
 		bind:edges={edges.current}
 		fitView
 		{nodeTypes}
