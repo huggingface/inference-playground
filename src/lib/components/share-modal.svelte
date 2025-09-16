@@ -137,8 +137,8 @@
 						<div class="h-px grow bg-gray-500" aria-hidden="true"></div>
 					</div>
 
-					<h3 class="text-lg font-semibold">Load a copied project</h3>
-					<p>Paste a copied project string, and load it for your local usage.</p>
+					<h3 class="text-lg font-semibold">Recover a project</h3>
+					<p>Paste a copied project string, and recover it for your local usage.</p>
 					<LocalToasts>
 						{#snippet children({ addToast, trigger })}
 							<form
