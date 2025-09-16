@@ -137,8 +137,8 @@
 						<div class="h-px grow bg-gray-500" aria-hidden="true"></div>
 					</div>
 
-					<h3 class="text-lg font-semibold">Save a copied project</h3>
-					<p>Paste a copied project string, and save it for your local usage.</p>
+					<h3 class="text-lg font-semibold">Load a copied project</h3>
+					<p>Paste a copied project string, and load it for your local usage.</p>
 					<LocalToasts>
 						{#snippet children({ addToast, trigger })}
 							<form
@@ -193,10 +193,10 @@
 												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 											></path>
 										</svg>
-										Saving...
+										Loading...
 									{:else}
 										<IconSave />
-										Save
+										Load
 									{/if}
 								</button>
 							</form>
