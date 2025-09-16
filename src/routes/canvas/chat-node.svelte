@@ -159,8 +159,8 @@
 
 	<!-- Add node button -->
 	<button
-		class="abs-x-center absolute -bottom-4 flex items-center gap-1.5 rounded-full
-		bg-black px-4 py-2 text-xs font-medium
+		class="abs-x-center absolute -bottom-4 z-10 flex items-center gap-1.5
+		rounded-full bg-black px-4 py-2 text-xs font-medium
 		text-white shadow-sm transition-all hover:scale-[1.02]
 		hover:bg-gray-900 focus:ring-2 focus:ring-gray-900/20 focus:outline-none active:scale-[0.98]"
 		onclick={() => {
@@ -201,8 +201,6 @@
 
 <Handle type="target" position={Position.Top} class="h-3 w-3 border-2 border-white bg-gray-500 shadow-sm" />
 <Handle type="source" position={Position.Bottom} class="h-3 w-3 border-2 border-white bg-gray-500 shadow-sm" />
-<Handle type="source" position={Position.Left} class="h-3 w-3 border-2 border-white bg-gray-500 shadow-sm" />
-<Handle type="source" position={Position.Right} class="h-3 w-3 border-2 border-white bg-gray-500 shadow-sm" />
 
 <!-- <NodeResizeControl minWidth={200} minHeight={150}> -->
 <!-- 	<IconResize class="absolute right-2 bottom-2" /> -->
