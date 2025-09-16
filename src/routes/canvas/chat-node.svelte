@@ -12,13 +12,18 @@
 	import IconX from "~icons/lucide/x";
 	import type { ChatCompletionInputMessage } from "@huggingface/tasks";
 	import ModelPicker from "./model-picker.svelte";
+	import ProviderPicker from "./provider-picker.svelte";
+	import { ElementSize } from "runed";
 
-	type Props = Omit<NodeProps, "data"> & { data: { query: string; response: string; modelId?: Model["id"] } };
+	type Props = Omit<NodeProps, "data"> & {
+		data: { query: string; response: string; modelId?: Model["id"]; provider?: string };
+	};
 	let { id, data }: Props = $props();
 
 	let { updateNodeData, updateNode, getNode } = useSvelteFlow();
 	onMount(() => {
 		if (!data.modelId) data.modelId = models.trending[0]?.id;
+		if (!data.provider) data.provider = "auto";
 		updateNode(id, { height: undefined });
 	});
 
@@ -80,7 +85,8 @@
 			});
 
 			const stream = client.chatCompletionStream({
-				provider: "auto",
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				provider: (data.provider || "auto") as any,
 				model: data.modelId,
 				messages,
 				temperature: 0.5,
@@ -97,15 +103,24 @@
 			isLoading = false;
 		}
 	}
+
+	let node = $state<HTMLElement>();
+	const size = new ElementSize(() => node);
 </script>
 
 <div
-	class="chat-node relative flex h-full min-h-[200px] w-full max-w-[500px] min-w-[300px]
-	flex-col items-stretch rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+	class="chat-node group relative flex h-full min-h-[200px] w-full max-w-[800px]
+	min-w-[500px] flex-col items-stretch rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+	bind:this={node}
 >
-	<!-- Model selector -->
-	<div class="mb-4">
+	<!-- Model and Provider selectors -->
+	<div class="mb-4 space-y-3">
 		<ModelPicker modelId={data.modelId} onModelSelect={modelId => updateNodeData(id, { modelId })} />
+		<ProviderPicker
+			provider={data.provider}
+			modelId={data.modelId}
+			onProviderSelect={provider => updateNodeData(id, { provider })}
+		/>
 	</div>
 
 	<form class="flex flex-col gap-4" onsubmit={handleSubmit}>
@@ -159,16 +174,16 @@
 
 	<!-- Add node button -->
 	<button
-		class="abs-x-center absolute -bottom-4 z-10 flex items-center gap-1.5
-		rounded-full bg-black px-4 py-2 text-xs font-medium
-		text-white shadow-sm transition-all hover:scale-[1.02]
+		class="abs-x-center absolute -bottom-4 z-10 flex items-center gap-1.5 rounded-full bg-black
+		px-4 py-2 text-xs font-medium text-white opacity-0
+		shadow-sm transition-all group-hover:opacity-100 hover:scale-[1.02]
 		hover:bg-gray-900 focus:ring-2 focus:ring-gray-900/20 focus:outline-none active:scale-[0.98]"
 		onclick={() => {
 			const curr = getNode(id);
 			const newNode: Node = {
 				id: crypto.randomUUID(),
-				position: { x: curr?.position.x ?? 100, y: (curr?.position.y ?? 0) + 400 },
-				data: { query: "", response: "", modelId: data.modelId },
+				position: { x: curr?.position.x ?? 100, y: (curr?.position.y ?? 0) + size.height + 40 },
+				data: { query: "", response: "", modelId: data.modelId, provider: data.provider },
 				type: "chat",
 				width: undefined,
 				height: undefined,
@@ -200,7 +215,11 @@
 </div>
 
 <Handle type="target" position={Position.Top} class="h-3 w-3 border-2 border-white bg-gray-500 shadow-sm" />
-<Handle type="source" position={Position.Bottom} class="h-3 w-3 border-2 border-white bg-gray-500 shadow-sm" />
+<Handle
+	type="source"
+	position={Position.Bottom}
+	class="h-3 w-3 border-2 border-white bg-gray-500 opacity-0 shadow-sm"
+/>
 
 <!-- <NodeResizeControl minWidth={200} minHeight={150}> -->
 <!-- 	<IconResize class="absolute right-2 bottom-2" /> -->
