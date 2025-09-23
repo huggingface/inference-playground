@@ -10,6 +10,7 @@
 	import type { ToastData } from "./toaster.svelte.js";
 	import { addToast } from "./toaster.svelte.js";
 	import { isDark } from "$lib/spells/is-dark.svelte";
+	import { conversations } from "$lib/state/conversations.svelte";
 
 	let innerWidth = $state<number>();
 	let innerHeight = $state<number>();
@@ -91,6 +92,22 @@
 						endpointUrl: "https://openrouter.ai/api",
 					},
 				});
+			},
+		},
+		{
+			label: "Fill conversation",
+			cb: async () => {
+				for (const c of conversations.active) {
+					const totalMessages = c.data.messages?.length ?? 0;
+					for (let i = 0; i < 20; i++) {
+						const actualIndex = totalMessages + i;
+
+						await c.addMessage({
+							role: actualIndex % 2 === 0 ? "user" : "assistant",
+							content: `Message ${actualIndex + 1}`,
+						});
+					}
+				}
 			},
 		},
 	].toSorted((a, b) => compareStr(a.label, b.label));
