@@ -2,6 +2,7 @@
 	import { observe, observed, ObservedElements } from "$lib/attachments/observe.svelte.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
+	import { settings } from "$lib/state/settings.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
@@ -96,6 +97,7 @@
 					projects.update({ ...projects.current, systemMessage: e.currentTarget.value });
 				}}
 				class="absolute inset-x-0 bottom-0 h-full resize-none bg-transparent px-3 pt-10 text-sm outline-hidden"
+				style="font-size: {settings.textSize}%"
 			></textarea>
 		</div>
 	</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ConversationClass } from "$lib/state/conversations.svelte.js";
+	import { settings } from "$lib/state/settings.svelte.js";
 	import { maxAllowedTokens } from "$lib/utils/business.svelte.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { isNumber } from "$lib/utils/is.js";
@@ -11,6 +12,9 @@
 	import StructuredOutputModal, { openStructuredOutputModal } from "./structured-output-modal.svelte";
 	import { mcpServers } from "$lib/state/mcps.svelte.js";
 	import { isMcpEnabled } from "$lib/constants.js";
+	import IconMinus from "~icons/carbon/subtract";
+	import IconPlus from "~icons/carbon/add-large";
+
 	interface Props {
 		conversation: ConversationClass;
 		classNames?: string;
@@ -166,6 +170,36 @@
 			class="peer relative h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-black peer-focus:outline-hidden after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-checked:bg-blue-600"
 		></div>
 	</label>
+
+	<!-- Text Size Setting -->
+	<div class="mt-4 flex items-center justify-between">
+		<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Text Size</span>
+		<div class="flex items-center gap-2">
+			<button
+				type="button"
+				onclick={() => {
+					if (settings.textSize > 50) {
+						settings.textSize = settings.textSize - 10;
+					}
+				}}
+				class="btn-mini aspect-square"
+			>
+				<IconMinus />
+			</button>
+			<span class="text-sm">{settings.textSize}%</span>
+			<button
+				type="button"
+				onclick={() => {
+					if (settings.textSize < 200) {
+						settings.textSize = settings.textSize + 10;
+					}
+				}}
+				class="btn-mini aspect-square"
+			>
+				<IconPlus />
+			</button>
+		</div>
+	</div>
 </div>
 
 <StructuredOutputModal {conversation} />

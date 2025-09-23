@@ -4,6 +4,7 @@
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { type ConversationClass } from "$lib/state/conversations.svelte.js";
 	import { images } from "$lib/state/images.svelte";
+	import { settings } from "$lib/state/settings.svelte.js";
 	import { type ConversationMessage } from "$lib/types.js";
 	import { copyToClipboard } from "$lib/utils/copy.js";
 	import { cmdOrCtrl } from "$lib/utils/platform.js";
@@ -11,6 +12,8 @@
 	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { FileUpload } from "melt/builders";
 	import { fade } from "svelte/transition";
+	import { watch } from "runed";
+	import { tick } from "svelte";
 	import IconCopy from "~icons/carbon/copy";
 	import IconImage from "~icons/carbon/image-reference";
 	import IconMaximize from "~icons/carbon/maximize";
@@ -91,6 +94,18 @@
 		}
 		return marked(parsedMessage.thinking);
 	});
+
+	// Watch for text size changes and trigger resize
+	watch(
+		() => settings.textSize,
+		() => {
+			// Trigger resize on next tick to ensure styles are applied
+			tick().then(() => {
+				autosized.triggerResize();
+				reasoningAutosized.triggerResize();
+			});
+		},
+	);
 </script>
 
 <div
@@ -142,6 +157,7 @@
 							{#if conversation.data.parseMarkdown && !isEditing}
 								<div
 									class="relative w-full max-w-none rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900"
+									style="font-size: {settings.textSize}%"
 								>
 									<div class="prose prose-sm dark:prose-invert">
 										{@html parsedReasoning}
@@ -171,6 +187,7 @@
 									class="w-full resize-none overflow-hidden rounded-lg bg-transparent px-2 py-2.5 ring-gray-100 outline-none group-hover/message:ring-3 hover:bg-white focus:bg-white focus:ring-3 @2xl:px-3 dark:ring-gray-600 dark:hover:bg-gray-900 dark:focus:bg-gray-900"
 									rows="1"
 									{@attach reasoningAutosized.attachment}
+									style="font-size: {settings.textSize}%"
 								></textarea>
 							{/if}
 						{/if}
@@ -184,6 +201,7 @@
 						data-message
 						data-test-id={TEST_IDS.message}
 						{@attach clickOutside(() => (isEditing = false))}
+						style="font-size: {settings.textSize}%"
 					>
 						<Tooltip>
 							{#snippet trigger(tooltip)}
@@ -228,6 +246,7 @@
 								class="w-full resize-none overflow-hidden border-none bg-transparent outline-none"
 								rows="1"
 								{@attach autosized.attachment}
+								style="font-size: {settings.textSize}%"
 							></textarea>
 						{/if}
 					</div>
@@ -257,6 +276,7 @@
 						data-message
 						data-test-id={TEST_IDS.message}
 						{@attach autosized.attachment}
+						style="font-size: {settings.textSize}%"
 					></textarea>
 				{/if}
 			</div>
