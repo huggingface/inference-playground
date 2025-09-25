@@ -4,7 +4,6 @@
 	import { TextareaAutosize } from "$lib/spells/textarea-autosize.svelte.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { images } from "$lib/state/images.svelte";
-	import { settings } from "$lib/state/settings.svelte.js";
 	import type { ConversationMessage } from "$lib/types.js";
 	import { fileToDataURL } from "$lib/utils/file.js";
 	import { omit } from "$lib/utils/object.svelte";
@@ -15,8 +14,6 @@
 	import IconMaximize from "~icons/carbon/maximize";
 	import Tooltip from "../tooltip.svelte";
 	import { previewImage } from "./img-preview.svelte";
-	import { watch } from "runed";
-	import { tick } from "svelte";
 
 	const multiple = $derived(conversations.active.length > 1);
 	const loading = $derived(conversations.generating);
@@ -95,17 +92,6 @@
 	});
 
 	const autosized = new TextareaAutosize();
-
-	// Watch for text size changes and trigger resize
-	watch(
-		() => settings.textSize,
-		() => {
-			// Trigger resize on next tick to ensure styles are applied
-			tick().then(() => {
-				autosized.triggerResize();
-			});
-		},
-	);
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -132,7 +118,6 @@
 				bind:value={input}
 				{@attach autosized.attachment}
 				{@attach autofocus()}
-				style="font-size: {settings.textSize}%"
 			></textarea>
 			{#if canUploadImgs}
 				<Tooltip openDelay={250}>

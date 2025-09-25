@@ -1,36 +1,35 @@
 <script lang="ts">
 	import { observe, observed, ObservedElements } from "$lib/attachments/observe.svelte.js";
+	import { TEST_IDS } from "$lib/constants.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
-	import { settings } from "$lib/state/settings.svelte.js";
 	import { token } from "$lib/state/token.svelte.js";
 	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { isSystemPromptSupported } from "$lib/utils/business.svelte.js";
+	import { atLeastNDecimals } from "$lib/utils/number.js";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
+	import IconClose from "~icons/carbon/close";
 	import IconCode from "~icons/carbon/code";
 	import IconCompare from "~icons/carbon/compare";
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
 	import IconShare from "~icons/carbon/share";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
+	import BillingIndicator from "../billing-indicator.svelte";
 	import { showShareModal } from "../share-modal.svelte";
 	import Toaster from "../toaster.svelte";
 	import Tooltip from "../tooltip.svelte";
+	import BillingModal from "./billing-modal.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
 	import GenerationConfig from "./generation-config.svelte";
 	import HFTokenModal from "./hf-token-modal.svelte";
+	import MessageTextarea from "./message-textarea.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import BillingModal from "./billing-modal.svelte";
-	import BillingIndicator from "../billing-indicator.svelte";
-	import { TEST_IDS } from "$lib/constants.js";
-	import MessageTextarea from "./message-textarea.svelte";
-	import { atLeastNDecimals } from "$lib/utils/number.js";
-	import IconClose from "~icons/carbon/close";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
@@ -97,7 +96,6 @@
 					projects.update({ ...projects.current, systemMessage: e.currentTarget.value });
 				}}
 				class="absolute inset-x-0 bottom-0 h-full resize-none bg-transparent px-3 pt-10 text-sm outline-hidden"
-				style="font-size: {settings.textSize}%"
 			></textarea>
 		</div>
 	</div>
@@ -191,7 +189,7 @@
 	{#if !compareActive}
 		<div
 			class={[
-				"z-50 flex h-full flex-col p-3 max-md:fixed max-md:inset-0 max-md:backdrop-blur-lg ",
+				"z-50 flex h-full flex-col overflow-y-auto p-3 max-md:fixed max-md:inset-0 max-md:backdrop-blur-lg ",
 				!viewSettings && "max-md:hidden",
 			]}
 		>
@@ -239,7 +237,7 @@
 					<div class="flex items-center justify-end">
 						<BillingIndicator showModal={() => (billingModalOpen = true)} />
 					</div>
-					<div class="flex items-center justify-end gap-4 whitespace-nowrap">
+					<div class="flex flex-wrap items-center justify-end gap-4 whitespace-nowrap">
 						<button
 							onclick={() => projects.current && showShareModal(projects.current)}
 							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
