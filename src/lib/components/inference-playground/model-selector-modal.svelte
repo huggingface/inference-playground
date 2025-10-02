@@ -29,10 +29,23 @@
 
 	let backdropEl = $state<HTMLDivElement>();
 	let query = $state("");
+	let showVisionOnly = $state(false);
 
-	const trending = $derived(fuzzysearch({ needle: query, haystack: models.trending, property: "id" }));
-	const other = $derived(fuzzysearch({ needle: query, haystack: models.nonTrending, property: "id" }));
-	const custom = $derived(fuzzysearch({ needle: query, haystack: models.custom, property: "id" }));
+	const trending = $derived(
+		fuzzysearch({ needle: query, haystack: models.trending, property: "id" }).filter(model =>
+			showVisionOnly ? models.supportsVision(model) : true,
+		),
+	);
+	const other = $derived(
+		fuzzysearch({ needle: query, haystack: models.nonTrending, property: "id" }).filter(model =>
+			showVisionOnly ? models.supportsVision(model) : true,
+		),
+	);
+	const custom = $derived(
+		fuzzysearch({ needle: query, haystack: models.custom, property: "id" }).filter(model =>
+			showVisionOnly ? models.supportsVision(model) : true,
+		),
+	);
 
 	// Combine all filtered models into sections for virtualization
 	type SectionItem =
@@ -147,6 +160,24 @@
 				bind:value={query}
 				{@attach autofocus()}
 			/>
+			<Tooltip openDelay={100}>
+				{#snippet trigger(tooltip)}
+					<button
+						class="ml-2 grid size-8 place-items-center rounded-md transition-colors {showVisionOnly
+							? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30'
+							: 'text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-800'}"
+						aria-label="Toggle vision filter"
+						{...tooltip.trigger}
+						onclick={e => {
+							e.stopPropagation();
+							showVisionOnly = !showVisionOnly;
+						}}
+					>
+						<IconEye class="size-4" />
+					</button>
+				{/snippet}
+				{showVisionOnly ? "Showing vision models only" : "Show vision models only"}
+			</Tooltip>
 		</div>
 		<div
 			class="max-h-[220px] overflow-x-hidden overflow-y-auto md:max-h-[300px]"

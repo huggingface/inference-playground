@@ -82,6 +82,13 @@ class Models {
 		if (!routerDataEntry) return false;
 		return routerDataEntry.providers.find(p => p.provider === provider)?.supports_structured_output ?? false;
 	}
+
+	supportsVision(model: Model | CustomModel) {
+		if (typia.is<CustomModel>(model)) {
+			return model.pipeline_tag === "image-text-to-text";
+		}
+		return model.pipeline_tag === "image-text-to-text";
+	}
 }
 
 export const models = new Models();
