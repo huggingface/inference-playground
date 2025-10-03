@@ -91,6 +91,7 @@
 	const isCustom = typia.createIs<CustomModel>();
 
 	const combobox = new Combobox<string | undefined>({
+		closeOnOutsideClick: false,
 		onOpenChange(o) {
 			if (!o) onClose?.();
 		},
@@ -134,6 +135,7 @@
 					: null;
 		},
 	});
+
 	$effect(() => {
 		untrack(() => combobox.highlight(conversation.model.id));
 		// Workaround while this component does not use a <dialog />
@@ -160,7 +162,7 @@
 				bind:value={query}
 				{@attach autofocus()}
 			/>
-			<Tooltip openDelay={100}>
+			<Tooltip openDelay={1000}>
 				{#snippet trigger(tooltip)}
 					<button
 						class="ml-2 grid size-8 place-items-center rounded-md transition-colors {showVisionOnly
@@ -170,6 +172,7 @@
 						{...tooltip.trigger}
 						onclick={e => {
 							e.stopPropagation();
+							e.preventDefault();
 							showVisionOnly = !showVisionOnly;
 						}}
 					>
