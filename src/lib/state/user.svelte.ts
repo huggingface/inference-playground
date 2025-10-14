@@ -8,6 +8,7 @@ interface Org {
 	avatarUrl: string;
 	roleInOrg: string;
 	isEnterprise: boolean;
+	plan?: string;
 }
 
 interface WhoamiResponse {
@@ -51,6 +52,10 @@ class User {
 
 	get orgs() {
 		return this.#info?.orgs ?? [];
+	}
+
+	get paidOrgs() {
+		return this.orgs.filter(org => org.plan === "team" || org.plan === "enterprise");
 	}
 
 	get name() {

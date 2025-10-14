@@ -16,12 +16,13 @@
 	const { onClose }: Props = $props();
 
 	const options = $derived([
-		{ value: "", label: "Personal Account", avatarUrl: user.avatarUrl, isEnterprise: false },
-		...user.orgs.map(org => ({
+		{ value: "", label: "Personal Account", avatarUrl: user.avatarUrl, isEnterprise: false, plan: null },
+		...user.paidOrgs.map(org => ({
 			value: org.name,
 			label: org.fullname,
 			avatarUrl: org.avatarUrl,
 			isEnterprise: org.isEnterprise,
+			plan: org.plan,
 		})),
 	]);
 
@@ -101,11 +102,17 @@
 									<span class="text-gray-900 dark:text-white">
 										{option.label}
 									</span>
-									{#if option.isEnterprise}
+									{#if option.plan === "enterprise"}
 										<span
 											class="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
 										>
 											Enterprise
+										</span>
+									{:else if option.plan === "team"}
+										<span
+											class="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+										>
+											Team
 										</span>
 									{/if}
 								</div>
@@ -147,11 +154,17 @@
 									{/if}
 
 									<span class="text-sm text-gray-900 dark:text-white">{option.label}</span>
-									{#if option.isEnterprise}
+									{#if option.plan === "enterprise"}
 										<span
 											class="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
 										>
 											Enterprise
+										</span>
+									{:else if option.plan === "team"}
+										<span
+											class="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+										>
+											Team
 										</span>
 									{/if}
 								</div>
@@ -255,7 +268,10 @@
 		</form>
 
 		<!-- Help Link -->
-		<div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+		<div class="space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+			<p class="text-xs text-gray-600 dark:text-gray-400">
+				Note: Only organizations with Team or Enterprise plans can use organization billing for Inference Providers.
+			</p>
 			<a
 				href="https://huggingface.co/docs/inference-providers/pricing#billing-for-team-and-enterprise-organizations"
 				target="_blank"
