@@ -43,17 +43,17 @@ importers:
         specifier: ^1.6.13
         version: 1.6.13
       '@huggingface/hub':
-        specifier: ^2.4.0
-        version: 2.4.0
+        specifier: ^2.6.12
+        version: 2.6.12
       '@huggingface/inference':
-        specifier: ^4.5.3
-        version: 4.5.3
+        specifier: ^4.11.1
+        version: 4.11.1
       '@huggingface/tasks':
-        specifier: ^0.19.26
-        version: 0.19.26
+        specifier: ^0.19.50
+        version: 0.19.50
       '@huggingface/transformers':
-        specifier: ^3.6.3
-        version: 3.6.3
+        specifier: ^3.7.5
+        version: 3.7.5
       '@iconify-json/carbon':
         specifier: ^1.2.8
         version: 1.2.8
@@ -454,24 +454,24 @@ packages:
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
 
-  '@huggingface/hub@2.4.0':
-    resolution: {integrity: sha512-8H9uLOIBJNPw6lUV1g/t+7pAVNOhBW5g7CNAOJ0JVkA1QObEb7u0O7vMVkjmu3311SUU39aSx8l1Fgsw586g4g==}
+  '@huggingface/hub@2.6.12':
+    resolution: {integrity: sha512-/AZN2LAtrt4B8S83/Ru4wMorHY4NPwIYXo60SkuD6c/Mr135t1UqffD1vqcqtDYVf0hhLiyVmm1LMU1CXi8iKQ==}
     engines: {node: '>=18'}
     hasBin: true
 
-  '@huggingface/inference@4.5.3':
-    resolution: {integrity: sha512-SAWKT+e32jSfxwYkRaBQx1rlfgzkHCu0PXbCbOpY0Pvx6Si5wHia2BzZZdwgrpldaRbmFClxmNJy6lfCzQYfOw==}
+  '@huggingface/inference@4.11.1':
+    resolution: {integrity: sha512-otClcigc7KUQfvG5wav7oVTBEVLsdKelEMuuQGXwBdPqrsJ7WZknAGCXJcXJoO2zLw9v518jgylkQnFwEBpGvw==}
     engines: {node: '>=18'}
 
   '@huggingface/jinja@0.5.1':
     resolution: {integrity: sha512-yUZLld4lrM9iFxHCwFQ7D1HW2MWMwSbeB7WzWqFYDWK+rEb+WldkLdAJxUPOmgICMHZLzZGVcVjFh3w/YGubng==}
     engines: {node: '>=18'}
 
-  '@huggingface/tasks@0.19.26':
-    resolution: {integrity: sha512-E1+A6RIdfIS32tBjo+ReM61sZ5H3fHUDOH/gGO5uxvapjxaOns1IFtl+ESH8g9Tu+2HRmANoQ4bxli48igRAcA==}
+  '@huggingface/tasks@0.19.50':
+    resolution: {integrity: sha512-kHrfiDsJttkuwpdp7PgFiFHaK9rj+COJTIZ+221gk9vdF4B5QySW7hQT4aOGkwwZP+4qbXGhjMNGg/bxOq+LwA==}
 
-  '@huggingface/transformers@3.6.3':
-    resolution: {integrity: sha512-trcoB3jEzYNkhmDnJwsiXI1vsjKhGKq+11RgYQJwqOs/XUqJfL/5KiFf2FKwfdTZTCMrgKTBF8U5Dk0fh1YVtg==}
+  '@huggingface/transformers@3.7.5':
+    resolution: {integrity: sha512-5jvrIwHyRXfOKVaGKYvUZM6ZjJKQXWeKzIOdKBE5pdzPSNzTwBNx5NdWcGElf4Ddv7Dl2mWsvJh+G5RnCUxMmA==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -1374,6 +1374,10 @@ packages:
   cli-cursor@3.1.0:
     resolution: {integrity: sha512-I/zHAwsKf9FqGoXM4WWRACob9+SNukZTd94DWF57E4toouRulbCxcUh6RKUEOQlYTHJnzkPMySvPNaaSLNfLZw==}
     engines: {node: '>=8'}
+
+  cli-progress@3.12.0:
+    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
+    engines: {node: '>=4'}
 
   cli-spinners@2.9.2:
     resolution: {integrity: sha512-ywqV+5MmyL4E7ybXgKys4DugZbX0FC6LnwrhjuykIjnK9k8OQacQ7axGKnjDXWNhns0xot3bZI5h55H8yo9cJg==}
@@ -3580,20 +3584,22 @@ snapshots:
 
   '@floating-ui/utils@0.2.9': {}
 
-  '@huggingface/hub@2.4.0':
+  '@huggingface/hub@2.6.12':
     dependencies:
-      '@huggingface/tasks': 0.19.26
+      '@huggingface/tasks': 0.19.50
+    optionalDependencies:
+      cli-progress: 3.12.0
 
-  '@huggingface/inference@4.5.3':
+  '@huggingface/inference@4.11.1':
     dependencies:
       '@huggingface/jinja': 0.5.1
-      '@huggingface/tasks': 0.19.26
+      '@huggingface/tasks': 0.19.50
 
   '@huggingface/jinja@0.5.1': {}
 
-  '@huggingface/tasks@0.19.26': {}
+  '@huggingface/tasks@0.19.50': {}
 
-  '@huggingface/transformers@3.6.3':
+  '@huggingface/transformers@3.7.5':
     dependencies:
       '@huggingface/jinja': 0.5.1
       onnxruntime-node: 1.21.0
@@ -4499,6 +4505,11 @@ snapshots:
     dependencies:
       restore-cursor: 3.1.0
 
+  cli-progress@3.12.0:
+    dependencies:
+      string-width: 4.2.3
+    optional: true
+
   cli-spinners@2.9.2: {}
 
   cli-width@3.0.0: {}
@@ -5027,7 +5038,7 @@ snapshots:
       es6-error: 4.1.1
       matcher: 3.0.0
       roarr: 2.15.4
-      semver: 7.7.1
+      semver: 7.7.2
       serialize-error: 7.0.1
 
   global-prefix@4.0.0:
