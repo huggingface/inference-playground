@@ -1,5 +1,5 @@
+import { env } from "$env/dynamic/public";
 import { safeParse } from "$lib/utils/json.js";
-import { PUBLIC_HF_TOKEN } from "$env/static/public";
 import typia from "typia";
 
 const key = "hf_token";
@@ -9,8 +9,8 @@ class Token {
 	writeToLocalStorage = $state(true);
 
 	constructor() {
-		if (PUBLIC_HF_TOKEN) {
-			this.#value = PUBLIC_HF_TOKEN;
+		if (env.PUBLIC_HF_TOKEN) {
+			this.#value = env.PUBLIC_HF_TOKEN;
 			return;
 		}
 
@@ -59,7 +59,7 @@ class Token {
 	reset = () => {
 		this.value = "";
 		localStorage.removeItem(key);
-		if (!PUBLIC_HF_TOKEN) {
+		if (!env.PUBLIC_HF_TOKEN) {
 			this.requestTokenFromParent();
 		}
 	};
