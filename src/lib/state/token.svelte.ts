@@ -1,4 +1,5 @@
 import { safeParse } from "$lib/utils/json.js";
+import { PUBLIC_HF_TOKEN } from "$env/static/public";
 import typia from "typia";
 
 const key = "hf_token";
@@ -6,12 +7,22 @@ const key = "hf_token";
 class Token {
 	#value = $state("");
 	writeToLocalStorage = $state(true);
-	showModal = $state(false);
 
 	constructor() {
+		if (PUBLIC_HF_TOKEN) {
+			this.#value = PUBLIC_HF_TOKEN;
+			return;
+		}
+
 		const storedHfToken = localStorage.getItem(key);
 		const parsed = safeParse(storedHfToken ?? "");
-		this.value = typia.is<string>(parsed) ? parsed : "";
+		const storedToken = typia.is<string>(parsed) ? parsed : "";
+
+		if (storedToken) {
+			this.#value = storedToken;
+		} else {
+			this.requestTokenFromParent();
+		}
 	}
 
 	get value() {
@@ -23,12 +34,34 @@ class Token {
 			localStorage.setItem(key, JSON.stringify(token));
 		}
 		this.#value = token;
-		this.showModal = !token.length;
 	}
+
+	requestTokenFromParent = (): Promise<void> => {
+		if (typeof window === "undefined") return Promise.resolve();
+
+		return new Promise(resolve => {
+			const handleMessage = (event: MessageEvent) => {
+				if (event.data.type === "INFERENCE_JWT_RESPONSE") {
+					const token = event.data.token;
+					if (token && typeof token === "string") {
+						this.value = token;
+						window.removeEventListener("message", handleMessage);
+						resolve();
+					}
+				}
+			};
+
+			window.addEventListener("message", handleMessage);
+			window.parent?.postMessage({ type: "INFERENCE_JWT_REQUEST" }, "*");
+		});
+	};
 
 	reset = () => {
 		this.value = "";
 		localStorage.removeItem(key);
+		if (!PUBLIC_HF_TOKEN) {
+			this.requestTokenFromParent();
+		}
 	};
 }
 

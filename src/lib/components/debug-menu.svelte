@@ -47,12 +47,6 @@
 			},
 		},
 		{
-			label: "Show token modal",
-			cb: () => {
-				token.showModal = true;
-			},
-		},
-		{
 			label: "Test toast",
 			cb: () => {
 				const toastData: ToastData[] = [

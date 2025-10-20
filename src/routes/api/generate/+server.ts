@@ -7,6 +7,7 @@ import { createAdapter, type GenerationArgs } from "./adapter.js";
 import { connectToMCPServers, executeMcpTool, type MCPServerConnection } from "./mcp.js";
 import type { FinishReason, GenerateRequest } from "./types.js";
 import { debugLog } from "./utils.js";
+import { InferenceClientProviderApiError, InferenceClientHubApiError } from "@huggingface/inference";
 
 type AssistantResponse = { message: ChatCompletionMessage; finish_reason: FinishReason };
 
@@ -197,6 +198,16 @@ export const POST: RequestHandler = async ({ request }) => {
 	} catch (error) {
 		debugLog(JSON.stringify(error, null, 2));
 		console.error("Generation error:", error);
-		return json({ error: error instanceof Error ? error.message : "Unknown error occurred" }, { status: 500 });
+
+		const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+		let status = 500;
+
+		if (error instanceof InferenceClientProviderApiError || error instanceof InferenceClientHubApiError) {
+			status = error.httpResponse.status;
+		} else if (error && typeof error === "object" && "status" in error && typeof error.status === "number") {
+			status = error.status;
+		}
+
+		return json({ error: errorMessage }, { status });
 	}
 };

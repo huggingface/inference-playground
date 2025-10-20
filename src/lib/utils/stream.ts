@@ -49,6 +49,9 @@ export class StreamReader {
 	static async fromFetch(url: string, options?: RequestInit): Promise<StreamReader> {
 		const response = await fetch(url, options);
 		if (!response.ok) {
+			if (response.status === 401) {
+				throw new Error("401 Unauthorized");
+			}
 			const error = await response.json();
 			throw new Error(error.error || "Request failed");
 		}

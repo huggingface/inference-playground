@@ -122,6 +122,7 @@ export async function handleStreamingResponse(
 	conversation: ConversationClass | Conversation,
 	onChunk: (content: string) => void,
 	abortController: AbortController,
+	retryCount = 0,
 ): Promise<void> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
@@ -149,28 +150,37 @@ export async function handleStreamingResponse(
 		enabledMCPs: getEnabledMCPs(),
 	};
 
-	const reader = await StreamReader.fromFetch("/api/generate", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify(requestBody),
-		signal: abortController.signal,
-	});
+	try {
+		const reader = await StreamReader.fromFetch("/api/generate", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(requestBody),
+			signal: abortController.signal,
+		});
 
-	let out = "";
-	for await (const chunk of reader.read()) {
-		if (chunk.type === "chunk" && chunk.content) {
-			out += chunk.content;
-			onChunk(out);
-		} else if (chunk.type === "error") {
-			throw new Error(chunk.error || "Stream error");
+		let out = "";
+		for await (const chunk of reader.read()) {
+			if (chunk.type === "chunk" && chunk.content) {
+				out += chunk.content;
+				onChunk(out);
+			} else if (chunk.type === "error") {
+				throw new Error(chunk.error || "Stream error");
+			}
 		}
+	} catch (error) {
+		if (error instanceof Error && error.message.includes("401") && retryCount === 0) {
+			await token.requestTokenFromParent();
+			return handleStreamingResponse(conversation, onChunk, abortController, retryCount + 1);
+		}
+		throw error;
 	}
 }
 
 export async function handleNonStreamingResponse(
 	conversation: ConversationClass | Conversation,
+	retryCount = 0,
 ): Promise<{ message: ChatCompletionOutputMessage; completion_tokens: number }> {
 	const data = conversation instanceof ConversationClass ? conversation.data : conversation;
 	const model = conversation.model;
@@ -207,6 +217,10 @@ export async function handleNonStreamingResponse(
 	});
 
 	if (!response.ok) {
+		if (response.status === 401 && retryCount === 0) {
+			await token.requestTokenFromParent();
+			return handleNonStreamingResponse(conversation, retryCount + 1);
+		}
 		const error = await response.json();
 		throw new Error(error.error || "Failed to generate response");
 	}

@@ -202,7 +202,7 @@ export class ConversationClass {
 
 	genNextMessage = async () => {
 		if (!token.value) {
-			token.showModal = true;
+			token.requestTokenFromParent();
 			return;
 		}
 
@@ -437,7 +437,7 @@ class Conversations {
 
 	genNextMessages = async (conv: "left" | "right" | "both" | ConversationClass = "both") => {
 		if (!token.value) {
-			token.showModal = true;
+			token.requestTokenFromParent();
 			return;
 		}
 

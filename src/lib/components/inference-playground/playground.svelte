@@ -25,7 +25,6 @@
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
 	import GenerationConfig from "./generation-config.svelte";
-	import HFTokenModal from "./hf-token-modal.svelte";
 	import MessageTextarea from "./message-textarea.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
@@ -39,29 +38,7 @@
 
 	const systemPromptSupported = $derived(conversations.active.some(c => isSystemPromptSupported(c.model)));
 	const compareActive = $derived(conversations.active.length === 2);
-
-	function handleTokenSubmit(e: Event) {
-		const form = e.target as HTMLFormElement;
-		const formData = new FormData(form);
-		const submittedHfToken = (formData.get("hf-token") as string).trim() ?? "";
-		const RE_HF_TOKEN = /\bhf_[a-zA-Z0-9]{34}\b/;
-		if (RE_HF_TOKEN.test(submittedHfToken)) {
-			token.value = submittedHfToken;
-			// TODO: Only submit when previous action was trying to submit
-			// submit();
-		} else {
-			alert("Please provide a valid HF token.");
-		}
-	}
 </script>
-
-{#if token.showModal}
-	<HFTokenModal
-		bind:storeLocallyHfToken={token.writeToLocalStorage}
-		on:close={() => (token.showModal = false)}
-		on:submit={handleTokenSubmit}
-	/>
-{/if}
 
 <div
 	class={[
@@ -253,26 +230,6 @@
 							<IconWaterfall class="text-xs" />
 							Metrics
 						</a>
-						<button
-							onclick={token.reset}
-							class="flex items-center gap-1 text-sm text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" class="text-xs" width="1em" height="1em" viewBox="0 0 32 32">
-								<path
-									fill="currentColor"
-									d="M23.216 4H26V2h-7v6h2V5.096A11.96 11.96 0 0 1 28 16c0 6.617-5.383 12-12 12v2c7.72 0 14-6.28 14-14c0-5.009-2.632-9.512-6.784-12"
-								/>
-								<path fill="currentColor" d="M16 20a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3M15 9h2v9h-2z" /><path
-									fill="currentColor"
-									d="M16 4V2C8.28 2 2 8.28 2 16c0 4.977 2.607 9.494 6.784 12H6v2h7v-6h-2v2.903A11.97 11.97 0 0 1 4 16C4 9.383 9.383 4 16 4"
-								/>
-							</svg>
-							{#if token.value}
-								Reset token
-							{:else}
-								Set token
-							{/if}
-						</button>
 					</div>
 				</div>
 
