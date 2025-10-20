@@ -3,7 +3,6 @@
 	import { TEST_IDS } from "$lib/constants.js";
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
-	import { token } from "$lib/state/token.svelte.js";
 	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { isSystemPromptSupported } from "$lib/utils/business.svelte.js";

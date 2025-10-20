@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { isDark } from "$lib/spells/is-dark.svelte";
+	import { conversations } from "$lib/state/conversations.svelte";
 	import { models } from "$lib/state/models.svelte";
-	import { token } from "$lib/state/token.svelte.js";
 	import { compareStr } from "$lib/utils/compare.js";
 	import { Popover } from "melt/builders";
 	import { openCustomModelConfig } from "./inference-playground/custom-model-config.svelte";
@@ -9,8 +10,6 @@
 	import { showQuotaModal } from "./quota-modal.svelte";
 	import type { ToastData } from "./toaster.svelte.js";
 	import { addToast } from "./toaster.svelte.js";
-	import { isDark } from "$lib/spells/is-dark.svelte";
-	import { conversations } from "$lib/state/conversations.svelte";
 
 	let innerWidth = $state<number>();
 	let innerHeight = $state<number>();

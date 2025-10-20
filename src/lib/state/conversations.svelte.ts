@@ -20,6 +20,7 @@ import { isString } from "$lib/utils/is.js";
 import { poll } from "$lib/utils/poll.js";
 import { Entity, Fields, repo, type MembersOnly } from "remult";
 import { images } from "./images.svelte";
+import { dev } from "$app/environment";
 
 @Entity("conversation")
 export class ConversationEntity {
@@ -202,6 +203,13 @@ export class ConversationClass {
 
 	genNextMessage = async () => {
 		if (!token.value) {
+			addToast({
+				title: "Error",
+				description: dev
+					? "Please set your Hugging Face token in the .env file"
+					: "Failed to connect to inference providers. Are you logged in?",
+				variant: "error",
+			});
 			token.requestTokenFromParent();
 			return;
 		}
