@@ -32,6 +32,7 @@ import { mcpServers } from "$lib/state/mcps.svelte.js";
 import { modifySnippet } from "$lib/utils/snippets.js";
 import { models } from "$lib/state/models.svelte";
 import { StreamReader } from "$lib/utils/stream.js";
+import { dev } from "$app/environment";
 
 type ChatCompletionInputMessageChunk =
 	NonNullable<ChatCompletionInputMessage["content"]> extends string | (infer U)[] ? U : never;
@@ -118,6 +119,10 @@ function getResponseFormatObj(conversation: ConversationClass | Conversation) {
 	}
 }
 
+const tokenErrMessage = dev
+	? "Please set your Hugging Face token in the .env file"
+	: "Failed to connect to inference providers. Are you logged in?";
+
 export async function handleStreamingResponse(
 	conversation: ConversationClass | Conversation,
 	onChunk: (content: string) => void,
@@ -171,7 +176,8 @@ export async function handleStreamingResponse(
 		}
 	} catch (error) {
 		if (error instanceof Error && error.message.includes("401") && retryCount === 0) {
-			await token.requestTokenFromParent();
+			const ok = await token.requestTokenFromParent();
+			if (!ok) throw new Error(tokenErrMessage);
 			return handleStreamingResponse(conversation, onChunk, abortController, retryCount + 1);
 		}
 		throw error;
@@ -218,7 +224,8 @@ export async function handleNonStreamingResponse(
 
 	if (!response.ok) {
 		if (response.status === 401 && retryCount === 0) {
-			await token.requestTokenFromParent();
+			const ok = await token.requestTokenFromParent();
+			if (!ok) throw new Error(tokenErrMessage);
 			return handleNonStreamingResponse(conversation, retryCount + 1);
 		}
 		const error = await response.json();

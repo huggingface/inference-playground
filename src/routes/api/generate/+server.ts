@@ -144,7 +144,16 @@ export const POST: RequestHandler = async ({ request }) => {
 						}
 					} catch (error) {
 						console.error("stream error", error);
-						writer.error(error instanceof Error ? error : new Error(String(error)));
+
+						let status = 500;
+						if (error instanceof InferenceClientProviderApiError || error instanceof InferenceClientHubApiError) {
+							status = error.httpResponse.status;
+						}
+
+						const errorMessage = error instanceof Error ? error.message : String(error);
+						const errorWithStatus = new Error(status === 401 ? "401 Unauthorized" : errorMessage);
+
+						writer.error(errorWithStatus);
 						res.finish_reason = "stop";
 						return res;
 					}

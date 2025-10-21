@@ -18,7 +18,7 @@ class Token {
 		const parsed = safeParse(storedHfToken ?? "");
 		const storedToken = typia.is<string>(parsed) ? parsed : "";
 
-		if (storedToken) {
+		if (storedToken && storedToken.startsWith("hf_jwt")) {
 			this.#value = storedToken;
 		} else {
 			this.requestTokenFromParent();
@@ -36,18 +36,23 @@ class Token {
 		this.#value = token;
 	}
 
-	requestTokenFromParent = (): Promise<void> => {
-		if (typeof window === "undefined") return Promise.resolve();
+	requestTokenFromParent = (): Promise<boolean> => {
+		if (typeof window === "undefined") return Promise.resolve(false);
 
 		return new Promise(resolve => {
+			const timeout = window.setTimeout(() => {
+				window.removeEventListener("message", handleMessage);
+				resolve(false);
+			}, 5000);
+
 			const handleMessage = (event: MessageEvent) => {
 				if (event.data.type === "INFERENCE_JWT_RESPONSE") {
 					const token = event.data.token;
-					if (token && typeof token === "string") {
-						this.value = token;
-						window.removeEventListener("message", handleMessage);
-						resolve();
-					}
+					if (!token || typeof token !== "string") return resolve(false);
+					this.value = token;
+					window.removeEventListener("message", handleMessage);
+					resolve(true);
+					window.clearTimeout(timeout);
 				}
 			};
 
