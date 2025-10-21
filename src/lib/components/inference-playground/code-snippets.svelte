@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { type ConversationClass } from "$lib/state/conversations.svelte";
-	import { token } from "$lib/state/token.svelte.js";
 	import { billing } from "$lib/state/billing.svelte";
+	import { type ConversationClass } from "$lib/state/conversations.svelte";
 	import { isCustomModel } from "$lib/types.js";
 	import {
 		getInferenceSnippet,
@@ -17,6 +16,7 @@
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconCopy from "~icons/carbon/copy";
 	import LocalToasts from "../local-toasts.svelte";
+	import IconLaunch from "~icons/carbon/launch";
 
 	hljs.registerLanguage("javascript", javascript);
 	hljs.registerLanguage("python", python);
@@ -37,8 +37,6 @@
 	type Language = keyof typeof labelsByLanguage;
 
 	let lang: Language = $state("javascript");
-	let showToken = $state(false);
-
 	type GetSnippetArgs = {
 		tokenStr?: string;
 		conversation: ConversationClass;
@@ -98,20 +96,10 @@
 		return hljs.highlight(code, { language: language === "sh" ? "http" : language }).value;
 	}
 
-	const tokenStr = $derived.by(() => {
-		if (isCustomModel(conversation.model)) {
-			const t = conversation.model.accessToken;
-
-			return t && showToken ? t : undefined;
-		}
-
-		return token.value && showToken ? token.value : undefined;
-	});
-
 	const snippetsByLang = $derived({
-		javascript: getSnippet({ lang: "js", tokenStr, conversation }),
-		python: getSnippet({ lang: "python", tokenStr, conversation }),
-		http: getSnippet({ lang: "sh", tokenStr, conversation }),
+		javascript: getSnippet({ lang: "js", conversation }),
+		python: getSnippet({ lang: "python", conversation }),
+		http: getSnippet({ lang: "sh", conversation }),
 	} as Record<Language, GetInferenceSnippetReturn>);
 
 	// Auto-switch to available language if current one has no snippets
@@ -245,10 +233,14 @@
 			<h2 class="font-semibold">Non-Streaming API</h2>
 		{/if}
 		<div class="flex items-center gap-x-4">
-			<label class="flex items-center gap-x-1.5 text-sm select-none">
-				<input type="checkbox" bind:checked={showToken} />
-				<p class="leading-none">With token</p>
-			</label>
+			<a
+				href="https://huggingface.co/settings/tokens/new?ownUserPermissions=inference.serverless.write&tokenType=fineGrained"
+				target="_blank"
+				class="flex items-center gap-x-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+			>
+				Create token
+				<IconLaunch class="translate-y-[0.5px] text-xs" />
+			</a>
 			<LocalToasts>
 				{#snippet children({ addToast, trigger })}
 					<button
