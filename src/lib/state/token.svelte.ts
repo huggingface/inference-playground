@@ -1,12 +1,7 @@
 import { env } from "$env/dynamic/public";
-import { safeParse } from "$lib/utils/json.js";
-import typia from "typia";
-
-const key = "hf_token";
 
 class Token {
 	#value = $state("");
-	writeToLocalStorage = $state(true);
 
 	constructor() {
 		if (env.PUBLIC_HF_TOKEN) {
@@ -14,15 +9,7 @@ class Token {
 			return;
 		}
 
-		const storedHfToken = localStorage.getItem(key);
-		const parsed = safeParse(storedHfToken ?? "");
-		const storedToken = typia.is<string>(parsed) ? parsed : "";
-
-		if (storedToken && storedToken.startsWith("hf_jwt")) {
-			this.#value = storedToken;
-		} else {
-			this.requestTokenFromParent();
-		}
+		this.requestTokenFromParent();
 	}
 
 	get value() {
@@ -30,9 +17,6 @@ class Token {
 	}
 
 	set value(token: string) {
-		if (this.writeToLocalStorage) {
-			localStorage.setItem(key, JSON.stringify(token));
-		}
 		this.#value = token;
 	}
 
@@ -59,14 +43,6 @@ class Token {
 			window.addEventListener("message", handleMessage);
 			window.parent?.postMessage({ type: "INFERENCE_JWT_REQUEST" }, "*");
 		});
-	};
-
-	reset = () => {
-		this.value = "";
-		localStorage.removeItem(key);
-		if (!env.PUBLIC_HF_TOKEN) {
-			this.requestTokenFromParent();
-		}
 	};
 }
 

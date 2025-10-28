@@ -251,7 +251,7 @@ export class ConversationClass {
 				// }
 
 				if (error.message.includes("token seems invalid")) {
-					token.reset();
+					token.requestTokenFromParent();
 				}
 
 				if (error.name !== "AbortError") {
@@ -486,7 +486,7 @@ class Conversations {
 				}
 
 				if (error.message.includes("token seems invalid")) {
-					token.reset();
+					token.requestTokenFromParent();
 				}
 
 				if (error.name !== "AbortError") {
