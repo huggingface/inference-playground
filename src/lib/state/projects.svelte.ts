@@ -146,6 +146,41 @@ class Projects {
 			branchedFromMessageIndex: null,
 		});
 	};
+
+	getBranchChildren = (projectId: string) => {
+		return this.all.filter(p => p.branchedFromId === projectId);
+	};
+
+	getBranchDepth = (projectId: string): number => {
+		const project = this.#projects[projectId];
+		if (!project?.branchedFromId) return 0;
+		return 1 + this.getBranchDepth(project.branchedFromId);
+	};
+
+	getBranchRoot = (projectId: string) => {
+		let current = this.#projects[projectId];
+		while (current?.branchedFromId) {
+			current = this.#projects[current.branchedFromId];
+		}
+		return current;
+	};
+
+	getAllBranchesInTree = (rootId: string): typeof this.all => {
+		const result: typeof this.all = [];
+		const root = this.#projects[rootId];
+		if (root) result.push(root);
+
+		const addChildren = (parentId: string) => {
+			const children = this.getBranchChildren(parentId);
+			children.forEach(child => {
+				result.push(child);
+				addChildren(child.id);
+			});
+		};
+
+		addChildren(rootId);
+		return result;
+	};
 }
 
 export const projects = new Projects();

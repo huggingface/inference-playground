@@ -10,6 +10,7 @@
 	import IconHistory from "~icons/carbon/recently-viewed";
 	import IconSave from "~icons/carbon/save";
 	import IconDelete from "~icons/carbon/trash-can";
+	import IconBranch from "~icons/carbon/branch";
 	import ArrowSplitRounded from "~icons/material-symbols/arrow-split-rounded";
 	import Dialog from "../dialog.svelte";
 	import { prompt } from "../prompts.svelte";
@@ -74,7 +75,10 @@
 			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
 		)}
 	>
-		<div class="flex items-center gap-1 text-sm">
+		<div class="flex items-center gap-1.5 text-sm">
+			{#if projects.current?.branchedFromId}
+				<IconBranch class="text-xs text-green-600 dark:text-green-400" />
+			{/if}
 			{projects.current?.name}
 		</div>
 		<div
@@ -117,6 +121,9 @@
 				class="flex items-center gap-2 rounded-md py-1.5 pr-1 pl-2 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 			>
 				<div class="flex items-center gap-2">
+					{#if projects.all.find(p => p.id === id)?.branchedFromId}
+						<IconBranch class="text-xs text-green-600 dark:text-green-400" />
+					{/if}
 					{name}
 					{#if projects.all.find(p => p.id === id)?.branchedFromId}
 						{@const originalProject = projects.getBranchedFromProject(id)}
