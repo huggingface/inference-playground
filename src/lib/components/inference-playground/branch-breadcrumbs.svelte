@@ -23,9 +23,9 @@
 </script>
 
 {#if showBreadcrumbs}
-	<div class="flex items-center gap-1 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400">
-		<IconBranch class="text-green-600 dark:text-green-400" />
-		<div class="flex items-center gap-1 overflow-x-auto">
+	<div class="flex items-start gap-1 px-2 text-xs text-gray-600 dark:text-gray-400">
+		<IconBranch class="mt-1 text-blue-600 dark:text-blue-400" />
+		<div class="flex items-center gap-1 overflow-x-auto pb-3">
 			{#each breadcrumbs as project, i}
 				{#if i > 0}
 					<IconChevronRight class="text-2xs flex-none text-gray-400" />

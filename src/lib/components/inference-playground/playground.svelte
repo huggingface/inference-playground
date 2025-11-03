@@ -21,6 +21,7 @@
 	import Toaster from "../toaster.svelte";
 	import Tooltip from "../tooltip.svelte";
 	import BillingModal from "./billing-modal.svelte";
+	import BranchTreeModal from "./branch-tree-modal.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
 	import GenerationConfig from "./generation-config.svelte";
@@ -28,8 +29,6 @@
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectSelect from "./project-select.svelte";
-	import BranchTreeModal from "./branch-tree-modal.svelte";
-	import BranchBreadcrumbs from "./branch-breadcrumbs.svelte";
 
 	let viewCode = $state(false);
 	let viewSettings = $state(false);
@@ -57,7 +56,6 @@
 			<ProjectSelect />
 			<BranchTreeModal />
 		</div>
-		<BranchBreadcrumbs />
 		<div
 			class="relative flex flex-1 flex-col gap-6 overflow-y-hidden rounded-r-xl border-x border-y border-gray-200/80 bg-linear-to-b from-white via-white p-3 shadow-xs max-md:rounded-xl dark:border-white/5 dark:from-gray-800/40 dark:via-gray-800/40"
 			class:pointer-events-none={!systemPromptSupported}

@@ -74,10 +74,10 @@
 	}
 </script>
 
-<button class="btn relative size-[32px] p-0" {...popover.trigger} title="View branch tree">
+<button class="btn relative size-[32px] shrink-0 p-0" {...popover.trigger}>
 	<IconTree />
 	{#if buildTree.length > 1 || buildTree.some(n => n.children.length > 0)}
-		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-green-500" aria-label="Project has branches"></div>
+		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-blue-500" aria-label="Project has branches"></div>
 	{/if}
 </button>
 
