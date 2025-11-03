@@ -116,8 +116,10 @@
 			<div
 				class="flex items-center gap-2 rounded-md py-1.5 pr-1 pl-2 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 			>
-				<div class="flex items-center gap-2">
-					{name}
+				<div class="flex items-center gap-2 overflow-hidden" title={name}>
+					<p class="truncate">
+						{name}
+					</p>
 					{#if projects.all.find(p => p.id === id)?.branchedFromId}
 						{@const originalProject = projects.getBranchedFromProject(id)}
 						<Tooltip>

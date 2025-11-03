@@ -2,15 +2,19 @@
 	import { clickOutside } from "$lib/attachments/click-outside.js";
 	import { projects } from "$lib/state/projects.svelte";
 	import { conversations } from "$lib/state/conversations.svelte";
-	import { Popover } from "melt/builders";
+	import { Popover, Tree, type TreeItem } from "melt/builders";
 	import IconBranch from "~icons/carbon/branch";
 	import IconTree from "~icons/carbon/tree-view";
+	import IconLiteralTree from "~icons/carbon/tree";
+	import IconChevronDown from "~icons/carbon/chevron-down";
 	import IconChevronRight from "~icons/carbon/chevron-right";
+	import { SvelteMap } from "svelte/reactivity";
 
-	interface BranchNode {
+	interface ProjectTreeItem extends TreeItem {
+		id: string;
+		value: string;
 		project: NonNullable<typeof projects.current>;
-		children: BranchNode[];
-		depth: number;
+		children?: ProjectTreeItem[];
 	}
 
 	const popover = new Popover({
@@ -25,17 +29,22 @@
 
 	let dialog = $state<HTMLDialogElement>();
 
-	const buildTree = $derived.by(() => {
+	const treeItems = $derived.by((): ProjectTreeItem[] => {
 		const allProjects = projects.all;
-		const nodeMap = $state(new Map<string, BranchNode>());
+		const nodeMap = new SvelteMap<string, ProjectTreeItem>();
 
 		allProjects.forEach(project => {
 			if (!nodeMap.has(project.id)) {
-				nodeMap.set(project.id, { project, children: [], depth: 0 });
+				nodeMap.set(project.id, {
+					id: project.id,
+					value: project.id,
+					project,
+					children: [],
+				});
 			}
 		});
 
-		const roots: BranchNode[] = [];
+		const roots: ProjectTreeItem[] = [];
 
 		allProjects.forEach(project => {
 			const node = nodeMap.get(project.id)!;
@@ -43,8 +52,7 @@
 			if (project.branchedFromId) {
 				const parent = nodeMap.get(project.branchedFromId);
 				if (parent) {
-					parent.children.push(node);
-					node.depth = parent.depth + 1;
+					parent.children!.push(node);
 				} else {
 					roots.push(node);
 				}
@@ -53,19 +61,30 @@
 			}
 		});
 
-		const sortNodes = (nodes: BranchNode[]) => {
+		const sortNodes = (nodes: ProjectTreeItem[]) => {
 			nodes.sort((a, b) => a.project.name.localeCompare(b.project.name));
-			nodes.forEach(node => sortNodes(node.children));
+			nodes.forEach(node => {
+				if (node.children && node.children.length > 0) {
+					sortNodes(node.children);
+				}
+			});
 		};
 		sortNodes(roots);
 
 		return roots;
 	});
 
-	function switchToProject(projectId: string) {
-		projects.activeId = projectId;
-		popover.open = false;
-	}
+	const tree = new Tree({
+		items: () => treeItems,
+		selected: () => projects.activeId,
+		onSelectedChange: value => {
+			if (value) {
+				projects.activeId = value;
+				popover.open = false;
+			}
+		},
+		expandOnClick: false,
+	});
 
 	function getBranchStats(projectId: string) {
 		const convs = conversations.for(projectId);
@@ -76,7 +95,7 @@
 
 <button class="btn relative size-[32px] shrink-0 p-0" {...popover.trigger}>
 	<IconTree />
-	{#if buildTree.length > 1 || buildTree.some(n => n.children.length > 0)}
+	{#if treeItems.length > 1 || treeItems.some(n => (n.children?.length ?? 0) > 0)}
 		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-blue-500" aria-label="Project has branches"></div>
 	{/if}
 </button>
@@ -99,74 +118,87 @@
 			</h3>
 		</div>
 
-		{#if buildTree.length === 0}
+		{#if treeItems.length === 0}
 			<div class="flex flex-col items-center gap-2 py-3">
 				<span class="text-sm text-gray-500">No projects found</span>
 			</div>
 		{:else}
-			<div class="space-y-1">
-				{#each buildTree as root}
-					{@render treeNode(root)}
-				{/each}
+			<div {...tree.root}>
+				{@render treeNode(tree.children)}
 			</div>
 		{/if}
 	</div>
 </dialog>
 
-{#snippet treeNode(node: BranchNode)}
-	{@const isActive = projects.activeId === node.project.id}
-	{@const stats = getBranchStats(node.project.id)}
-	{@const isBranch = node.project.branchedFromId !== null && node.project.branchedFromId !== undefined}
+{#snippet treeNode(items: typeof tree.children)}
+	{#each items as item (item.id)}
+		{@const project = item.item.project}
+		{@const isActive = tree.isSelected(item.id)}
+		{@const isExpanded = tree.isExpanded(item.id)}
+		{@const stats = getBranchStats(project.id)}
+		{@const isBranch = project.branchedFromId !== null && project.branchedFromId !== undefined}
+		{@const hasChildren = item.children && item.children.length > 0}
 
-	<div class="flex flex-col">
-		<button
-			class="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left transition-colors {isActive
-				? 'bg-blue-100 dark:bg-blue-900/30'
-				: 'hover:bg-gray-100 dark:hover:bg-gray-700'}"
-			onclick={() => switchToProject(node.project.id)}
-			style="padding-left: {node.depth * 1.5 + 0.75}rem"
-		>
-			{#if node.depth > 0}
-				<div class="flex-none text-gray-400">
-					<IconChevronRight class="text-xs" />
+		<div class="group">
+			<div
+				{...item.attrs}
+				class="flex w-full items-center rounded-lg px-1 py-2 text-left transition-colors {isActive
+					? 'bg-blue-100 dark:bg-blue-900/30'
+					: 'hover:bg-gray-100 dark:hover:bg-gray-700'}"
+			>
+				{#if hasChildren}
+					<button
+						onclick={e => {
+							e.stopPropagation();
+							tree.toggleExpand(item.id);
+						}}
+						class="flex-none p-2 text-gray-500 transition-transform hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+						aria-label={isExpanded ? "Collapse" : "Expand"}
+					>
+						{#if isExpanded}
+							<IconChevronDown class="size-4" />
+						{:else}
+							<IconChevronRight class="size-4" />
+						{/if}
+					</button>
+				{:else}
+					<div class="size-4 flex-none"></div>
+				{/if}
+
+				<div class="flex-none text-base">
+					{#if isBranch}
+						<IconBranch class="text-blue-600 dark:text-blue-400" />
+					{:else}
+						<IconLiteralTree class="text-blue-600 dark:text-blue-400" />
+					{/if}
+				</div>
+
+				<div class="ml-2 min-w-0 flex-1">
+					<div
+						class="truncate text-sm font-medium {isActive
+							? 'text-blue-700 dark:text-blue-300'
+							: 'text-gray-900 dark:text-gray-100'}"
+					>
+						{project.name}
+						{#if isActive}
+							<span class="text-2xs ml-1.5 font-semibold text-blue-600 dark:text-blue-400">ACTIVE</span>
+						{/if}
+					</div>
+					<div class="text-2xs mt-0.5 flex items-center gap-2 text-gray-500">
+						<span>{stats.messages} msg{stats.messages === 1 ? "" : "s"}</span>
+						{#if isBranch && typeof project.branchedFromMessageIndex === "number"}
+							<span>•</span>
+							<span>from msg {project.branchedFromMessageIndex + 1}</span>
+						{/if}
+					</div>
+				</div>
+			</div>
+
+			{#if hasChildren && isExpanded}
+				<div {...tree.group} class="ml-6 border-l-2 border-gray-200 pl-2 dark:border-gray-700">
+					{@render treeNode(item.children)}
 				</div>
 			{/if}
-
-			<div class="flex-none text-base">
-				{#if isBranch}
-					<IconBranch class="text-green-600 dark:text-green-400" />
-				{:else}
-					📁
-				{/if}
-			</div>
-
-			<div class="min-w-0 flex-1">
-				<div
-					class="truncate text-sm font-medium {isActive
-						? 'text-blue-700 dark:text-blue-300'
-						: 'text-gray-900 dark:text-gray-100'}"
-				>
-					{node.project.name}
-					{#if isActive}
-						<span class="text-2xs ml-1.5 font-semibold text-blue-600 dark:text-blue-400">ACTIVE</span>
-					{/if}
-				</div>
-				<div class="text-2xs mt-0.5 flex items-center gap-2 text-gray-500">
-					<span>{stats.messages} msg{stats.messages === 1 ? "" : "s"}</span>
-					{#if isBranch && typeof node.project.branchedFromMessageIndex === "number"}
-						<span>•</span>
-						<span>from msg {node.project.branchedFromMessageIndex + 1}</span>
-					{/if}
-				</div>
-			</div>
-		</button>
-
-		{#if node.children.length > 0}
-			<div class="ml-3 border-l-2 border-gray-200 dark:border-gray-700">
-				{#each node.children as child}
-					{@render treeNode(child)}
-				{/each}
-			</div>
-		{/if}
-	</div>
+		</div>
+	{/each}
 {/snippet}
