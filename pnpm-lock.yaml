@@ -46,8 +46,8 @@ importers:
         specifier: ^2.6.12
         version: 2.6.12
       '@huggingface/inference':
-        specifier: ^4.13.0
-        version: 4.13.0
+        specifier: ^4.13.1
+        version: 4.13.1
       '@huggingface/tasks':
         specifier: ^0.19.62
         version: 0.19.62
@@ -459,8 +459,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@huggingface/inference@4.13.0':
-    resolution: {integrity: sha512-oqBHbYoLHpNlEUJp/MG28gCR0JOUmLi9iKKd0oJfTAgTqaDSLhoCsIdS1XfLHbT/CrzZch33cARTR3bO4q/2yQ==}
+  '@huggingface/inference@4.13.1':
+    resolution: {integrity: sha512-tP63myCjsH+2CqkOaDklJ9MDpUzp6esGMS7RHFXpfv66DWub43kaGTDpI49arqLXM+yFH6FW868eIDgespw5Uw==}
     engines: {node: '>=18'}
 
   '@huggingface/jinja@0.5.1':
@@ -3590,7 +3590,7 @@ snapshots:
     optionalDependencies:
       cli-progress: 3.12.0
 
-  '@huggingface/inference@4.13.0':
+  '@huggingface/inference@4.13.1':
     dependencies:
       '@huggingface/jinja': 0.5.1
       '@huggingface/tasks': 0.19.62
