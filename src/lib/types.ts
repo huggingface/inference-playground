@@ -15,7 +15,7 @@ export type Conversation = {
 	systemMessage: ConversationMessage;
 	streaming: boolean;
 	provider?: string;
-} & Pick<ConversationEntityMembers, "structuredOutput" | "extraParams">;
+} & Pick<ConversationEntityMembers, "structuredOutput" | "extraParams" | "autoPolicy">;
 
 export type ConversationWithCustomModel = Conversation & {
 	model: CustomModel;

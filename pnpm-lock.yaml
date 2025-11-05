@@ -46,14 +46,14 @@ importers:
         specifier: ^2.6.12
         version: 2.6.12
       '@huggingface/inference':
-        specifier: ^4.11.1
-        version: 4.11.1
+        specifier: ^4.13.0
+        version: 4.13.0
       '@huggingface/tasks':
-        specifier: ^0.19.50
-        version: 0.19.50
+        specifier: ^0.19.62
+        version: 0.19.62
       '@huggingface/transformers':
-        specifier: ^3.7.5
-        version: 3.7.5
+        specifier: ^3.7.6
+        version: 3.7.6
       '@iconify-json/carbon':
         specifier: ^1.2.8
         version: 1.2.8
@@ -459,19 +459,19 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@huggingface/inference@4.11.1':
-    resolution: {integrity: sha512-otClcigc7KUQfvG5wav7oVTBEVLsdKelEMuuQGXwBdPqrsJ7WZknAGCXJcXJoO2zLw9v518jgylkQnFwEBpGvw==}
+  '@huggingface/inference@4.13.0':
+    resolution: {integrity: sha512-oqBHbYoLHpNlEUJp/MG28gCR0JOUmLi9iKKd0oJfTAgTqaDSLhoCsIdS1XfLHbT/CrzZch33cARTR3bO4q/2yQ==}
     engines: {node: '>=18'}
 
   '@huggingface/jinja@0.5.1':
     resolution: {integrity: sha512-yUZLld4lrM9iFxHCwFQ7D1HW2MWMwSbeB7WzWqFYDWK+rEb+WldkLdAJxUPOmgICMHZLzZGVcVjFh3w/YGubng==}
     engines: {node: '>=18'}
 
-  '@huggingface/tasks@0.19.50':
-    resolution: {integrity: sha512-kHrfiDsJttkuwpdp7PgFiFHaK9rj+COJTIZ+221gk9vdF4B5QySW7hQT4aOGkwwZP+4qbXGhjMNGg/bxOq+LwA==}
+  '@huggingface/tasks@0.19.62':
+    resolution: {integrity: sha512-sv0ieUqggz2yWfVv14WuvdhmQA8mvSF/OD1quz5RKcysP+dmrPn0E9SwJsSksTsp1QwpAC396PukgPmDymPVhQ==}
 
-  '@huggingface/transformers@3.7.5':
-    resolution: {integrity: sha512-5jvrIwHyRXfOKVaGKYvUZM6ZjJKQXWeKzIOdKBE5pdzPSNzTwBNx5NdWcGElf4Ddv7Dl2mWsvJh+G5RnCUxMmA==}
+  '@huggingface/transformers@3.7.6':
+    resolution: {integrity: sha512-OYlIRY8vj8r/pNx2CdXcDHz4KqpEC+bUMKzdVW5Dx//gp4XRmK+/g8as0h3cssRQYT0vG1A6VCfZy8SV0F4RDQ==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -3586,20 +3586,20 @@ snapshots:
 
   '@huggingface/hub@2.6.12':
     dependencies:
-      '@huggingface/tasks': 0.19.50
+      '@huggingface/tasks': 0.19.62
     optionalDependencies:
       cli-progress: 3.12.0
 
-  '@huggingface/inference@4.11.1':
+  '@huggingface/inference@4.13.0':
     dependencies:
       '@huggingface/jinja': 0.5.1
-      '@huggingface/tasks': 0.19.50
+      '@huggingface/tasks': 0.19.62
 
   '@huggingface/jinja@0.5.1': {}
 
-  '@huggingface/tasks@0.19.50': {}
+  '@huggingface/tasks@0.19.62': {}
 
-  '@huggingface/transformers@3.7.5':
+  '@huggingface/transformers@3.7.6':
     dependencies:
       '@huggingface/jinja': 0.5.1
       onnxruntime-node: 1.21.0

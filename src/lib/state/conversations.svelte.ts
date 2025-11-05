@@ -52,6 +52,9 @@ export class ConversationEntity {
 	provider?: string;
 
 	@Fields.string()
+	autoPolicy?: "default" | "fastest" | "cheapest";
+
+	@Fields.string()
 	projectId!: string;
 
 	@Fields.string()
@@ -87,6 +90,8 @@ function getDefaultConversation(projectId: string) {
 		messages: [],
 		streaming: true,
 		parseMarkdown: false,
+		provider: "auto",
+		autoPolicy: "default" as const,
 		createdAt: new Date(),
 	} satisfies Partial<ConversationEntityMembers>;
 }

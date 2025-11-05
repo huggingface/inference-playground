@@ -123,6 +123,15 @@ const tokenErrMessage = dev
 	? "Please set your Hugging Face token in the .env file"
 	: "Failed to connect to inference providers. Are you logged in?";
 
+function getModelIdWithPolicy(modelId: string, provider?: string, autoPolicy?: "default" | "fastest" | "cheapest") {
+	// When using auto provider, append policy suffix if it's not "default"
+	const policy = autoPolicy ?? "default";
+	if (provider === "auto" && policy !== "default") {
+		return `${modelId}:${policy}`;
+	}
+	return modelId;
+}
+
 export async function handleStreamingResponse(
 	conversation: ConversationClass | Conversation,
 	onChunk: (content: string) => void,
@@ -139,9 +148,11 @@ export async function handleStreamingResponse(
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));
 
+	const modelIdWithPolicy = getModelIdWithPolicy(model.id, data.provider, data.autoPolicy);
+
 	const requestBody = {
 		model: {
-			id: model.id,
+			id: modelIdWithPolicy,
 			isCustom: isCustomModel(model),
 			accessToken: isCustomModel(model) ? model.accessToken : undefined,
 			endpointUrl: isCustomModel(model) ? model.endpointUrl : undefined,
@@ -198,9 +209,11 @@ export async function handleNonStreamingResponse(
 	];
 	const parsed = await Promise.all(messages.map(parseMessage));
 
+	const modelIdWithPolicy = getModelIdWithPolicy(model.id, data.provider, data.autoPolicy);
+
 	const requestBody = {
 		model: {
-			id: model.id,
+			id: modelIdWithPolicy,
 			isCustom: isCustomModel(model),
 			accessToken: isCustomModel(model) ? model.accessToken : undefined,
 			endpointUrl: isCustomModel(model) ? model.endpointUrl : undefined,
@@ -331,11 +344,15 @@ export function getInferenceSnippet(
 
 	const providerMapping = model.inferenceProviderMapping.find(p => p.provider === provider);
 	if (!providerMapping && provider !== "auto") return [];
+
+	// Apply auto policy suffix to model ID if using auto provider
+	const modelIdWithPolicy = getModelIdWithPolicy(model.id, data.provider, data.autoPolicy);
+
 	const allSnippets = snippets.getInferenceSnippets(
-		{ ...model, inference: "" },
+		{ ...model, inference: "", id: modelIdWithPolicy },
 		provider,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		{ ...providerMapping, hfModelId: model.id } as any,
+		{ ...providerMapping, hfModelId: modelIdWithPolicy } as any,
 		{ ...opts, directRequest: false },
 	);
 

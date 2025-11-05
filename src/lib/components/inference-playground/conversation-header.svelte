@@ -27,7 +27,7 @@
 		if (!model) {
 			return;
 		}
-		conversation.update({ modelId: model.id, provider: undefined });
+		conversation.update({ modelId: model.id, provider: "auto", autoPolicy: "default" });
 	}
 
 	let nameSpace = $derived(conversation.model.id.split("/")[0] ?? "");
