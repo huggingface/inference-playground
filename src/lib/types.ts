@@ -232,3 +232,5 @@ export interface SearchContextCostPerQuery {
 	search_context_size_medium: number;
 	search_context_size_high: number;
 }
+
+export type AutoPolicy = "default" | "fastest" | "cheapest";

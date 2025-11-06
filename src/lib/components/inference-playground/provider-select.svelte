@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ConversationClass } from "$lib/state/conversations.svelte";
 	import { pricing } from "$lib/state/pricing.svelte";
-	import type { Model } from "$lib/types.js";
+	import type { AutoPolicy, Model } from "$lib/types.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
 	import { run } from "svelte/legacy";
@@ -33,13 +33,6 @@
 		value: () => conversation.data.provider,
 		onValueChange(v) {
 			conversation.update({ provider: v });
-		},
-	});
-
-	const autoPolicySelect = new Select<"default" | "fastest" | "cheapest", false>({
-		value: () => conversation.data.autoPolicy ?? "default",
-		onValueChange(v) {
-			conversation.update({ autoPolicy: v });
 		},
 	});
 
@@ -87,27 +80,26 @@
 		return pricing.formatPricing(pd);
 	}
 
-	function getAutoPolicyLabel(policy: "default" | "fastest" | "cheapest") {
-		switch (policy) {
-			case "default":
-				return "Default";
-			case "fastest":
-				return "Fastest";
-			case "cheapest":
-				return "Cheapest";
-		}
-	}
+	const autoPolicyLabels: Record<AutoPolicy, string> = {
+		default: "Default",
+		fastest: "Fastest",
+		cheapest: "Cheapest",
+	};
 
-	function getAutoPolicyDescription(policy: "default" | "fastest" | "cheapest") {
-		switch (policy) {
-			case "default":
-				return "Uses your preference order from Inference Provider settings";
-			case "fastest":
-				return "Selects the provider with highest throughput";
-			case "cheapest":
-				return "Selects the provider with lowest price per output token";
-		}
-	}
+	const autoPolicyDescriptions: Record<AutoPolicy, string> = {
+		default: "Uses your preference order from Inference Provider settings",
+		fastest: "Selects the provider with highest throughput",
+		cheapest: "Selects the provider with lowest price per output token",
+	};
+
+	const autoPolicyValue = $derived(conversation.data.autoPolicy ?? "default");
+
+	const autoPolicySelect = new Select<AutoPolicy, false>({
+		value: () => autoPolicyValue,
+		onValueChange(v) {
+			conversation.update({ autoPolicy: v });
+		},
+	});
 </script>
 
 {#snippet providerDisplay(provider: string)}
@@ -168,7 +160,7 @@
 							<IconInfo class="size-3" />
 						</button>
 					{/snippet}
-					{getAutoPolicyDescription(conversation.data.autoPolicy ?? "default")}
+					{autoPolicyDescriptions[autoPolicyValue]}
 				</Tooltip>
 			</div>
 			<button
@@ -178,7 +170,7 @@
 					"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
 				)}
 			>
-				{getAutoPolicyLabel(conversation.data.autoPolicy ?? "default")}
+				{autoPolicyLabels[autoPolicyValue]}
 				<div
 					class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
 				>
@@ -195,7 +187,7 @@
 							<div class="flex flex-col items-start gap-0.5">
 								<span>{label}</span>
 								<span class="text-xs text-gray-500 dark:text-gray-400">
-									{getAutoPolicyDescription(policy)}
+									{autoPolicyDescriptions[policy]}
 								</span>
 							</div>
 						</div>

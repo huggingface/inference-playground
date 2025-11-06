@@ -4,7 +4,13 @@ import {
 } from "$lib/components/inference-playground/generation-config-settings.js";
 import { addToast } from "$lib/components/toaster.svelte.js";
 import { AbortManager } from "$lib/spells/abort-manager.svelte";
-import { PipelineTag, type ConversationMessage, type GenerationStatistics, type Model } from "$lib/types.js";
+import {
+	PipelineTag,
+	type AutoPolicy,
+	type ConversationMessage,
+	type GenerationStatistics,
+	type Model,
+} from "$lib/types.js";
 import { handleNonStreamingResponse, handleStreamingResponse, estimateTokens } from "$lib/utils/business.svelte.js";
 import { omit, snapshot } from "$lib/utils/object.svelte";
 import { models } from "./models.svelte";
@@ -52,7 +58,7 @@ export class ConversationEntity {
 	provider?: string;
 
 	@Fields.string()
-	autoPolicy?: "default" | "fastest" | "cheapest";
+	autoPolicy?: AutoPolicy;
 
 	@Fields.string()
 	projectId!: string;
