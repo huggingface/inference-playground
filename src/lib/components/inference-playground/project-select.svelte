@@ -31,9 +31,6 @@
 			if (v) projects.activeId = v;
 		},
 		sameWidth: true,
-		onOpenChange(open) {
-			console.log("open", open);
-		},
 	});
 
 	type SaveDialogState = {

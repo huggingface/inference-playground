@@ -132,7 +132,6 @@ export class ConversationClass {
 
 	update = async (data: Partial<ConversationEntityMembers>) => {
 		if (this.data.id === -1) return;
-		// if (this.data.id === undefined) return;
 		const cloned = snapshot({ ...this.data, ...data });
 
 		if (this.data.id === undefined) {
@@ -407,6 +406,7 @@ class Conversations {
 			[to]: [...fromArr],
 			[from]: [],
 		};
+		await this.create(getDefaultConversation(from));
 	};
 
 	duplicate = async (from: ProjectEntity["id"], to: ProjectEntity["id"]) => {
