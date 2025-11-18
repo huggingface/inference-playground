@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { autofocus } from "$lib/attachments/autofocus.js";
 	import { checkpoints } from "$lib/state/checkpoints.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
 	import type { EventHandler } from "svelte/elements";
+	import IconBranch from "~icons/carbon/branch";
 	import IconCaret from "~icons/carbon/chevron-down";
 	import IconCross from "~icons/carbon/close";
 	import IconEdit from "~icons/carbon/edit";
 	import IconHistory from "~icons/carbon/recently-viewed";
 	import IconSave from "~icons/carbon/save";
 	import IconDelete from "~icons/carbon/trash-can";
-	import ArrowSplitRounded from "~icons/material-symbols/arrow-split-rounded";
 	import Dialog from "../dialog.svelte";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
 	import CheckpointsMenu from "./checkpoints-menu.svelte";
-	import { projects } from "$lib/state/projects.svelte";
 
 	interface Props {
 		class?: string;
@@ -71,7 +71,7 @@
 			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
 		)}
 	>
-		<div class="flex items-center gap-1 text-sm">
+		<div class="flex items-center gap-1.5 text-sm">
 			{projects.current?.name}
 		</div>
 		<div
@@ -113,8 +113,10 @@
 			<div
 				class="flex items-center gap-2 rounded-md py-1.5 pr-1 pl-2 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 			>
-				<div class="flex items-center gap-2">
-					{name}
+				<div class="flex items-center gap-2 overflow-hidden" title={name}>
+					<p class="truncate">
+						{name}
+					</p>
 					{#if projects.all.find(p => p.id === id)?.branchedFromId}
 						{@const originalProject = projects.getBranchedFromProject(id)}
 						<Tooltip>
@@ -124,7 +126,7 @@
 									aria-label="Branched project"
 									{...tooltip.trigger}
 								>
-									<ArrowSplitRounded />
+									<IconBranch />
 								</div>
 							{/snippet}
 							Branched from {originalProject?.name || "unknown project"}
