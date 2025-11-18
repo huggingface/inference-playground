@@ -84,7 +84,6 @@
 		() => treeItems,
 		() => {
 			if (treeItems.length === 0 || initExpanded) return;
-			console.log("init expanded");
 			tree.expandAll();
 			initExpanded = true;
 		},
@@ -95,7 +94,7 @@
 			offset: { crossAxis: -12 },
 		},
 		focus: {
-			onOpen: () => `#${contentId} [data-melt-tree-item][data-selected]`,
+			onOpen: () => `#${contentId} [data-melt-tree-item]`,
 		},
 	});
 	const contentId: string = $derived(popover.ids.content);
