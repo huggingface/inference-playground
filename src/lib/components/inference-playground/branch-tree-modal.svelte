@@ -2,6 +2,7 @@
 	import { conversations } from "$lib/state/conversations.svelte";
 	import { projects } from "$lib/state/projects.svelte";
 	import { Popover, Tree, type TreeItem } from "melt/builders";
+	import { watch } from "runed";
 	import { SvelteMap } from "svelte/reactivity";
 	import IconBranch from "~icons/carbon/branch";
 	import IconChevronDown from "~icons/carbon/chevron-down";
@@ -77,6 +78,17 @@
 		},
 		expandOnClick: false,
 	});
+
+	let initExpanded = false;
+	watch(
+		() => treeItems,
+		() => {
+			if (treeItems.length === 0 || initExpanded) return;
+			console.log("init expanded");
+			tree.expandAll();
+			initExpanded = true;
+		},
+	);
 
 	const popover = new Popover({
 		floatingConfig: {

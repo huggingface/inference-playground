@@ -139,8 +139,8 @@ importers:
         specifier: ^26.0.0
         version: 26.1.0
       melt:
-        specifier: ^0.41.0
-        version: 0.41.0(@floating-ui/dom@1.6.13)(svelte@5.43.10)
+        specifier: ^0.42.0
+        version: 0.42.0(@floating-ui/dom@1.6.13)(svelte@5.43.10)
       openai:
         specifier: ^4.90.0
         version: 4.90.0(ws@8.18.3)(zod@3.25.76)
@@ -2404,8 +2404,8 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
-  melt@0.41.0:
-    resolution: {integrity: sha512-WRnW09FVudTF53yvUKLxmjev03uvC1jf0PBNZVQn1GDMhSNVh4aG69S0pAXvOl0kNtMks1OqVinQY4hP/68ZVQ==}
+  melt@0.42.0:
+    resolution: {integrity: sha512-ye5bE6J0bcNsWRCrSwp4pI9V2M5SB908g6VwqD2zAuTOiIXDNAMZ2S7OLmSKuecJ6sY1bFgQUhji8W4Y9u6GXA==}
     peerDependencies:
       '@floating-ui/dom': ^1.6.0
       svelte: ^5.30.1
@@ -5631,7 +5631,7 @@ snapshots:
 
   media-typer@1.1.0: {}
 
-  melt@0.41.0(@floating-ui/dom@1.6.13)(svelte@5.43.10):
+  melt@0.42.0(@floating-ui/dom@1.6.13)(svelte@5.43.10):
     dependencies:
       '@floating-ui/dom': 1.6.13
       dequal: 2.0.3
