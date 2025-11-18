@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { clickOutside } from "$lib/attachments/click-outside.js";
-	import { projects } from "$lib/state/projects.svelte";
 	import { conversations } from "$lib/state/conversations.svelte";
+	import { projects } from "$lib/state/projects.svelte";
 	import { Popover, Tree, type TreeItem } from "melt/builders";
+	import { SvelteMap } from "svelte/reactivity";
 	import IconBranch from "~icons/carbon/branch";
-	import IconTree from "~icons/carbon/tree-view";
-	import IconLiteralTree from "~icons/carbon/tree";
 	import IconChevronDown from "~icons/carbon/chevron-down";
 	import IconChevronRight from "~icons/carbon/chevron-right";
-	import { SvelteMap } from "svelte/reactivity";
+	import IconLiteralTree from "~icons/carbon/tree";
+	import IconTree from "~icons/carbon/tree-view";
 
 	interface ProjectTreeItem extends TreeItem {
 		id: string;
@@ -17,23 +16,16 @@
 		children?: ProjectTreeItem[];
 	}
 
-	const popover = new Popover({
-		floatingConfig: {
-			offset: { crossAxis: -12 },
-		},
-		onOpenChange: open => {
-			if (open) dialog?.showModal();
-			else dialog?.close();
-		},
-	});
-
-	let dialog = $state<HTMLDialogElement>();
-
 	const treeItems = $derived.by((): ProjectTreeItem[] => {
-		const allProjects = projects.all;
+		// Get the root of the current active project
+		const currentRoot = projects.getBranchRoot(projects.activeId);
+		if (!currentRoot) return [];
+
+		// Get all projects in this tree (same root)
+		const treeProjects = projects.getAllBranchesInTree(currentRoot.id);
 		const nodeMap = new SvelteMap<string, ProjectTreeItem>();
 
-		allProjects.forEach(project => {
+		treeProjects.forEach(project => {
 			if (!nodeMap.has(project.id)) {
 				nodeMap.set(project.id, {
 					id: project.id,
@@ -46,7 +38,7 @@
 
 		const roots: ProjectTreeItem[] = [];
 
-		allProjects.forEach(project => {
+		treeProjects.forEach(project => {
 			const node = nodeMap.get(project.id)!;
 
 			if (project.branchedFromId) {
@@ -86,6 +78,16 @@
 		expandOnClick: false,
 	});
 
+	const popover = new Popover({
+		floatingConfig: {
+			offset: { crossAxis: -12 },
+		},
+		focus: {
+			onOpen: () => `#${contentId} [data-melt-tree-item][data-selected]`,
+		},
+	});
+	const contentId: string = $derived(popover.ids.content);
+
 	function getBranchStats(projectId: string) {
 		const convs = conversations.for(projectId);
 		const totalMessages = convs.reduce((sum, c) => sum + (c.data.messages?.length || 0), 0);
@@ -100,10 +102,8 @@
 	{/if}
 </button>
 
-<dialog
-	bind:this={dialog}
+<div
 	class="mb-2 !overflow-visible rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
-	{@attach clickOutside(() => (popover.open = false))}
 	{...popover.content}
 >
 	<div
@@ -128,7 +128,7 @@
 			</div>
 		{/if}
 	</div>
-</dialog>
+</div>
 
 {#snippet treeNode(items: typeof tree.children)}
 	{#each items as item (item.id)}
