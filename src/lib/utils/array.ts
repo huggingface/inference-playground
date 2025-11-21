@@ -44,3 +44,7 @@ export function* iterate<T>(array: T[]): Generator<IterateReturn<T>> {
 		];
 	}
 }
+
+export function unique<T>(arr: T[]): T[] {
+	return [...new Set(arr)];
+}

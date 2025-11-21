@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { InferenceProviderMapping, Model } from "$lib/types.js";
-	import { randomPick } from "$lib/utils/array.js";
+	import { randomPick, unique } from "$lib/utils/array.js";
 	import { cn } from "$lib/utils/cn.js";
 	import { Select } from "melt/builders";
 	import { run } from "svelte/legacy";
@@ -15,13 +15,13 @@
 
 	let { model, provider = $bindable(), class: classes = undefined }: Props = $props();
 
-	function reset(providers: InferenceProviderMapping[]) {
-		const validProvider = providers.find(p => p.provider === provider);
+	function reset(providers: string[]) {
+		const validProvider = providers.find(p => p === provider);
 		if (validProvider || !providers) return;
-		provider = randomPick(providers)!.provider;
+		provider = randomPick(providers)!;
 	}
 
-	let providers = $derived(model.inferenceProviderMapping);
+	let providers = $derived(unique(model.inferenceProviderMapping.map(p => p.provider)));
 	run(() => {
 		reset(providers);
 	});
@@ -95,7 +95,7 @@
 	</button>
 
 	<div {...select.content} class="rounded-lg border bg-stone-100 shadow-xl dark:border-stone-700 dark:bg-stone-800">
-		{#each providers as { provider, providerId } (provider + providerId)}
+		{#each providers as provider (provider)}
 			<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
 				<div
 					class="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[highlighted]:bg-stone-200 dark:group-data-[highlighted]:bg-stone-700"
