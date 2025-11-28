@@ -28,8 +28,8 @@
 	const projCheckpoints = $derived(checkpoints.for(projects.activeId));
 </script>
 
-<button class="btn relative size-[32px] p-0" {...popover.trigger} data-test-id={TEST_IDS.checkpoints_trigger}>
-	<IconHistory />
+<button class="btn-sm relative size-8 shrink-0 p-0!" {...popover.trigger} data-test-id={TEST_IDS.checkpoints_trigger}>
+	<IconHistory class="size-4" />
 	{#if projCheckpoints.length > 0}
 		<div class="absolute -top-1 -right-1 size-2.5 rounded-full bg-amber-500" aria-label="Project has checkpoints"></div>
 	{/if}

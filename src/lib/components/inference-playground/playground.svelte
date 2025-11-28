@@ -113,10 +113,10 @@
 	<div class="relative flex flex-1 flex-col overflow-hidden">
 		<!-- Top bar -->
 		<header
-			class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900"
+			class="flex justify-between border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900"
 		>
 			<!-- Left side: Model selector, provider selector, and compare -->
-			<div class="flex items-center gap-3">
+			<div class="flex items-start gap-3">
 				{#if !compareActive && conversations.active[0]}
 					<!-- Model and provider stacked vertically with fixed width -->
 					<div class="flex w-72 flex-col gap-1">
@@ -126,10 +126,7 @@
 							<ProviderSelect conversation={conversations.active[0] as any} compact />
 						{/if}
 					</div>
-					<button
-						class="flex items-center gap-1 rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-						onclick={() => (selectCompareModelOpen = true)}
-					>
+					<button class="btn-xs" onclick={() => (selectCompareModelOpen = true)}>
 						<IconCompare class="size-4" />
 						Compare
 					</button>
@@ -137,7 +134,7 @@
 			</div>
 
 			<!-- Right side: Actions -->
-			<div class="flex items-center gap-3">
+			<div class="flex items-center gap-2">
 				<!-- Checkpoints menu -->
 				<CheckpointsMenu />
 
@@ -146,21 +143,18 @@
 					{#snippet trigger(tooltip)}
 						<button
 							{...settingsPopover.trigger}
-							class="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+							class="btn-sm size-8 shrink-0 p-0!"
 							aria-label="Settings"
 							{...tooltip.trigger}
 						>
-							<IconSettings class="size-5" />
+							<IconSettings class="size-4" />
 						</button>
 					{/snippet}
 					Settings
 				</Tooltip>
 
 				<!-- Share button -->
-				<button
-					onclick={() => projects.current && showShareModal(projects.current)}
-					class="flex items-center gap-1 rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-				>
+				<button onclick={() => projects.current && showShareModal(projects.current)} class="btn-sm">
 					<IconShare class="size-4" />
 					Share
 				</button>
