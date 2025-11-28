@@ -34,6 +34,12 @@
 		onValueChange(v) {
 			conversation.update({ provider: v });
 		},
+		sameWidth: false,
+		floatingConfig: {
+			computePosition: {
+				placement: "bottom-start",
+			},
+		},
 	});
 
 	const nameMap: Record<string, string> = {
@@ -94,6 +100,12 @@
 		value: () => autoPolicyValue,
 		onValueChange(v) {
 			conversation.update({ autoPolicy: v });
+		},
+		sameWidth: false,
+		floatingConfig: {
+			computePosition: {
+				placement: "bottom-start",
+			},
 		},
 	});
 
