@@ -15,7 +15,7 @@
 	import IconEdit from "~icons/carbon/edit";
 	import IconDelete from "~icons/carbon/trash-can";
 	import IconHistory from "~icons/carbon/recently-viewed";
-	import IconSidebarCollapse from "~icons/carbon/side-panel-close";
+	import IconClose from "~icons/carbon/close";
 	import IconSidebarExpand from "~icons/carbon/side-panel-open";
 	import { prompt } from "../prompts.svelte";
 	import Tooltip from "../tooltip.svelte";
@@ -34,12 +34,21 @@
 
 	interface Props {
 		collapsed?: boolean;
+		mobileOpen?: boolean;
 		width?: number;
 		onToggleCollapse?: () => void;
+		onMobileClose?: () => void;
 		onWidthChange?: (width: number) => void;
 	}
 
-	let { collapsed = false, width = DEFAULT_WIDTH, onToggleCollapse, onWidthChange }: Props = $props();
+	let {
+		collapsed = false,
+		mobileOpen = false,
+		width = DEFAULT_WIDTH,
+		onToggleCollapse,
+		onMobileClose,
+		onWidthChange,
+	}: Props = $props();
 
 	// Resize state
 	let is_resizing = $state(false);
@@ -182,10 +191,24 @@
 	}
 </script>
 
+<!-- Mobile overlay backdrop -->
+{#if mobileOpen}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-40 bg-black/50 md:hidden"
+		onclick={onMobileClose}
+		onkeydown={e => e.key === "Escape" && onMobileClose?.()}
+	></div>
+{/if}
+
 <aside
 	class={cn(
-		"relative flex h-full flex-col overflow-hidden border-r border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900/50",
-		!is_resizing && "transition-[width] duration-200 ease-out",
+		"relative flex h-full flex-col overflow-hidden border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900",
+		!is_resizing && "transition-[width,transform] duration-200 ease-out",
+		// Desktop: normal sidebar behavior
+		"max-md:fixed max-md:top-0 max-md:left-0 max-md:z-50 max-md:w-72!",
+		// Mobile: slide in/out
+		mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
 	)}
 	style="width: {collapsed ? COLLAPSED_WIDTH : width}px"
 >
@@ -206,19 +229,28 @@
 					{/snippet}
 					New project
 				</Tooltip>
+				<!-- Desktop: collapse button -->
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
 							onclick={onToggleCollapse}
-							class="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+							class="hidden rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 md:block dark:hover:bg-gray-700 dark:hover:text-gray-200"
 							aria-label="Collapse sidebar"
 							{...tooltip.trigger}
 						>
-							<IconSidebarCollapse class="size-4" />
+							<IconClose class="size-4" />
 						</button>
 					{/snippet}
 					Collapse sidebar
 				</Tooltip>
+				<!-- Mobile: close button -->
+				<button
+					onclick={onMobileClose}
+					class="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 md:hidden dark:hover:bg-gray-700 dark:hover:text-gray-200"
+					aria-label="Close sidebar"
+				>
+					<IconClose class="size-4" />
+				</button>
 			</div>
 		</div>
 
@@ -285,12 +317,12 @@
 		</div>
 	{/if}
 
-	<!-- Resize handle -->
+	<!-- Resize handle (desktop only) -->
 	{#if !collapsed}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class={cn(
-				"absolute top-0 right-0 h-full w-1 cursor-ew-resize transition-colors",
+				"absolute top-0 right-0 h-full w-1 cursor-ew-resize transition-colors max-md:hidden",
 				"hover:bg-blue-400 dark:hover:bg-blue-500",
 				is_resizing && "bg-blue-500 dark:bg-blue-400",
 			)}

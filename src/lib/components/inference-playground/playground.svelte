@@ -30,6 +30,8 @@
 	import ModelSelector from "./model-selector.svelte";
 	import ProjectTreeSidebar from "./project-tree-sidebar.svelte";
 	import ProviderSelect from "./provider-select.svelte";
+	import IconMenu from "~icons/carbon/menu";
+	import IconProvider from "../icon-provider.svelte";
 
 	// LocalStorage keys
 	const SIDEBAR_COLLAPSED_KEY = "playground:sidebar:collapsed";
@@ -53,9 +55,11 @@
 	let viewCode = $state(false);
 	let sidebarCollapsed = $state(get_initial_collapsed());
 	let sidebarWidth = $state(get_initial_width());
+	let mobileSidebarOpen = $state(false);
 	let billingModalOpen = $state(false);
 	let selectCompareModelOpen = $state(false);
 	let settingsPopoverOpen = $state(false);
+	let providerPopoverOpen = $state(false);
 
 	const compareActive = $derived(conversations.active.length === 2);
 
@@ -91,6 +95,14 @@
 			settingsPopoverOpen = value;
 		},
 	});
+
+	// Provider popover (mobile)
+	const providerPopover = new Popover({
+		open: () => providerPopoverOpen,
+		onOpenChange: value => {
+			providerPopoverOpen = value;
+		},
+	});
 </script>
 
 <div
@@ -99,44 +111,78 @@
 		"dark:bg-gray-900 dark:text-gray-300 dark:[color-scheme:dark]",
 	]}
 >
-	<!-- Project tree sidebar -->
-	<ProjectTreeSidebar
-		collapsed={sidebarCollapsed}
-		width={sidebarWidth}
-		onToggleCollapse={toggle_sidebar_collapsed}
-		onWidthChange={handle_sidebar_width_change}
-	/>
+	<!-- Project tree sidebar (hidden on mobile unless open) -->
+	<div class="max-md:hidden">
+		<ProjectTreeSidebar
+			collapsed={sidebarCollapsed}
+			width={sidebarWidth}
+			onToggleCollapse={toggle_sidebar_collapsed}
+			onWidthChange={handle_sidebar_width_change}
+		/>
+	</div>
+
+	<!-- Mobile sidebar (overlay) -->
+	<div class="md:hidden">
+		<ProjectTreeSidebar mobileOpen={mobileSidebarOpen} onMobileClose={() => (mobileSidebarOpen = false)} />
+	</div>
 
 	<!-- Main content area -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
 		<!-- Top bar -->
 		<header
-			class="flex justify-between border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900"
+			class="flex items-center gap-2 border-b border-gray-200 bg-white px-2 py-2 md:px-4 dark:border-gray-800 dark:bg-gray-900"
 		>
-			<!-- Left side: Model selector, provider selector, and compare -->
-			<div class="flex items-start gap-3">
-				{#if !compareActive && conversations.active[0]}
-					<!-- Model and provider stacked vertically with fixed width -->
-					<div class="flex w-72 flex-col gap-1">
-						<ModelSelector conversation={conversations.active[0]} compact />
-						{#if isHFModel(conversations.active[0].model)}
+			<!-- Mobile menu button -->
+			<button
+				class="btn-sm size-8 shrink-0 p-0! md:hidden"
+				onclick={() => (mobileSidebarOpen = true)}
+				aria-label="Open menu"
+			>
+				<IconMenu class="size-4" />
+			</button>
+
+			{#if !compareActive && conversations.active[0]}
+				<!-- Model and provider stacked vertically on desktop -->
+				<div class="flex min-w-0 flex-1 flex-col gap-1 md:w-72 md:flex-none">
+					<ModelSelector conversation={conversations.active[0]} compact />
+					<!-- Desktop: Provider selector below model -->
+					{#if isHFModel(conversations.active[0].model)}
+						<div class="hidden md:block">
 							<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
 							<ProviderSelect conversation={conversations.active[0] as any} compact />
-						{/if}
-					</div>
-					<button class="btn-xs" onclick={() => (selectCompareModelOpen = true)}>
-						<IconCompare class="size-4" />
-						Compare
-					</button>
-				{/if}
-			</div>
+						</div>
+					{/if}
+				</div>
 
-			<!-- Right side: Actions -->
-			<div class="flex items-center gap-2">
-				<!-- Checkpoints menu -->
+				<!-- Desktop: Compare button -->
+				<button class="btn-xs self-start max-md:hidden" onclick={() => (selectCompareModelOpen = true)}>
+					<IconCompare class="size-4" />
+					Compare
+				</button>
+			{/if}
+
+			<!-- Right side actions -->
+			<div class="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
+				<!-- Mobile: Provider popover button -->
+				{#if !compareActive && conversations.active[0] && isHFModel(conversations.active[0].model)}
+					{@const activeConv = conversations.active[0]}
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								{...providerPopover.trigger}
+								class="btn-sm size-8 shrink-0 p-0! md:hidden"
+								aria-label="Provider settings"
+								{...tooltip.trigger}
+							>
+								<IconProvider provider={activeConv.data.provider ?? "auto"} />
+							</button>
+						{/snippet}
+						Provider
+					</Tooltip>
+				{/if}
+
 				<CheckpointsMenu />
 
-				<!-- Settings button with popover -->
 				<Tooltip>
 					{#snippet trigger(tooltip)}
 						<button
@@ -151,14 +197,19 @@
 					Settings
 				</Tooltip>
 
-				<!-- Share button -->
-				<button onclick={() => projects.current && showShareModal(projects.current)} class="btn-sm">
+				<!-- Desktop: Share button -->
+				<button onclick={() => projects.current && showShareModal(projects.current)} class="btn-sm max-md:hidden">
 					<IconShare class="size-4" />
-					Share
+					<span class="max-lg:hidden">Share</span>
 				</button>
 
-				<!-- Billing indicator -->
-				<BillingIndicator showModal={() => (billingModalOpen = true)} />
+				<!-- Billing: icon only on mobile -->
+				<div class="md:hidden">
+					<BillingIndicator showModal={() => (billingModalOpen = true)} iconOnly />
+				</div>
+				<div class="hidden md:block">
+					<BillingIndicator showModal={() => (billingModalOpen = true)} />
+				</div>
 			</div>
 		</header>
 
@@ -191,9 +242,9 @@
 
 			<!-- Bottom bar -->
 			<div
-				class="relative mt-2 flex h-12 shrink-0 items-center justify-between border-t border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900"
+				class="relative mt-2 flex h-12 shrink-0 items-center justify-between gap-2 border-t border-gray-200 bg-white px-2 md:px-4 dark:border-gray-800 dark:bg-gray-900"
 			>
-				<div class="flex items-center gap-4">
+				<div class="flex items-center gap-2 md:gap-4">
 					<Tooltip>
 						{#snippet trigger(tooltip)}
 							<button
@@ -209,8 +260,8 @@
 						Clear conversation
 					</Tooltip>
 
-					<!-- Footer links - moved here to avoid overlap -->
-					<div class="flex items-center gap-2 text-xs max-md:hidden">
+					<!-- Footer links (hidden on mobile) -->
+					<div class="flex items-center gap-2 text-xs max-lg:hidden">
 						<a
 							target="_blank"
 							href="https://huggingface.co/docs/inference-providers/tasks/chat-completion"
@@ -239,7 +290,7 @@
 					</div>
 				</div>
 
-				<!-- Stats in center -->
+				<!-- Stats in center (hidden on smaller screens) -->
 				<div
 					class="pointer-events-none absolute inset-x-0 flex items-center justify-center gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 				>
@@ -253,12 +304,24 @@
 				<div class="flex items-center gap-2">
 					<button type="button" onclick={() => (viewCode = !viewCode)} class="btn h-[28px]! px-2!">
 						<IconCode />
-						{!viewCode ? "View Code" : "Hide Code"}
+						<span class="max-sm:hidden">{!viewCode ? "View Code" : "Hide Code"}</span>
 					</button>
 				</div>
 			</div>
 		</div>
 	</div>
+</div>
+
+<!-- Provider popover content (mobile) -->
+<div
+	{...providerPopover.content}
+	class="z-50 w-64 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+>
+	<h3 class="mb-3 text-sm font-semibold text-gray-700 uppercase dark:text-gray-300">Provider</h3>
+	{#if conversations.active[0] && isHFModel(conversations.active[0].model)}
+		<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
+		<ProviderSelect conversation={conversations.active[0] as any} />
+	{/if}
 </div>
 
 <!-- Settings popover content -->

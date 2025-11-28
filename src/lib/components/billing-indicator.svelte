@@ -4,16 +4,17 @@
 	import IconGroup from "~icons/carbon/group";
 	import IconWarning from "~icons/carbon/warning";
 	import IconCheckmark from "~icons/carbon/checkmark";
+	import Tooltip from "./tooltip.svelte";
 
 	interface Props {
 		showModal?: () => void;
+		iconOnly?: boolean;
 	}
 
-	const { showModal }: Props = $props();
+	const { showModal, iconOnly = false }: Props = $props();
 </script>
 
-<button onclick={showModal} class="btn-sm">
-	<!-- Avatar or Icon -->
+{#snippet icon()}
 	{#if billing.organization && billing.organizationInfo?.avatar && billing.isValid}
 		<img src={billing.organizationInfo.avatar} alt={billing.displayName} class="size-4 rounded-full" />
 	{:else if billing.organization}
@@ -21,10 +22,9 @@
 	{:else}
 		<IconUser class="size-4" />
 	{/if}
+{/snippet}
 
-	<span class="max-w-32 truncate">{billing.displayName}</span>
-
-	<!-- Status indicator for organization -->
+{#snippet statusIndicator()}
 	{#if billing.organization}
 		{#if billing.validating}
 			<div class="size-3 animate-spin rounded-full border border-yellow-600 border-t-transparent"></div>
@@ -34,4 +34,22 @@
 			<IconWarning class="size-3 text-red-600 dark:text-red-400" />
 		{/if}
 	{/if}
-</button>
+{/snippet}
+
+{#if iconOnly}
+	<Tooltip>
+		{#snippet trigger(tooltip)}
+			<button onclick={showModal} class="btn-sm size-8 shrink-0 p-0!" {...tooltip.trigger}>
+				{@render icon()}
+				{@render statusIndicator()}
+			</button>
+		{/snippet}
+		{billing.displayName}
+	</Tooltip>
+{:else}
+	<button onclick={showModal} class="btn-sm">
+		{@render icon()}
+		<span class="max-w-32 truncate">{billing.displayName}</span>
+		{@render statusIndicator()}
+	</button>
+{/if}

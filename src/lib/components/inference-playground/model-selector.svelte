@@ -50,7 +50,8 @@
 		<div class="flex items-center gap-2 overflow-hidden">
 			<Avatar model={conversation.model} orgName={nameSpace} size="sm" />
 			<div class="overflow-hidden">
-				<span class="text-xs text-gray-500 dark:text-gray-400">{nameSpace}/</span>
+				<!-- Hide org name on mobile -->
+				<span class="hidden text-xs text-gray-500 md:inline dark:text-gray-400">{nameSpace}/</span>
 				<span class="truncate font-medium">{modelName}</span>
 			</div>
 		</div>
