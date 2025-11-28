@@ -7,7 +7,7 @@
 	import { atLeastNDecimals } from "$lib/utils/number.js";
 	import { isMac } from "$lib/utils/platform.js";
 	import { Popover } from "melt/builders";
-	import { onMount } from "svelte";
+	import { useEventListener } from "runed";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
 	import IconCode from "~icons/carbon/code";
@@ -21,16 +21,15 @@
 	import Toaster from "../toaster.svelte";
 	import Tooltip from "../tooltip.svelte";
 	import BillingModal from "./billing-modal.svelte";
+	import CheckpointsMenu from "./checkpoints-menu.svelte";
 	import PlaygroundConversationHeader from "./conversation-header.svelte";
 	import PlaygroundConversation from "./conversation.svelte";
 	import GenerationConfig from "./generation-config.svelte";
 	import MessageTextarea from "./message-textarea.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
-	import ProviderSelect from "./provider-select.svelte";
 	import ProjectTreeSidebar from "./project-tree-sidebar.svelte";
-	import CheckpointsMenu from "./checkpoints-menu.svelte";
-	import { useEventListener } from "runed";
+	import ProviderSelect from "./provider-select.svelte";
 
 	// LocalStorage keys
 	const SIDEBAR_COLLAPSED_KEY = "playground:sidebar:collapsed";
@@ -192,7 +191,7 @@
 
 			<!-- Bottom bar -->
 			<div
-				class="relative flex h-12 shrink-0 items-center justify-between border-t border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900"
+				class="relative mt-2 flex h-12 shrink-0 items-center justify-between border-t border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900"
 			>
 				<div class="flex items-center gap-4">
 					<Tooltip>
