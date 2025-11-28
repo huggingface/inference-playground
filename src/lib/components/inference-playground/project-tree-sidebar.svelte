@@ -15,7 +15,10 @@
 	import IconEdit from "~icons/carbon/edit";
 	import IconDelete from "~icons/carbon/trash-can";
 	import IconHistory from "~icons/carbon/recently-viewed";
+	import IconSidebarCollapse from "~icons/carbon/side-panel-close";
+	import IconSidebarExpand from "~icons/carbon/side-panel-open";
 	import { prompt } from "../prompts.svelte";
+	import Tooltip from "../tooltip.svelte";
 
 	interface ProjectTreeItem extends TreeItem {
 		id: string;
@@ -24,11 +27,50 @@
 		children?: ProjectTreeItem[];
 	}
 
+	const MIN_WIDTH = 200;
+	const MAX_WIDTH = 400;
+	const DEFAULT_WIDTH = 256;
+	const COLLAPSED_WIDTH = 48;
+
 	interface Props {
 		collapsed?: boolean;
+		width?: number;
+		onToggleCollapse?: () => void;
+		onWidthChange?: (width: number) => void;
 	}
 
-	let { collapsed = false }: Props = $props();
+	let { collapsed = false, width = DEFAULT_WIDTH, onToggleCollapse, onWidthChange }: Props = $props();
+
+	// Resize state
+	let is_resizing = $state(false);
+	let resize_start_x = $state(0);
+	let resize_start_width = $state(0);
+
+	function handle_resize_start(e: MouseEvent) {
+		if (collapsed) return;
+		is_resizing = true;
+		resize_start_x = e.clientX;
+		resize_start_width = width;
+		document.addEventListener("mousemove", handle_resize_move);
+		document.addEventListener("mouseup", handle_resize_end);
+		document.body.style.cursor = "ew-resize";
+		document.body.style.userSelect = "none";
+	}
+
+	function handle_resize_move(e: MouseEvent) {
+		if (!is_resizing) return;
+		const delta = e.clientX - resize_start_x;
+		const new_width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, resize_start_width + delta));
+		onWidthChange?.(new_width);
+	}
+
+	function handle_resize_end() {
+		is_resizing = false;
+		document.removeEventListener("mousemove", handle_resize_move);
+		document.removeEventListener("mouseup", handle_resize_end);
+		document.body.style.cursor = "";
+		document.body.style.userSelect = "";
+	}
 
 	// Build tree structure from projects
 	const tree_items = $derived.by((): ProjectTreeItem[] => {
@@ -142,20 +184,42 @@
 
 <aside
 	class={cn(
-		"flex h-full flex-col overflow-hidden border-r border-gray-200 bg-gray-50/50 transition-all dark:border-gray-800 dark:bg-gray-900/50",
-		collapsed ? "w-12" : "w-64",
+		"relative flex h-full flex-col overflow-hidden border-r border-gray-200 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900/50",
+		!is_resizing && "transition-[width] duration-200 ease-out",
 	)}
+	style="width: {collapsed ? COLLAPSED_WIDTH : width}px"
 >
 	{#if !collapsed}
-		<div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+		<div class="flex items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-800">
 			<h2 class="text-sm font-semibold text-gray-700 uppercase dark:text-gray-300">Projects</h2>
-			<button
-				onclick={handle_new_project}
-				class="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-				aria-label="New project"
-			>
-				<IconPlus class="size-4" />
-			</button>
+			<div class="flex items-center gap-1">
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<button
+							onclick={handle_new_project}
+							class="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+							aria-label="New project"
+							{...tooltip.trigger}
+						>
+							<IconPlus class="size-4" />
+						</button>
+					{/snippet}
+					New project
+				</Tooltip>
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<button
+							onclick={onToggleCollapse}
+							class="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+							aria-label="Collapse sidebar"
+							{...tooltip.trigger}
+						>
+							<IconSidebarCollapse class="size-4" />
+						</button>
+					{/snippet}
+					Collapse sidebar
+				</Tooltip>
+			</div>
 		</div>
 
 		<div class="flex-1 overflow-y-auto p-2" {...tree.root}>
@@ -175,29 +239,58 @@
 			{/if}
 		</div>
 	{:else}
-		<!-- Collapsed state - just show icons -->
-		<div class="flex flex-col items-center gap-1 py-3">
-			{#each tree_items as item}
-				{@const is_active = tree.isSelected(item.id)}
-				{@const is_branch = item.project.branchedFromId !== null}
-				<button
-					onclick={() => tree.toggleSelect(item.id)}
-					class={cn(
-						"grid size-8 place-items-center rounded-md transition-colors",
-						is_active
-							? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-							: "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700",
-					)}
-					title={item.project.name}
-				>
-					{#if is_branch}
-						<IconBranch class="size-4" />
-					{:else}
-						<IconFolder class="size-4" />
-					{/if}
-				</button>
-			{/each}
+		<!-- Collapsed state - show expand button and project icons -->
+		<div class="flex flex-col items-center py-2">
+			<Tooltip>
+				{#snippet trigger(tooltip)}
+					<button
+						onclick={onToggleCollapse}
+						class="mb-2 grid size-8 place-items-center rounded-md text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+						aria-label="Expand sidebar"
+						{...tooltip.trigger}
+					>
+						<IconSidebarExpand class="size-4" />
+					</button>
+				{/snippet}
+				Expand sidebar
+			</Tooltip>
+			<div class="h-px w-6 bg-gray-200 dark:bg-gray-700"></div>
+			<div class="mt-2 flex flex-col items-center gap-1">
+				{#each tree_items as item}
+					{@const is_active = tree.isSelected(item.id)}
+					{@const is_branch = item.project.branchedFromId !== null}
+					<button
+						onclick={() => tree.toggleSelect(item.id)}
+						class={cn(
+							"grid size-8 place-items-center rounded-md transition-colors",
+							is_active
+								? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+								: "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700",
+						)}
+						title={item.project.name}
+					>
+						{#if is_branch}
+							<IconBranch class="size-4" />
+						{:else}
+							<IconFolder class="size-4" />
+						{/if}
+					</button>
+				{/each}
+			</div>
 		</div>
+	{/if}
+
+	<!-- Resize handle -->
+	{#if !collapsed}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class={cn(
+				"absolute top-0 right-0 h-full w-1 cursor-ew-resize transition-colors",
+				"hover:bg-blue-400 dark:hover:bg-blue-500",
+				is_resizing && "bg-blue-500 dark:bg-blue-400",
+			)}
+			onmousedown={handle_resize_start}
+		></div>
 	{/if}
 </aside>
 

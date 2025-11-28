@@ -5,7 +5,9 @@
 	import { isHFModel } from "$lib/types.js";
 	import { iterate } from "$lib/utils/array.js";
 	import { atLeastNDecimals } from "$lib/utils/number.js";
+	import { isMac } from "$lib/utils/platform.js";
 	import { Popover } from "melt/builders";
+	import { onMount } from "svelte";
 	import IconExternal from "~icons/carbon/arrow-up-right";
 	import IconWaterfall from "~icons/carbon/chart-waterfall";
 	import IconCode from "~icons/carbon/code";
@@ -13,8 +15,6 @@
 	import IconInfo from "~icons/carbon/information";
 	import IconSettings from "~icons/carbon/settings";
 	import IconShare from "~icons/carbon/share";
-	import IconSidebarCollapse from "~icons/carbon/side-panel-close";
-	import IconSidebarExpand from "~icons/carbon/side-panel-open";
 	import { default as IconDelete } from "~icons/carbon/trash-can";
 	import BillingIndicator from "../billing-indicator.svelte";
 	import { showShareModal } from "../share-modal.svelte";
@@ -27,16 +27,64 @@
 	import MessageTextarea from "./message-textarea.svelte";
 	import ModelSelectorModal from "./model-selector-modal.svelte";
 	import ModelSelector from "./model-selector.svelte";
+	import ProviderSelect from "./provider-select.svelte";
 	import ProjectTreeSidebar from "./project-tree-sidebar.svelte";
 	import CheckpointsMenu from "./checkpoints-menu.svelte";
 
+	// LocalStorage keys
+	const SIDEBAR_COLLAPSED_KEY = "playground:sidebar:collapsed";
+	const SIDEBAR_WIDTH_KEY = "playground:sidebar:width";
+	const DEFAULT_SIDEBAR_WIDTH = 256;
+
+	// Initialize from localStorage or defaults
+	function get_initial_collapsed(): boolean {
+		if (typeof localStorage === "undefined") return false;
+		const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+		return stored === "true";
+	}
+
+	function get_initial_width(): number {
+		if (typeof localStorage === "undefined") return DEFAULT_SIDEBAR_WIDTH;
+		const stored = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+		const parsed = stored ? parseInt(stored, 10) : NaN;
+		return isNaN(parsed) ? DEFAULT_SIDEBAR_WIDTH : parsed;
+	}
+
 	let viewCode = $state(false);
-	let sidebarCollapsed = $state(false);
+	let sidebarCollapsed = $state(get_initial_collapsed());
+	let sidebarWidth = $state(get_initial_width());
 	let billingModalOpen = $state(false);
 	let selectCompareModelOpen = $state(false);
 	let settingsPopoverOpen = $state(false);
 
 	const compareActive = $derived(conversations.active.length === 2);
+
+	// Persist sidebar state to localStorage
+	function toggle_sidebar_collapsed() {
+		sidebarCollapsed = !sidebarCollapsed;
+		localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(sidebarCollapsed));
+	}
+
+	function handle_sidebar_width_change(width: number) {
+		sidebarWidth = width;
+		localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width));
+	}
+
+	// Keyboard shortcut for toggling sidebar (Cmd+B / Ctrl+B)
+	function handle_keydown(e: KeyboardEvent) {
+		const mod_key = isMac() ? e.metaKey : e.ctrlKey;
+		if (mod_key && e.key === "b") {
+			e.preventDefault();
+			toggle_sidebar_collapsed();
+		}
+	}
+
+	onMount(() => {
+		document.addEventListener("keydown", handle_keydown);
+		return () => {
+			document.removeEventListener("keydown", handle_keydown);
+		};
+	});
 
 	// Settings popover
 	const settingsPopover = new Popover({
@@ -54,56 +102,44 @@
 	]}
 >
 	<!-- Project tree sidebar -->
-	<ProjectTreeSidebar collapsed={sidebarCollapsed} />
+	<ProjectTreeSidebar
+		collapsed={sidebarCollapsed}
+		width={sidebarWidth}
+		onToggleCollapse={toggle_sidebar_collapsed}
+		onWidthChange={handle_sidebar_width_change}
+	/>
 
 	<!-- Main content area -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
 		<!-- Top bar -->
 		<header
-			class="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900"
+			class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900"
 		>
+			<!-- Left side: Model selector, provider selector, and compare -->
 			<div class="flex items-center gap-3">
-				<!-- Sidebar toggle -->
-				<Tooltip>
-					{#snippet trigger(tooltip)}
-						<button
-							onclick={() => (sidebarCollapsed = !sidebarCollapsed)}
-							class="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-							aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-							{...tooltip.trigger}
-						>
-							{#if sidebarCollapsed}
-								<IconSidebarExpand class="size-5" />
-							{:else}
-								<IconSidebarCollapse class="size-5" />
-							{/if}
-						</button>
-					{/snippet}
-					{sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-				</Tooltip>
-
-				<!-- Project name and checkpoints -->
-				<div class="flex items-center gap-2">
-					<span class="text-sm font-semibold">{projects.current?.name}</span>
-					<CheckpointsMenu />
-				</div>
+				{#if !compareActive && conversations.active[0]}
+					<!-- Model and provider stacked vertically -->
+					<div class="flex flex-col gap-1">
+						<ModelSelector conversation={conversations.active[0]} compact />
+						{#if isHFModel(conversations.active[0].model)}
+							<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
+							<ProviderSelect conversation={conversations.active[0] as any} compact />
+						{/if}
+					</div>
+					<button
+						class="flex items-center gap-1 rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+						onclick={() => (selectCompareModelOpen = true)}
+					>
+						<IconCompare class="size-4" />
+						Compare
+					</button>
+				{/if}
 			</div>
 
-			<!-- Right side of top bar -->
+			<!-- Right side: Actions -->
 			<div class="flex items-center gap-3">
-				<!-- Model selector -->
-				{#if !compareActive && conversations.active[0]}
-					<div class="flex items-center gap-2">
-						<ModelSelector conversation={conversations.active[0]} compact />
-						<button
-							class="flex items-center gap-1 rounded px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-							onclick={() => (selectCompareModelOpen = true)}
-						>
-							<IconCompare class="size-4" />
-							Compare
-						</button>
-					</div>
-				{/if}
+				<!-- Checkpoints menu -->
+				<CheckpointsMenu />
 
 				<!-- Settings button with popover -->
 				<Tooltip>
@@ -165,7 +201,7 @@
 			<div
 				class="relative flex h-12 shrink-0 items-center justify-between border-t border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900"
 			>
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-4">
 					<Tooltip>
 						{#snippet trigger(tooltip)}
 							<button
@@ -180,11 +216,40 @@
 						{/snippet}
 						Clear conversation
 					</Tooltip>
+
+					<!-- Footer links - moved here to avoid overlap -->
+					<div class="flex items-center gap-2 text-xs max-md:hidden">
+						<a
+							target="_blank"
+							href="https://huggingface.co/docs/inference-providers/tasks/chat-completion"
+							class="flex items-center gap-1 text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+						>
+							<IconInfo class="size-3" />
+							Docs
+						</a>
+						<span class="text-gray-400 dark:text-gray-600">·</span>
+						<a
+							target="_blank"
+							href="https://huggingface.co/spaces/huggingface/inference-playground/discussions/1"
+							class="text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+						>
+							Feedback
+						</a>
+						<span class="text-gray-400 dark:text-gray-600">·</span>
+						<a
+							href="https://huggingface.co/inference/models"
+							target="_blank"
+							class="flex items-center gap-1 text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
+						>
+							<IconWaterfall class="size-3" />
+							Metrics
+						</a>
+					</div>
 				</div>
 
 				<!-- Stats in center -->
 				<div
-					class="pointer-events-none absolute inset-x-0 flex items-center justify-center gap-x-8 text-center text-sm text-gray-500 max-lg:hidden"
+					class="pointer-events-none absolute inset-x-0 flex items-center justify-center gap-x-8 text-center text-sm text-gray-500 max-xl:hidden"
 				>
 					{#each iterate(conversations.generationStats) as [{ latency, tokens, cost }]}
 						<span>
@@ -200,35 +265,6 @@
 					</button>
 				</div>
 			</div>
-		</div>
-
-		<!-- Footer links -->
-		<div class="absolute bottom-3 left-4 flex items-center gap-2 text-xs">
-			<a
-				target="_blank"
-				href="https://huggingface.co/docs/inference-providers/tasks/chat-completion"
-				class="flex items-center gap-1 text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-			>
-				<IconInfo class="size-3" />
-				View Docs
-			</a>
-			<span class="text-gray-500 dark:text-gray-500">·</span>
-			<a
-				target="_blank"
-				href="https://huggingface.co/spaces/huggingface/inference-playground/discussions/1"
-				class="flex items-center gap-1 text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-			>
-				Give feedback
-			</a>
-			<span class="text-gray-500 dark:text-gray-500">·</span>
-			<a
-				href="https://huggingface.co/inference/models"
-				target="_blank"
-				class="flex items-center gap-1 text-gray-500 underline decoration-gray-300 hover:text-gray-800 dark:text-gray-400 dark:decoration-gray-600 dark:hover:text-gray-200"
-			>
-				<IconWaterfall class="size-3" />
-				Metrics
-			</a>
 		</div>
 	</div>
 </div>

@@ -13,9 +13,10 @@
 	interface Props {
 		conversation: ConversationClass & { model: Model };
 		class?: string | undefined;
+		compact?: boolean;
 	}
 
-	const { conversation, class: classes = undefined }: Props = $props();
+	const { conversation, class: classes = undefined, compact = false }: Props = $props();
 
 	function reset(providers: typeof conversation.model.inferenceProviderMapping) {
 		const validProvider = providers.find(p => p.provider === conversation.data.provider);
@@ -102,14 +103,14 @@
 	});
 </script>
 
-{#snippet providerDisplay(provider: string)}
+{#snippet providerDisplay(provider: string, showPricing: boolean = true)}
 	{@const providerPricing = getProviderPricing(provider)}
 	<div class="flex flex-col items-start gap-0.5">
 		<div class="flex items-center gap-2 text-sm">
 			<IconProvider {provider} />
 			<span>{getProviderName(provider) ?? "loading"}</span>
 		</div>
-		{#if providerPricing}
+		{#if showPricing && providerPricing}
 			<span class="text-xs text-gray-500 dark:text-gray-400">
 				In: {providerPricing.input} • Out: {providerPricing.output}
 			</span>
@@ -117,68 +118,70 @@
 	</div>
 {/snippet}
 
-<div class="flex flex-col gap-2">
-	<button
-		{...select.trigger}
-		class={cn(
-			"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
-			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
-			classes,
-		)}
-	>
-		{@render providerDisplay(conversation.data.provider ?? "")}
-		<div
-			class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
-		>
-			<IconCaret />
-		</div>
-	</button>
-
-	<div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-		{#snippet option(provider: string)}
-			<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
-				<div
-					class="rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
-				>
-					{@render providerDisplay(provider)}
-				</div>
-			</div>
-		{/snippet}
-		{#each conversation.model.inferenceProviderMapping as { provider, providerId } (provider + providerId)}
-			{@render option(provider)}
-		{/each}
-		{@render option("auto")}
+{#snippet compactProviderDisplay(provider: string)}
+	<div class="flex items-center gap-1.5">
+		<IconProvider {provider} />
+		<span class="text-sm">{getProviderName(provider) ?? "loading"}</span>
 	</div>
+{/snippet}
 
-	{#if conversation.data.provider === "auto"}
-		<div class="flex flex-col gap-1.5">
-			<div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-				<span>Auto Policy</span>
-				<Tooltip>
-					{#snippet trigger(tooltip)}
-						<button class="flex items-center" {...tooltip.trigger}>
-							<IconInfo class="size-3" />
-						</button>
-					{/snippet}
-					{autoPolicyDescriptions[autoPolicyValue]}
-				</Tooltip>
-			</div>
-			<button
-				{...autoPolicySelect.trigger}
-				class={cn(
-					"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 text-sm leading-tight whitespace-nowrap shadow-sm",
-					"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
-				)}
-			>
-				{autoPolicyLabels[autoPolicyValue]}
-				<div
-					class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
-				>
-					<IconCaret />
+{#if compact}
+	<!-- Compact mode for top bar - provider and auto policy side by side -->
+	<div class="flex items-center gap-2">
+		<!-- Provider select -->
+		<button
+			{...select.trigger}
+			class={cn(
+				"focus-outline relative flex items-center gap-2 overflow-hidden rounded-lg border",
+				"bg-gray-100/80 px-3 py-1.5 text-sm leading-tight whitespace-nowrap shadow-sm",
+				"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
+				classes,
+			)}
+		>
+			{@render compactProviderDisplay(conversation.data.provider ?? "")}
+			<IconCaret class="size-4 flex-none text-gray-500" />
+		</button>
+
+		<div {...select.content} class="z-50 rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+			{#snippet option(provider: string)}
+				<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
+					<div
+						class="rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
+					>
+						{@render providerDisplay(provider)}
+					</div>
 				</div>
-			</button>
+			{/snippet}
+			{#each conversation.model.inferenceProviderMapping as { provider, providerId } (provider + providerId)}
+				{@render option(provider)}
+			{/each}
+			{@render option("auto")}
+		</div>
 
-			<div {...autoPolicySelect.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+		<!-- Auto policy select (only shown when provider is auto) -->
+		{#if conversation.data.provider === "auto"}
+			<Tooltip>
+				{#snippet trigger(tooltip)}
+					<button
+						{...autoPolicySelect.trigger}
+						class={cn(
+							"focus-outline relative flex items-center gap-2 overflow-hidden rounded-lg border",
+							"bg-gray-100/80 px-3 py-1.5 text-sm leading-tight whitespace-nowrap shadow-sm",
+							"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
+						)}
+						{...tooltip.trigger}
+					>
+						{autoPolicyLabels[autoPolicyValue]}
+						<IconCaret class="size-4 flex-none text-gray-500" />
+					</button>
+				{/snippet}
+				{autoPolicyDescriptions[autoPolicyValue]}
+			</Tooltip>
+
+			<div
+				{...autoPolicySelect.content}
+				class="z-50 rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800"
+			>
 				{#snippet policyOption(policy: "default" | "fastest" | "cheapest", label: string)}
 					<div {...autoPolicySelect.getOption(policy)} class="group block w-full p-1 text-sm dark:text-white">
 						<div
@@ -197,6 +200,91 @@
 				{@render policyOption("fastest", "Fastest")}
 				{@render policyOption("cheapest", "Cheapest")}
 			</div>
+		{/if}
+	</div>
+{:else}
+	<!-- Full mode for settings panel -->
+	<div class="flex flex-col gap-2">
+		<button
+			{...select.trigger}
+			class={cn(
+				"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 leading-tight whitespace-nowrap shadow-sm",
+				"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
+				classes,
+			)}
+		>
+			{@render providerDisplay(conversation.data.provider ?? "")}
+			<div
+				class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
+			>
+				<IconCaret />
+			</div>
+		</button>
+
+		<div {...select.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+			{#snippet option(provider: string)}
+				<div {...select.getOption(provider)} class="group block w-full p-1 text-sm dark:text-white">
+					<div
+						class="rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
+					>
+						{@render providerDisplay(provider)}
+					</div>
+				</div>
+			{/snippet}
+			{#each conversation.model.inferenceProviderMapping as { provider, providerId } (provider + providerId)}
+				{@render option(provider)}
+			{/each}
+			{@render option("auto")}
 		</div>
-	{/if}
-</div>
+
+		{#if conversation.data.provider === "auto"}
+			<div class="flex flex-col gap-1.5">
+				<div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+					<span>Auto Policy</span>
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button class="flex items-center" {...tooltip.trigger}>
+								<IconInfo class="size-3" />
+							</button>
+						{/snippet}
+						{autoPolicyDescriptions[autoPolicyValue]}
+					</Tooltip>
+				</div>
+				<button
+					{...autoPolicySelect.trigger}
+					class={cn(
+						"relative flex items-center justify-between gap-6 overflow-hidden rounded-lg border bg-gray-100/80 px-3 py-1.5 text-sm leading-tight whitespace-nowrap shadow-sm",
+						"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
+					)}
+				>
+					{autoPolicyLabels[autoPolicyValue]}
+					<div
+						class="absolute right-2 grid size-4 flex-none place-items-center rounded-sm bg-gray-100 text-xs dark:bg-gray-600"
+					>
+						<IconCaret />
+					</div>
+				</button>
+
+				<div {...autoPolicySelect.content} class="rounded-lg border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+					{#snippet policyOption(policy: "default" | "fastest" | "cheapest", label: string)}
+						<div {...autoPolicySelect.getOption(policy)} class="group block w-full p-1 text-sm dark:text-white">
+							<div
+								class="rounded-md px-2 py-1.5 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
+							>
+								<div class="flex flex-col items-start gap-0.5">
+									<span>{label}</span>
+									<span class="text-xs text-gray-500 dark:text-gray-400">
+										{autoPolicyDescriptions[policy]}
+									</span>
+								</div>
+							</div>
+						</div>
+					{/snippet}
+					{@render policyOption("default", "Default")}
+					{@render policyOption("fastest", "Fastest")}
+					{@render policyOption("cheapest", "Cheapest")}
+				</div>
+			</div>
+		{/if}
+	</div>
+{/if}
