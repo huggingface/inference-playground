@@ -118,8 +118,8 @@
 			<!-- Left side: Model selector, provider selector, and compare -->
 			<div class="flex items-center gap-3">
 				{#if !compareActive && conversations.active[0]}
-					<!-- Model and provider stacked vertically -->
-					<div class="flex flex-col gap-1">
+					<!-- Model and provider stacked vertically with fixed width -->
+					<div class="flex w-72 flex-col gap-1">
 						<ModelSelector conversation={conversations.active[0]} compact />
 						{#if isHFModel(conversations.active[0].model)}
 							<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->

@@ -41,16 +41,18 @@
 	<button
 		{id}
 		class={cn(
-			"focus-outline relative flex items-center gap-2 overflow-hidden rounded-lg border",
+			"focus-outline relative flex w-full items-center justify-between overflow-hidden rounded-lg border",
 			"bg-gray-100/80 px-3 py-1.5 text-sm leading-tight whitespace-nowrap shadow-sm",
 			"hover:brightness-95 dark:border-gray-700 dark:bg-gray-800 dark:hover:brightness-110",
 		)}
 		onclick={() => (showModelPickerModal = true)}
 	>
-		<Avatar model={conversation.model} orgName={nameSpace} size="sm" />
-		<div class="overflow-hidden">
-			<span class="text-xs text-gray-500 dark:text-gray-400">{nameSpace}/</span>
-			<span class="truncate font-medium">{modelName}</span>
+		<div class="flex items-center gap-2 overflow-hidden">
+			<Avatar model={conversation.model} orgName={nameSpace} size="sm" />
+			<div class="overflow-hidden">
+				<span class="text-xs text-gray-500 dark:text-gray-400">{nameSpace}/</span>
+				<span class="truncate font-medium">{modelName}</span>
+			</div>
 		</div>
 		<IconCaret class="size-4 flex-none text-gray-500" />
 	</button>
