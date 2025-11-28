@@ -30,6 +30,7 @@
 	import ProviderSelect from "./provider-select.svelte";
 	import ProjectTreeSidebar from "./project-tree-sidebar.svelte";
 	import CheckpointsMenu from "./checkpoints-menu.svelte";
+	import { useEventListener } from "runed";
 
 	// LocalStorage keys
 	const SIDEBAR_COLLAPSED_KEY = "playground:sidebar:collapsed";
@@ -70,21 +71,19 @@
 		localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width));
 	}
 
-	// Keyboard shortcut for toggling sidebar (Cmd+B / Ctrl+B)
-	function handle_keydown(e: KeyboardEvent) {
-		const mod_key = isMac() ? e.metaKey : e.ctrlKey;
-		if (mod_key && e.key === "b") {
-			e.preventDefault();
-			toggle_sidebar_collapsed();
-		}
-	}
-
-	onMount(() => {
-		document.addEventListener("keydown", handle_keydown);
-		return () => {
-			document.removeEventListener("keydown", handle_keydown);
-		};
-	});
+	useEventListener(
+		() => document.body,
+		"keydown",
+		e => {
+			const mod_key = isMac() ? e.metaKey : e.ctrlKey;
+			if (mod_key && e.key === "b") {
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				e.stopPropagation();
+				toggle_sidebar_collapsed();
+			}
+		},
+	);
 
 	// Settings popover
 	const settingsPopover = new Popover({
