@@ -259,22 +259,27 @@
 				{#each tree_items as item}
 					{@const is_active = tree.isSelected(item.id)}
 					{@const is_branch = item.project.branchedFromId !== null}
-					<button
-						onclick={() => tree.toggleSelect(item.id)}
-						class={cn(
-							"grid size-8 place-items-center rounded-md transition-colors",
-							is_active
-								? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-								: "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700",
-						)}
-						title={item.project.name}
-					>
-						{#if is_branch}
-							<IconBranch class="size-4" />
-						{:else}
-							<IconFolder class="size-4" />
-						{/if}
-					</button>
+					<Tooltip>
+						{#snippet trigger(tooltip)}
+							<button
+								onclick={() => tree.toggleSelect(item.id)}
+								class={cn(
+									"grid size-8 place-items-center rounded-md transition-colors",
+									is_active
+										? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+										: "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700",
+								)}
+								{...tooltip.trigger}
+							>
+								{#if is_branch}
+									<IconBranch class="size-4" />
+								{:else}
+									<IconFolder class="size-4" />
+								{/if}
+							</button>
+						{/snippet}
+						{item.project.name}
+					</Tooltip>
 				{/each}
 			</div>
 		</div>

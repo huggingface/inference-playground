@@ -113,53 +113,67 @@
 			<div
 				class="flex items-center gap-2 rounded-md py-1.5 pr-1 pl-2 group-data-[highlighted]:bg-gray-200 dark:group-data-[highlighted]:bg-gray-700"
 			>
-				<div class="flex items-center gap-2 overflow-hidden" title={name}>
-					<p class="truncate">
-						{name}
-					</p>
-					{#if projects.all.find(p => p.id === id)?.branchedFromId}
-						{@const originalProject = projects.getBranchedFromProject(id)}
-						<Tooltip>
-							{#snippet trigger(tooltip)}
+				<Tooltip>
+					{#snippet trigger(tooltip)}
+						<div class="flex items-center gap-2 overflow-hidden" {...tooltip.trigger}>
+							<p class="truncate">
+								{name}
+							</p>
+							{#if projects.all.find(p => p.id === id)?.branchedFromId}
 								<div
 									class="text-3xs grid aspect-square place-items-center rounded bg-blue-300 p-0.5 text-blue-700 dark:bg-blue-400/25 dark:text-blue-400"
 									aria-label="Branched project"
-									{...tooltip.trigger}
 								>
 									<IconBranch />
 								</div>
-							{/snippet}
-							Branched from {originalProject?.name || "unknown project"}
-						</Tooltip>
-					{:else if hasCheckpoints}
-						<div
-							class="text-3xs grid aspect-square place-items-center rounded bg-yellow-300 p-0.5 text-yellow-700 dark:bg-yellow-400/25 dark:text-yellow-400"
-							aria-label="Project has checkpoints"
-						>
-							<IconHistory />
+							{:else if hasCheckpoints}
+								<div
+									class="text-3xs grid aspect-square place-items-center rounded bg-yellow-300 p-0.5 text-yellow-700 dark:bg-yellow-400/25 dark:text-yellow-400"
+									aria-label="Project has checkpoints"
+								>
+									<IconHistory />
+								</div>
+							{/if}
 						</div>
+					{/snippet}
+					{name}
+					{#if projects.all.find(p => p.id === id)?.branchedFromId}
+						{@const originalProject = projects.getBranchedFromProject(id)}
+						<br /><span class="text-xs text-gray-400">Branched from {originalProject?.name || "unknown"}</span>
 					{/if}
-				</div>
+				</Tooltip>
 				{#if id !== "default"}
 					<div class="ml-auto flex items-center gap-1">
-						<button
-							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
-							onclick={async e => {
-								e.stopPropagation();
-								projects.update({ id, name: (await prompt("Edit project name", name)) || name });
-							}}
-						>
-							<IconEdit />
-						</button>
-						<button
-							class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
-							onclick={e => {
-								e.stopPropagation();
-								projects.delete(id);
-							}}
-						>
-							<IconDelete />
-						</button>
+						<Tooltip>
+							{#snippet trigger(tooltip)}
+								<button
+									class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
+									onclick={async e => {
+										e.stopPropagation();
+										projects.update({ id, name: (await prompt("Edit project name", name)) || name });
+									}}
+									{...tooltip.trigger}
+								>
+									<IconEdit />
+								</button>
+							{/snippet}
+							Edit name
+						</Tooltip>
+						<Tooltip>
+							{#snippet trigger(tooltip)}
+								<button
+									class="grid place-items-center rounded-md p-1 text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
+									onclick={e => {
+										e.stopPropagation();
+										projects.delete(id);
+									}}
+									{...tooltip.trigger}
+								>
+									<IconDelete />
+								</button>
+							{/snippet}
+							Delete project
+						</Tooltip>
 					</div>
 				{/if}
 			</div>
